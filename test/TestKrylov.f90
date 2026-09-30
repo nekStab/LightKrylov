@@ -62,12 +62,10 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("QR factorization", test_qr_factorization_rsp), &
-                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_rsp), &
-                        new_unittest("QR rank deficient", test_qr_rank_deficient_rsp), &
                         new_unittest("QR invalid inputs", test_qr_invalid_inputs_rsp), &
-                        new_unittest("QR single vector", test_qr_single_vector_rsp), &
-                        new_unittest("Pivoting QR diagonal ordering", test_pivoting_qr_diagonal_ordering_rsp) &
+                        new_unittest("QR factorization", test_qr_factorization_rsp), &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_rsp), &
+                        new_unittest("QR single vector", test_qr_single_vector_rsp) &
                     ]
         return
     end subroutine collect_qr_rsp_testsuite
@@ -86,6 +84,7 @@ contains
         real(sp), allocatable :: Adata(:, :), Qdata(:, :)
         real(sp), allocatable :: G(:, :)
         real(sp) :: err
+        integer :: perm(kdim), i
         character(len=256) :: msg
 
         ! Initialiaze matrix.
@@ -118,69 +117,22 @@ contains
         call check_test(error, 'test_qr_factorization_rsp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
-        return
-    end subroutine test_qr_factorization_rsp
 
-    subroutine test_pivoting_qr_exact_rank_deficiency_rsp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test basis.
-        type(vector_rsp), allocatable :: A(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = 20
-        ! Number of zero columns.
-        integer, parameter :: nzero = 5
-        ! Upper triangular matrix.
-        real(sp) :: R(kdim, kdim)
-        ! Permutation vector.
-        integer :: perm(kdim)
-        ! Information flag.
-        integer :: info
-       
-        ! Miscellaneous.
-        integer :: k, idx, rk
-        real(sp) :: alpha
-        logical :: mask(kdim)
-        real(sp), allocatable :: Adata(:, :), Qdata(:, :)
-        real(sp), allocatable :: G(:, :)
-        real(sp) :: err
-        character(len=256) :: msg
+        call init_rand(A); R = zero_rsp ; call get_data(Adata, A)
 
-        ! Effective rank.
-        rk = kdim - nzero
-
-        ! Initialize matrix.
-        allocate(A(kdim)) ; call init_rand(A)
-
-        ! Add zero vectors at random places.
-        mask = .true. ; k = nzero
-        do while (k > 0)
-            call random_number(alpha)
-            idx = 1 + floor(kdim*alpha)
-            if (mask(idx)) then
-                A(idx)%data = zero_rsp
-                mask(idx) = .false.
-                k = k-1
-            endif
-        enddo
-
-        ! Copy data.
-        allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
-
-        ! In-place QR factorization.
+        ! In-place Pivoted QR factorization.
         call qr(A, R, perm, info, tol=atol_sp)
-        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_pivoting_qr_exact_rank_deficiency_rsp')
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_factorization_rsp')
 
-        ! Extract data
-        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
-        Adata = Adata(:, perm)
+        ! Get data.
+        call get_data(Qdata, A)
 
         ! Check correctness.
-        err = maxval(abs(Adata - matmul(Qdata, R)))
+        err = maxval(abs(Adata(:, perm) - matmul(Qdata, R)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rsp', &
-                              & info='Factorization', eq='A = Q @ R', context=msg)
+        call check_test(error, 'test_qr_factorization_rsp', &
+                              & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = Gram(A(:kdim))
@@ -189,11 +141,23 @@ contains
         err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rsp', &
-                              & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+        call check_test(error, 'test_qr_factorization_rsp', &
+                              & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
+
+        ! Check that diagonal entries are non-increasing in magnitude.
+        ! |R(1,1)| >= |R(2,2)| >= ... >= |R(kdim,kdim)|
+        do i = 1, kdim-1
+            err = abs(R(i+1, i+1)) - abs(R(i, i))
+            call check(error, err <= rtol_sp)
+            if (allocated(error)) exit
+        end do
+        call get_err_str(msg, "max deviation: ", err)
+        call check_test(error, 'test_qr_factorization_rsp', &
+                              & info='Diagonal ordering', &
+                              & eq='|R(1,1)| >= |R(2,2)| >= ...', context=msg)
 
         return
-    end subroutine test_pivoting_qr_exact_rank_deficiency_rsp
+    end subroutine test_qr_factorization_rsp
 
     subroutine test_qr_rank_deficient_rsp(error)
         ! Error type to be returned.
@@ -213,7 +177,8 @@ contains
         real(sp) :: err
         character(len=256) :: msg
         real(sp) :: large_tol, beta, alpha
-        integer :: i
+        integer :: i, k, nzero, rk, idx, perm(kdim)
+        logical :: mask(kdim)
 
         ! Use a large tolerance to trigger collinearity detection.
         large_tol = sqrt(epsilon(1.0_sp))
@@ -231,26 +196,27 @@ contains
         allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
         R = zero_rsp
 
-        ! In-place QR factorization.
-        call qr(A, R, info, tol=large_tol)
+        do
+            ! In-place QR factorization.
+            call qr(A, R, info, tol=large_tol)
 
-        ! Check correct column has been flagged.
-        call check(error, info == j_col)
-        call check_test(error, 'test_qr_rank_deficient_rsp', &
-                        info = 'Deficient column.', eq='info == 3', context=msg)
+            ! Check correct column has been flagged.
+            call check(error, info == j_col)
+            if (allocated(error)) exit
 
-        ! Check corresponding entry in R is zero.
-        call check(error, abs(R(j_col, j_col)) == 0)
-        call check_test(error, 'test_qr_rank_deficient_rsp', &
-                        info = 'Deficient column.', eq='R(3, 3) = 0', context=msg)
+            ! Check corresponding entry in R is zero.
+            call check(error, abs(R(j_col, j_col)) == 0)
+            if (allocated(error)) exit
 
-        ! Get Q data after factorization.
-        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
+            ! Get Q data after factorization.
+            allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
 
-        ! Check correctness: A = Q @ R must hold even with collinear column.
-        err = maxval(abs(Adata - matmul(Qdata, R)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+            ! Check correctness: A = Q @ R must hold even with collinear column.
+            err = maxval(abs(Adata - matmul(Qdata, R)))
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_sp)
+            exit
+        end do
         call check_test(error, 'test_qr_rank_deficient_rsp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
@@ -263,6 +229,52 @@ contains
         call check(error, err < rtol_sp)
         call check_test(error, 'test_qr_rank_deficient_rsp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+
+        ! Effective rank.
+        rk = kdim - nzero
+
+        ! Initialize matrix.
+        call init_rand(A)
+
+        ! Add zero vectors at random places.
+        mask = .true. ; k = nzero
+        do while (k > 0)
+            call random_number(alpha)
+            idx = 1 + floor(kdim*alpha)
+            if (mask(idx)) then
+                A(idx)%data = zero_rsp
+                mask(idx) = .false.
+                k = k-1
+            endif
+        enddo
+
+        ! Copy data.
+        call get_data(Adata, A)
+
+        ! In-place QR factorization.
+        call qr(A, R, perm, info, tol=atol_sp)
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_rank_deficient_rsp')
+
+        ! Extract data
+        call get_data(Qdata, A)
+        Adata = Adata(:, perm)
+
+        ! Check correctness.
+        err = maxval(abs(Adata - matmul(Qdata, R)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_qr_rank_deficient_rsp', &
+                              & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = Gram(A(:kdim))
+
+        ! Check orthonormality of the computed basis.
+        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_qr_rank_deficient_rsp', &
+                              & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
         return
     end subroutine test_qr_rank_deficient_rsp
@@ -281,42 +293,39 @@ contains
         character(len=256) :: msg
 
         ! Test with empty set of vectors.
-        allocate(A(0))
-        call qr(A, R, info) ! Standard QR
-        call check(error, info == -1)
-        if (.not. allocated(error)) then
+        test_loop: do
+            allocate(A(0))
+            call qr(A, R, info) ! Standard QR
+            call check(error, info == -1)
+            if (allocated(error)) exit test_loop
             call qr(A, R, perm, info)   ! Pivoting QR
             call check(error, info == -1)
-        endif
-        call check_test(error, 'test_qr_invalid_input_rsp', &
-                        info='size(Q) == 0', eq='info == -1', context=msg)
+            if (allocated(error)) exit test_loop
 
-        ! Test matrix R with inconsistent dimensions.
-        deallocate(A) ; allocate(A(5)) ; call init_rand(A)
-        call qr(A, Rsmall, info)    ! Standard QR
-        call check(error, info==-2)
-        if (.not. allocated(error)) then
+            ! Test matrix R with inconsistent dimensions.
+            deallocate(A) ; allocate(A(5)) ; call init_rand(A)
+            call qr(A, Rsmall, info)    ! Standard QR
+            call check(error, info==-2)
+            if (allocated(error)) exit test_loop
             call qr(A, Rsmall, perm, info)  ! Pivoting QR
             call check(error, info==-2)
-        endif
-        call check_test(error, 'test_qr_invalid_inputs_rsp', &
-                        info='shape(R) is inconsistent', eq='info == -2', context=msg)
+            if (allocated(error)) exit test_loop
 
-        ! Test perm too small on qr_with_pivoting.
-        call qr(A, R, perm_small, info, tol=atol_sp)
-        call check(error, info == -3)
-        call check_test(error, 'test_qr_invalid_inputs_rsp', &
-                              & info='Perm too small', eq='info == -3', context=msg)
+            ! Test perm too small on qr_with_pivoting.
+            call qr(A, R, perm_small, info, tol=atol_sp)
+            call check(error, info == -3)
+            if (allocated(error)) exit test_loop
 
-        ! Test negative tolerance.
-        call qr(A, R, info, tol=-1.0_sp)  ! Standard QR
-        call check(error, info == -4)
-        if (.not. allocated(error)) then
+            ! Test negative tolerance.
+            call qr(A, R, info, tol=-1.0_sp)  ! Standard QR
+            call check(error, info == -4)
+            if (allocated(error)) exit test_loop
             call qr(A, R, perm, info, tol=-1.0_sp)    ! Pivoting QR
             call check(error, info == -4)
-        endif
+            exit test_loop
+        end do test_loop
         call check_test(error, 'test_qr_invalid_inputs_rsp', &
-                              & info='Negative tolerance', eq='info == -4', context=msg)
+                              & info='Invalid input parameters', eq='', context=msg)
 
         return
     end subroutine test_qr_invalid_inputs_rsp
@@ -381,62 +390,14 @@ contains
         return
     end subroutine test_qr_single_vector_rsp
 
-    subroutine test_pivoting_qr_diagonal_ordering_rsp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test Vectors.
-        integer, parameter :: kdim = 10
-        type(vector_rsp), allocatable :: A(:)
-        ! Upper triangular matrix.
-        real(sp) :: R(kdim, kdim)
-        ! Permutation vector.
-        integer :: perm(kdim)
-        ! Information flag.
-        integer :: info
-        ! Miscellaneous.
-        real(sp) :: err, scale(kdim)
-        character(len=256) :: msg
-        integer :: i
-
-        ! Initialize matrix.
-        allocate(A(kdim))
-        call random_number(scale)
-        do i = 1, kdim
-            call A(i)%rand(ifnorm=.true.)
-            call A(i)%scal(scale(i)*one_rsp)
-        enddo
-        R = zero_rsp
-
-        ! In-place QR with pivoting.
-        call qr(A, R, perm, info, tol=atol_sp)
-        call check_info(info, 'qr_pivot', module=this_module_long, &
-            & procedure='test_pivoting_qr_diagonal_ordering_rsp')
-
-        ! Check that diagonal entries are non-increasing in magnitude.
-        ! |R(1,1)| >= |R(2,2)| >= ... >= |R(kdim,kdim)|
-        do i = 1, kdim-1
-            err = abs(R(i+1, i+1)) - abs(R(i, i))
-            call check(error, err <= rtol_sp)
-            if (allocated(error)) exit
-        end do
-        call get_err_str(msg, "max deviation: ", err)
-        call check_test(error, 'test_pivoting_qr_diagonal_ordering_rsp', &
-                              & info='Diagonal ordering', &
-                              & eq='|R(1,1)| >= |R(2,2)| >= ...', context=msg)
-
-        return
-    end subroutine test_pivoting_qr_diagonal_ordering_rsp
-
     subroutine collect_qr_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("QR factorization", test_qr_factorization_rdp), &
-                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_rdp), &
-                        new_unittest("QR rank deficient", test_qr_rank_deficient_rdp), &
                         new_unittest("QR invalid inputs", test_qr_invalid_inputs_rdp), &
-                        new_unittest("QR single vector", test_qr_single_vector_rdp), &
-                        new_unittest("Pivoting QR diagonal ordering", test_pivoting_qr_diagonal_ordering_rdp) &
+                        new_unittest("QR factorization", test_qr_factorization_rdp), &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_rdp), &
+                        new_unittest("QR single vector", test_qr_single_vector_rdp) &
                     ]
         return
     end subroutine collect_qr_rdp_testsuite
@@ -455,6 +416,7 @@ contains
         real(dp), allocatable :: Adata(:, :), Qdata(:, :)
         real(dp), allocatable :: G(:, :)
         real(dp) :: err
+        integer :: perm(kdim), i
         character(len=256) :: msg
 
         ! Initialiaze matrix.
@@ -487,69 +449,22 @@ contains
         call check_test(error, 'test_qr_factorization_rdp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
-        return
-    end subroutine test_qr_factorization_rdp
 
-    subroutine test_pivoting_qr_exact_rank_deficiency_rdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test basis.
-        type(vector_rdp), allocatable :: A(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = 20
-        ! Number of zero columns.
-        integer, parameter :: nzero = 5
-        ! Upper triangular matrix.
-        real(dp) :: R(kdim, kdim)
-        ! Permutation vector.
-        integer :: perm(kdim)
-        ! Information flag.
-        integer :: info
-       
-        ! Miscellaneous.
-        integer :: k, idx, rk
-        real(dp) :: alpha
-        logical :: mask(kdim)
-        real(dp), allocatable :: Adata(:, :), Qdata(:, :)
-        real(dp), allocatable :: G(:, :)
-        real(dp) :: err
-        character(len=256) :: msg
+        call init_rand(A); R = zero_rdp ; call get_data(Adata, A)
 
-        ! Effective rank.
-        rk = kdim - nzero
-
-        ! Initialize matrix.
-        allocate(A(kdim)) ; call init_rand(A)
-
-        ! Add zero vectors at random places.
-        mask = .true. ; k = nzero
-        do while (k > 0)
-            call random_number(alpha)
-            idx = 1 + floor(kdim*alpha)
-            if (mask(idx)) then
-                A(idx)%data = zero_rdp
-                mask(idx) = .false.
-                k = k-1
-            endif
-        enddo
-
-        ! Copy data.
-        allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
-
-        ! In-place QR factorization.
+        ! In-place Pivoted QR factorization.
         call qr(A, R, perm, info, tol=atol_dp)
-        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_pivoting_qr_exact_rank_deficiency_rdp')
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_factorization_rdp')
 
-        ! Extract data
-        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
-        Adata = Adata(:, perm)
+        ! Get data.
+        call get_data(Qdata, A)
 
         ! Check correctness.
-        err = maxval(abs(Adata - matmul(Qdata, R)))
+        err = maxval(abs(Adata(:, perm) - matmul(Qdata, R)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rdp', &
-                              & info='Factorization', eq='A = Q @ R', context=msg)
+        call check_test(error, 'test_qr_factorization_rdp', &
+                              & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = Gram(A(:kdim))
@@ -558,11 +473,23 @@ contains
         err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_rdp', &
-                              & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+        call check_test(error, 'test_qr_factorization_rdp', &
+                              & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
+
+        ! Check that diagonal entries are non-increasing in magnitude.
+        ! |R(1,1)| >= |R(2,2)| >= ... >= |R(kdim,kdim)|
+        do i = 1, kdim-1
+            err = abs(R(i+1, i+1)) - abs(R(i, i))
+            call check(error, err <= rtol_dp)
+            if (allocated(error)) exit
+        end do
+        call get_err_str(msg, "max deviation: ", err)
+        call check_test(error, 'test_qr_factorization_rdp', &
+                              & info='Diagonal ordering', &
+                              & eq='|R(1,1)| >= |R(2,2)| >= ...', context=msg)
 
         return
-    end subroutine test_pivoting_qr_exact_rank_deficiency_rdp
+    end subroutine test_qr_factorization_rdp
 
     subroutine test_qr_rank_deficient_rdp(error)
         ! Error type to be returned.
@@ -582,7 +509,8 @@ contains
         real(dp) :: err
         character(len=256) :: msg
         real(dp) :: large_tol, beta, alpha
-        integer :: i
+        integer :: i, k, nzero, rk, idx, perm(kdim)
+        logical :: mask(kdim)
 
         ! Use a large tolerance to trigger collinearity detection.
         large_tol = sqrt(epsilon(1.0_dp))
@@ -600,26 +528,27 @@ contains
         allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
         R = zero_rdp
 
-        ! In-place QR factorization.
-        call qr(A, R, info, tol=large_tol)
+        do
+            ! In-place QR factorization.
+            call qr(A, R, info, tol=large_tol)
 
-        ! Check correct column has been flagged.
-        call check(error, info == j_col)
-        call check_test(error, 'test_qr_rank_deficient_rdp', &
-                        info = 'Deficient column.', eq='info == 3', context=msg)
+            ! Check correct column has been flagged.
+            call check(error, info == j_col)
+            if (allocated(error)) exit
 
-        ! Check corresponding entry in R is zero.
-        call check(error, abs(R(j_col, j_col)) == 0)
-        call check_test(error, 'test_qr_rank_deficient_rdp', &
-                        info = 'Deficient column.', eq='R(3, 3) = 0', context=msg)
+            ! Check corresponding entry in R is zero.
+            call check(error, abs(R(j_col, j_col)) == 0)
+            if (allocated(error)) exit
 
-        ! Get Q data after factorization.
-        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
+            ! Get Q data after factorization.
+            allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
 
-        ! Check correctness: A = Q @ R must hold even with collinear column.
-        err = maxval(abs(Adata - matmul(Qdata, R)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+            ! Check correctness: A = Q @ R must hold even with collinear column.
+            err = maxval(abs(Adata - matmul(Qdata, R)))
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_dp)
+            exit
+        end do
         call check_test(error, 'test_qr_rank_deficient_rdp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
@@ -632,6 +561,52 @@ contains
         call check(error, err < rtol_dp)
         call check_test(error, 'test_qr_rank_deficient_rdp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+
+        ! Effective rank.
+        rk = kdim - nzero
+
+        ! Initialize matrix.
+        call init_rand(A)
+
+        ! Add zero vectors at random places.
+        mask = .true. ; k = nzero
+        do while (k > 0)
+            call random_number(alpha)
+            idx = 1 + floor(kdim*alpha)
+            if (mask(idx)) then
+                A(idx)%data = zero_rdp
+                mask(idx) = .false.
+                k = k-1
+            endif
+        enddo
+
+        ! Copy data.
+        call get_data(Adata, A)
+
+        ! In-place QR factorization.
+        call qr(A, R, perm, info, tol=atol_dp)
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_rank_deficient_rdp')
+
+        ! Extract data
+        call get_data(Qdata, A)
+        Adata = Adata(:, perm)
+
+        ! Check correctness.
+        err = maxval(abs(Adata - matmul(Qdata, R)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_qr_rank_deficient_rdp', &
+                              & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = Gram(A(:kdim))
+
+        ! Check orthonormality of the computed basis.
+        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_qr_rank_deficient_rdp', &
+                              & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
         return
     end subroutine test_qr_rank_deficient_rdp
@@ -650,42 +625,39 @@ contains
         character(len=256) :: msg
 
         ! Test with empty set of vectors.
-        allocate(A(0))
-        call qr(A, R, info) ! Standard QR
-        call check(error, info == -1)
-        if (.not. allocated(error)) then
+        test_loop: do
+            allocate(A(0))
+            call qr(A, R, info) ! Standard QR
+            call check(error, info == -1)
+            if (allocated(error)) exit test_loop
             call qr(A, R, perm, info)   ! Pivoting QR
             call check(error, info == -1)
-        endif
-        call check_test(error, 'test_qr_invalid_input_rdp', &
-                        info='size(Q) == 0', eq='info == -1', context=msg)
+            if (allocated(error)) exit test_loop
 
-        ! Test matrix R with inconsistent dimensions.
-        deallocate(A) ; allocate(A(5)) ; call init_rand(A)
-        call qr(A, Rsmall, info)    ! Standard QR
-        call check(error, info==-2)
-        if (.not. allocated(error)) then
+            ! Test matrix R with inconsistent dimensions.
+            deallocate(A) ; allocate(A(5)) ; call init_rand(A)
+            call qr(A, Rsmall, info)    ! Standard QR
+            call check(error, info==-2)
+            if (allocated(error)) exit test_loop
             call qr(A, Rsmall, perm, info)  ! Pivoting QR
             call check(error, info==-2)
-        endif
-        call check_test(error, 'test_qr_invalid_inputs_rdp', &
-                        info='shape(R) is inconsistent', eq='info == -2', context=msg)
+            if (allocated(error)) exit test_loop
 
-        ! Test perm too small on qr_with_pivoting.
-        call qr(A, R, perm_small, info, tol=atol_dp)
-        call check(error, info == -3)
-        call check_test(error, 'test_qr_invalid_inputs_rdp', &
-                              & info='Perm too small', eq='info == -3', context=msg)
+            ! Test perm too small on qr_with_pivoting.
+            call qr(A, R, perm_small, info, tol=atol_dp)
+            call check(error, info == -3)
+            if (allocated(error)) exit test_loop
 
-        ! Test negative tolerance.
-        call qr(A, R, info, tol=-1.0_dp)  ! Standard QR
-        call check(error, info == -4)
-        if (.not. allocated(error)) then
+            ! Test negative tolerance.
+            call qr(A, R, info, tol=-1.0_dp)  ! Standard QR
+            call check(error, info == -4)
+            if (allocated(error)) exit test_loop
             call qr(A, R, perm, info, tol=-1.0_dp)    ! Pivoting QR
             call check(error, info == -4)
-        endif
+            exit test_loop
+        end do test_loop
         call check_test(error, 'test_qr_invalid_inputs_rdp', &
-                              & info='Negative tolerance', eq='info == -4', context=msg)
+                              & info='Invalid input parameters', eq='', context=msg)
 
         return
     end subroutine test_qr_invalid_inputs_rdp
@@ -750,62 +722,14 @@ contains
         return
     end subroutine test_qr_single_vector_rdp
 
-    subroutine test_pivoting_qr_diagonal_ordering_rdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test Vectors.
-        integer, parameter :: kdim = 10
-        type(vector_rdp), allocatable :: A(:)
-        ! Upper triangular matrix.
-        real(dp) :: R(kdim, kdim)
-        ! Permutation vector.
-        integer :: perm(kdim)
-        ! Information flag.
-        integer :: info
-        ! Miscellaneous.
-        real(dp) :: err, scale(kdim)
-        character(len=256) :: msg
-        integer :: i
-
-        ! Initialize matrix.
-        allocate(A(kdim))
-        call random_number(scale)
-        do i = 1, kdim
-            call A(i)%rand(ifnorm=.true.)
-            call A(i)%scal(scale(i)*one_rdp)
-        enddo
-        R = zero_rdp
-
-        ! In-place QR with pivoting.
-        call qr(A, R, perm, info, tol=atol_dp)
-        call check_info(info, 'qr_pivot', module=this_module_long, &
-            & procedure='test_pivoting_qr_diagonal_ordering_rdp')
-
-        ! Check that diagonal entries are non-increasing in magnitude.
-        ! |R(1,1)| >= |R(2,2)| >= ... >= |R(kdim,kdim)|
-        do i = 1, kdim-1
-            err = abs(R(i+1, i+1)) - abs(R(i, i))
-            call check(error, err <= rtol_dp)
-            if (allocated(error)) exit
-        end do
-        call get_err_str(msg, "max deviation: ", err)
-        call check_test(error, 'test_pivoting_qr_diagonal_ordering_rdp', &
-                              & info='Diagonal ordering', &
-                              & eq='|R(1,1)| >= |R(2,2)| >= ...', context=msg)
-
-        return
-    end subroutine test_pivoting_qr_diagonal_ordering_rdp
-
     subroutine collect_qr_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("QR factorization", test_qr_factorization_csp), &
-                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_csp), &
-                        new_unittest("QR rank deficient", test_qr_rank_deficient_csp), &
                         new_unittest("QR invalid inputs", test_qr_invalid_inputs_csp), &
-                        new_unittest("QR single vector", test_qr_single_vector_csp), &
-                        new_unittest("Pivoting QR diagonal ordering", test_pivoting_qr_diagonal_ordering_csp) &
+                        new_unittest("QR factorization", test_qr_factorization_csp), &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_csp), &
+                        new_unittest("QR single vector", test_qr_single_vector_csp) &
                     ]
         return
     end subroutine collect_qr_csp_testsuite
@@ -824,6 +748,7 @@ contains
         complex(sp), allocatable :: Adata(:, :), Qdata(:, :)
         complex(sp), allocatable :: G(:, :)
         real(sp) :: err
+        integer :: perm(kdim), i
         character(len=256) :: msg
 
         ! Initialiaze matrix.
@@ -856,69 +781,22 @@ contains
         call check_test(error, 'test_qr_factorization_csp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
-        return
-    end subroutine test_qr_factorization_csp
 
-    subroutine test_pivoting_qr_exact_rank_deficiency_csp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test basis.
-        type(vector_csp), allocatable :: A(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = 20
-        ! Number of zero columns.
-        integer, parameter :: nzero = 5
-        ! Upper triangular matrix.
-        complex(sp) :: R(kdim, kdim)
-        ! Permutation vector.
-        integer :: perm(kdim)
-        ! Information flag.
-        integer :: info
-       
-        ! Miscellaneous.
-        integer :: k, idx, rk
-        real(sp) :: alpha
-        logical :: mask(kdim)
-        complex(sp), allocatable :: Adata(:, :), Qdata(:, :)
-        complex(sp), allocatable :: G(:, :)
-        real(sp) :: err
-        character(len=256) :: msg
+        call init_rand(A); R = zero_csp ; call get_data(Adata, A)
 
-        ! Effective rank.
-        rk = kdim - nzero
-
-        ! Initialize matrix.
-        allocate(A(kdim)) ; call init_rand(A)
-
-        ! Add zero vectors at random places.
-        mask = .true. ; k = nzero
-        do while (k > 0)
-            call random_number(alpha)
-            idx = 1 + floor(kdim*alpha)
-            if (mask(idx)) then
-                A(idx)%data = zero_csp
-                mask(idx) = .false.
-                k = k-1
-            endif
-        enddo
-
-        ! Copy data.
-        allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
-
-        ! In-place QR factorization.
+        ! In-place Pivoted QR factorization.
         call qr(A, R, perm, info, tol=atol_sp)
-        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_pivoting_qr_exact_rank_deficiency_csp')
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_factorization_csp')
 
-        ! Extract data
-        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
-        Adata = Adata(:, perm)
+        ! Get data.
+        call get_data(Qdata, A)
 
         ! Check correctness.
-        err = maxval(abs(Adata - matmul(Qdata, R)))
+        err = maxval(abs(Adata(:, perm) - matmul(Qdata, R)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_csp', &
-                              & info='Factorization', eq='A = Q @ R', context=msg)
+        call check_test(error, 'test_qr_factorization_csp', &
+                              & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = Gram(A(:kdim))
@@ -927,11 +805,23 @@ contains
         err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_sp)
-        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_csp', &
-                              & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+        call check_test(error, 'test_qr_factorization_csp', &
+                              & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
+
+        ! Check that diagonal entries are non-increasing in magnitude.
+        ! |R(1,1)| >= |R(2,2)| >= ... >= |R(kdim,kdim)|
+        do i = 1, kdim-1
+            err = abs(R(i+1, i+1)) - abs(R(i, i))
+            call check(error, err <= rtol_sp)
+            if (allocated(error)) exit
+        end do
+        call get_err_str(msg, "max deviation: ", err)
+        call check_test(error, 'test_qr_factorization_csp', &
+                              & info='Diagonal ordering', &
+                              & eq='|R(1,1)| >= |R(2,2)| >= ...', context=msg)
 
         return
-    end subroutine test_pivoting_qr_exact_rank_deficiency_csp
+    end subroutine test_qr_factorization_csp
 
     subroutine test_qr_rank_deficient_csp(error)
         ! Error type to be returned.
@@ -951,7 +841,8 @@ contains
         real(sp) :: err
         character(len=256) :: msg
         real(sp) :: large_tol, beta, alpha
-        integer :: i
+        integer :: i, k, nzero, rk, idx, perm(kdim)
+        logical :: mask(kdim)
 
         ! Use a large tolerance to trigger collinearity detection.
         large_tol = sqrt(epsilon(1.0_sp))
@@ -969,26 +860,27 @@ contains
         allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
         R = zero_csp
 
-        ! In-place QR factorization.
-        call qr(A, R, info, tol=large_tol)
+        do
+            ! In-place QR factorization.
+            call qr(A, R, info, tol=large_tol)
 
-        ! Check correct column has been flagged.
-        call check(error, info == j_col)
-        call check_test(error, 'test_qr_rank_deficient_csp', &
-                        info = 'Deficient column.', eq='info == 3', context=msg)
+            ! Check correct column has been flagged.
+            call check(error, info == j_col)
+            if (allocated(error)) exit
 
-        ! Check corresponding entry in R is zero.
-        call check(error, abs(R(j_col, j_col)) == 0)
-        call check_test(error, 'test_qr_rank_deficient_csp', &
-                        info = 'Deficient column.', eq='R(3, 3) = 0', context=msg)
+            ! Check corresponding entry in R is zero.
+            call check(error, abs(R(j_col, j_col)) == 0)
+            if (allocated(error)) exit
 
-        ! Get Q data after factorization.
-        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
+            ! Get Q data after factorization.
+            allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
 
-        ! Check correctness: A = Q @ R must hold even with collinear column.
-        err = maxval(abs(Adata - matmul(Qdata, R)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+            ! Check correctness: A = Q @ R must hold even with collinear column.
+            err = maxval(abs(Adata - matmul(Qdata, R)))
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_sp)
+            exit
+        end do
         call check_test(error, 'test_qr_rank_deficient_csp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
@@ -1001,6 +893,52 @@ contains
         call check(error, err < rtol_sp)
         call check_test(error, 'test_qr_rank_deficient_csp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+
+        ! Effective rank.
+        rk = kdim - nzero
+
+        ! Initialize matrix.
+        call init_rand(A)
+
+        ! Add zero vectors at random places.
+        mask = .true. ; k = nzero
+        do while (k > 0)
+            call random_number(alpha)
+            idx = 1 + floor(kdim*alpha)
+            if (mask(idx)) then
+                A(idx)%data = zero_csp
+                mask(idx) = .false.
+                k = k-1
+            endif
+        enddo
+
+        ! Copy data.
+        call get_data(Adata, A)
+
+        ! In-place QR factorization.
+        call qr(A, R, perm, info, tol=atol_sp)
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_rank_deficient_csp')
+
+        ! Extract data
+        call get_data(Qdata, A)
+        Adata = Adata(:, perm)
+
+        ! Check correctness.
+        err = maxval(abs(Adata - matmul(Qdata, R)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_qr_rank_deficient_csp', &
+                              & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = Gram(A(:kdim))
+
+        ! Check orthonormality of the computed basis.
+        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_qr_rank_deficient_csp', &
+                              & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
         return
     end subroutine test_qr_rank_deficient_csp
@@ -1019,42 +957,39 @@ contains
         character(len=256) :: msg
 
         ! Test with empty set of vectors.
-        allocate(A(0))
-        call qr(A, R, info) ! Standard QR
-        call check(error, info == -1)
-        if (.not. allocated(error)) then
+        test_loop: do
+            allocate(A(0))
+            call qr(A, R, info) ! Standard QR
+            call check(error, info == -1)
+            if (allocated(error)) exit test_loop
             call qr(A, R, perm, info)   ! Pivoting QR
             call check(error, info == -1)
-        endif
-        call check_test(error, 'test_qr_invalid_input_csp', &
-                        info='size(Q) == 0', eq='info == -1', context=msg)
+            if (allocated(error)) exit test_loop
 
-        ! Test matrix R with inconsistent dimensions.
-        deallocate(A) ; allocate(A(5)) ; call init_rand(A)
-        call qr(A, Rsmall, info)    ! Standard QR
-        call check(error, info==-2)
-        if (.not. allocated(error)) then
+            ! Test matrix R with inconsistent dimensions.
+            deallocate(A) ; allocate(A(5)) ; call init_rand(A)
+            call qr(A, Rsmall, info)    ! Standard QR
+            call check(error, info==-2)
+            if (allocated(error)) exit test_loop
             call qr(A, Rsmall, perm, info)  ! Pivoting QR
             call check(error, info==-2)
-        endif
-        call check_test(error, 'test_qr_invalid_inputs_csp', &
-                        info='shape(R) is inconsistent', eq='info == -2', context=msg)
+            if (allocated(error)) exit test_loop
 
-        ! Test perm too small on qr_with_pivoting.
-        call qr(A, R, perm_small, info, tol=atol_sp)
-        call check(error, info == -3)
-        call check_test(error, 'test_qr_invalid_inputs_csp', &
-                              & info='Perm too small', eq='info == -3', context=msg)
+            ! Test perm too small on qr_with_pivoting.
+            call qr(A, R, perm_small, info, tol=atol_sp)
+            call check(error, info == -3)
+            if (allocated(error)) exit test_loop
 
-        ! Test negative tolerance.
-        call qr(A, R, info, tol=-1.0_sp)  ! Standard QR
-        call check(error, info == -4)
-        if (.not. allocated(error)) then
+            ! Test negative tolerance.
+            call qr(A, R, info, tol=-1.0_sp)  ! Standard QR
+            call check(error, info == -4)
+            if (allocated(error)) exit test_loop
             call qr(A, R, perm, info, tol=-1.0_sp)    ! Pivoting QR
             call check(error, info == -4)
-        endif
+            exit test_loop
+        end do test_loop
         call check_test(error, 'test_qr_invalid_inputs_csp', &
-                              & info='Negative tolerance', eq='info == -4', context=msg)
+                              & info='Invalid input parameters', eq='', context=msg)
 
         return
     end subroutine test_qr_invalid_inputs_csp
@@ -1119,62 +1054,14 @@ contains
         return
     end subroutine test_qr_single_vector_csp
 
-    subroutine test_pivoting_qr_diagonal_ordering_csp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test Vectors.
-        integer, parameter :: kdim = 10
-        type(vector_csp), allocatable :: A(:)
-        ! Upper triangular matrix.
-        complex(sp) :: R(kdim, kdim)
-        ! Permutation vector.
-        integer :: perm(kdim)
-        ! Information flag.
-        integer :: info
-        ! Miscellaneous.
-        real(sp) :: err, scale(kdim)
-        character(len=256) :: msg
-        integer :: i
-
-        ! Initialize matrix.
-        allocate(A(kdim))
-        call random_number(scale)
-        do i = 1, kdim
-            call A(i)%rand(ifnorm=.true.)
-            call A(i)%scal(scale(i)*one_csp)
-        enddo
-        R = zero_csp
-
-        ! In-place QR with pivoting.
-        call qr(A, R, perm, info, tol=atol_sp)
-        call check_info(info, 'qr_pivot', module=this_module_long, &
-            & procedure='test_pivoting_qr_diagonal_ordering_csp')
-
-        ! Check that diagonal entries are non-increasing in magnitude.
-        ! |R(1,1)| >= |R(2,2)| >= ... >= |R(kdim,kdim)|
-        do i = 1, kdim-1
-            err = abs(R(i+1, i+1)) - abs(R(i, i))
-            call check(error, err <= rtol_sp)
-            if (allocated(error)) exit
-        end do
-        call get_err_str(msg, "max deviation: ", err)
-        call check_test(error, 'test_pivoting_qr_diagonal_ordering_csp', &
-                              & info='Diagonal ordering', &
-                              & eq='|R(1,1)| >= |R(2,2)| >= ...', context=msg)
-
-        return
-    end subroutine test_pivoting_qr_diagonal_ordering_csp
-
     subroutine collect_qr_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
-                        new_unittest("QR factorization", test_qr_factorization_cdp), &
-                        new_unittest("Pivoting QR for a rank deficient matrix", test_pivoting_qr_exact_rank_deficiency_cdp), &
-                        new_unittest("QR rank deficient", test_qr_rank_deficient_cdp), &
                         new_unittest("QR invalid inputs", test_qr_invalid_inputs_cdp), &
-                        new_unittest("QR single vector", test_qr_single_vector_cdp), &
-                        new_unittest("Pivoting QR diagonal ordering", test_pivoting_qr_diagonal_ordering_cdp) &
+                        new_unittest("QR factorization", test_qr_factorization_cdp), &
+                        new_unittest("QR rank deficient", test_qr_rank_deficient_cdp), &
+                        new_unittest("QR single vector", test_qr_single_vector_cdp) &
                     ]
         return
     end subroutine collect_qr_cdp_testsuite
@@ -1193,6 +1080,7 @@ contains
         complex(dp), allocatable :: Adata(:, :), Qdata(:, :)
         complex(dp), allocatable :: G(:, :)
         real(dp) :: err
+        integer :: perm(kdim), i
         character(len=256) :: msg
 
         ! Initialiaze matrix.
@@ -1225,69 +1113,22 @@ contains
         call check_test(error, 'test_qr_factorization_cdp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
-        return
-    end subroutine test_qr_factorization_cdp
 
-    subroutine test_pivoting_qr_exact_rank_deficiency_cdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test basis.
-        type(vector_cdp), allocatable :: A(:)
-        ! Krylov subspace dimension.
-        integer, parameter :: kdim = 20
-        ! Number of zero columns.
-        integer, parameter :: nzero = 5
-        ! Upper triangular matrix.
-        complex(dp) :: R(kdim, kdim)
-        ! Permutation vector.
-        integer :: perm(kdim)
-        ! Information flag.
-        integer :: info
-       
-        ! Miscellaneous.
-        integer :: k, idx, rk
-        real(dp) :: alpha
-        logical :: mask(kdim)
-        complex(dp), allocatable :: Adata(:, :), Qdata(:, :)
-        complex(dp), allocatable :: G(:, :)
-        real(dp) :: err
-        character(len=256) :: msg
+        call init_rand(A); R = zero_cdp ; call get_data(Adata, A)
 
-        ! Effective rank.
-        rk = kdim - nzero
-
-        ! Initialize matrix.
-        allocate(A(kdim)) ; call init_rand(A)
-
-        ! Add zero vectors at random places.
-        mask = .true. ; k = nzero
-        do while (k > 0)
-            call random_number(alpha)
-            idx = 1 + floor(kdim*alpha)
-            if (mask(idx)) then
-                A(idx)%data = zero_cdp
-                mask(idx) = .false.
-                k = k-1
-            endif
-        enddo
-
-        ! Copy data.
-        allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
-
-        ! In-place QR factorization.
+        ! In-place Pivoted QR factorization.
         call qr(A, R, perm, info, tol=atol_dp)
-        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_pivoting_qr_exact_rank_deficiency_cdp')
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_factorization_cdp')
 
-        ! Extract data
-        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
-        Adata = Adata(:, perm)
+        ! Get data.
+        call get_data(Qdata, A)
 
         ! Check correctness.
-        err = maxval(abs(Adata - matmul(Qdata, R)))
+        err = maxval(abs(Adata(:, perm) - matmul(Qdata, R)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_cdp', &
-                              & info='Factorization', eq='A = Q @ R', context=msg)
+        call check_test(error, 'test_qr_factorization_cdp', &
+                              & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
         G = Gram(A(:kdim))
@@ -1296,11 +1137,23 @@ contains
         err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_dp)
-        call check_test(error, 'test_pivoting_qr_exact_rank_deficiency_cdp', &
-                              & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+        call check_test(error, 'test_qr_factorization_cdp', &
+                              & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
+
+        ! Check that diagonal entries are non-increasing in magnitude.
+        ! |R(1,1)| >= |R(2,2)| >= ... >= |R(kdim,kdim)|
+        do i = 1, kdim-1
+            err = abs(R(i+1, i+1)) - abs(R(i, i))
+            call check(error, err <= rtol_dp)
+            if (allocated(error)) exit
+        end do
+        call get_err_str(msg, "max deviation: ", err)
+        call check_test(error, 'test_qr_factorization_cdp', &
+                              & info='Diagonal ordering', &
+                              & eq='|R(1,1)| >= |R(2,2)| >= ...', context=msg)
 
         return
-    end subroutine test_pivoting_qr_exact_rank_deficiency_cdp
+    end subroutine test_qr_factorization_cdp
 
     subroutine test_qr_rank_deficient_cdp(error)
         ! Error type to be returned.
@@ -1320,7 +1173,8 @@ contains
         real(dp) :: err
         character(len=256) :: msg
         real(dp) :: large_tol, beta, alpha
-        integer :: i
+        integer :: i, k, nzero, rk, idx, perm(kdim)
+        logical :: mask(kdim)
 
         ! Use a large tolerance to trigger collinearity detection.
         large_tol = sqrt(epsilon(1.0_dp))
@@ -1338,26 +1192,27 @@ contains
         allocate(Adata(test_size, kdim)) ; call get_data(Adata, A)
         R = zero_cdp
 
-        ! In-place QR factorization.
-        call qr(A, R, info, tol=large_tol)
+        do
+            ! In-place QR factorization.
+            call qr(A, R, info, tol=large_tol)
 
-        ! Check correct column has been flagged.
-        call check(error, info == j_col)
-        call check_test(error, 'test_qr_rank_deficient_cdp', &
-                        info = 'Deficient column.', eq='info == 3', context=msg)
+            ! Check correct column has been flagged.
+            call check(error, info == j_col)
+            if (allocated(error)) exit
 
-        ! Check corresponding entry in R is zero.
-        call check(error, abs(R(j_col, j_col)) == 0)
-        call check_test(error, 'test_qr_rank_deficient_cdp', &
-                        info = 'Deficient column.', eq='R(3, 3) = 0', context=msg)
+            ! Check corresponding entry in R is zero.
+            call check(error, abs(R(j_col, j_col)) == 0)
+            if (allocated(error)) exit
 
-        ! Get Q data after factorization.
-        allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
+            ! Get Q data after factorization.
+            allocate(Qdata(test_size, kdim)) ; call get_data(Qdata, A)
 
-        ! Check correctness: A = Q @ R must hold even with collinear column.
-        err = maxval(abs(Adata - matmul(Qdata, R)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+            ! Check correctness: A = Q @ R must hold even with collinear column.
+            err = maxval(abs(Adata - matmul(Qdata, R)))
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_dp)
+            exit
+        end do
         call check_test(error, 'test_qr_rank_deficient_cdp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
@@ -1370,6 +1225,52 @@ contains
         call check(error, err < rtol_dp)
         call check_test(error, 'test_qr_rank_deficient_cdp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
+
+        ! Effective rank.
+        rk = kdim - nzero
+
+        ! Initialize matrix.
+        call init_rand(A)
+
+        ! Add zero vectors at random places.
+        mask = .true. ; k = nzero
+        do while (k > 0)
+            call random_number(alpha)
+            idx = 1 + floor(kdim*alpha)
+            if (mask(idx)) then
+                A(idx)%data = zero_cdp
+                mask(idx) = .false.
+                k = k-1
+            endif
+        enddo
+
+        ! Copy data.
+        call get_data(Adata, A)
+
+        ! In-place QR factorization.
+        call qr(A, R, perm, info, tol=atol_dp)
+        call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_rank_deficient_cdp')
+
+        ! Extract data
+        call get_data(Qdata, A)
+        Adata = Adata(:, perm)
+
+        ! Check correctness.
+        err = maxval(abs(Adata - matmul(Qdata, R)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_qr_rank_deficient_cdp', &
+                              & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
+
+        ! Compute Gram matrix associated to the Krylov basis.
+        G = Gram(A(:kdim))
+
+        ! Check orthonormality of the computed basis.
+        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_qr_rank_deficient_cdp', &
+                              & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
         return
     end subroutine test_qr_rank_deficient_cdp
@@ -1388,42 +1289,39 @@ contains
         character(len=256) :: msg
 
         ! Test with empty set of vectors.
-        allocate(A(0))
-        call qr(A, R, info) ! Standard QR
-        call check(error, info == -1)
-        if (.not. allocated(error)) then
+        test_loop: do
+            allocate(A(0))
+            call qr(A, R, info) ! Standard QR
+            call check(error, info == -1)
+            if (allocated(error)) exit test_loop
             call qr(A, R, perm, info)   ! Pivoting QR
             call check(error, info == -1)
-        endif
-        call check_test(error, 'test_qr_invalid_input_cdp', &
-                        info='size(Q) == 0', eq='info == -1', context=msg)
+            if (allocated(error)) exit test_loop
 
-        ! Test matrix R with inconsistent dimensions.
-        deallocate(A) ; allocate(A(5)) ; call init_rand(A)
-        call qr(A, Rsmall, info)    ! Standard QR
-        call check(error, info==-2)
-        if (.not. allocated(error)) then
+            ! Test matrix R with inconsistent dimensions.
+            deallocate(A) ; allocate(A(5)) ; call init_rand(A)
+            call qr(A, Rsmall, info)    ! Standard QR
+            call check(error, info==-2)
+            if (allocated(error)) exit test_loop
             call qr(A, Rsmall, perm, info)  ! Pivoting QR
             call check(error, info==-2)
-        endif
-        call check_test(error, 'test_qr_invalid_inputs_cdp', &
-                        info='shape(R) is inconsistent', eq='info == -2', context=msg)
+            if (allocated(error)) exit test_loop
 
-        ! Test perm too small on qr_with_pivoting.
-        call qr(A, R, perm_small, info, tol=atol_dp)
-        call check(error, info == -3)
-        call check_test(error, 'test_qr_invalid_inputs_cdp', &
-                              & info='Perm too small', eq='info == -3', context=msg)
+            ! Test perm too small on qr_with_pivoting.
+            call qr(A, R, perm_small, info, tol=atol_dp)
+            call check(error, info == -3)
+            if (allocated(error)) exit test_loop
 
-        ! Test negative tolerance.
-        call qr(A, R, info, tol=-1.0_dp)  ! Standard QR
-        call check(error, info == -4)
-        if (.not. allocated(error)) then
+            ! Test negative tolerance.
+            call qr(A, R, info, tol=-1.0_dp)  ! Standard QR
+            call check(error, info == -4)
+            if (allocated(error)) exit test_loop
             call qr(A, R, perm, info, tol=-1.0_dp)    ! Pivoting QR
             call check(error, info == -4)
-        endif
+            exit test_loop
+        end do test_loop
         call check_test(error, 'test_qr_invalid_inputs_cdp', &
-                              & info='Negative tolerance', eq='info == -4', context=msg)
+                              & info='Invalid input parameters', eq='', context=msg)
 
         return
     end subroutine test_qr_invalid_inputs_cdp
@@ -1487,52 +1385,6 @@ contains
 
         return
     end subroutine test_qr_single_vector_cdp
-
-    subroutine test_pivoting_qr_diagonal_ordering_cdp(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Test Vectors.
-        integer, parameter :: kdim = 10
-        type(vector_cdp), allocatable :: A(:)
-        ! Upper triangular matrix.
-        complex(dp) :: R(kdim, kdim)
-        ! Permutation vector.
-        integer :: perm(kdim)
-        ! Information flag.
-        integer :: info
-        ! Miscellaneous.
-        real(dp) :: err, scale(kdim)
-        character(len=256) :: msg
-        integer :: i
-
-        ! Initialize matrix.
-        allocate(A(kdim))
-        call random_number(scale)
-        do i = 1, kdim
-            call A(i)%rand(ifnorm=.true.)
-            call A(i)%scal(scale(i)*one_cdp)
-        enddo
-        R = zero_cdp
-
-        ! In-place QR with pivoting.
-        call qr(A, R, perm, info, tol=atol_dp)
-        call check_info(info, 'qr_pivot', module=this_module_long, &
-            & procedure='test_pivoting_qr_diagonal_ordering_cdp')
-
-        ! Check that diagonal entries are non-increasing in magnitude.
-        ! |R(1,1)| >= |R(2,2)| >= ... >= |R(kdim,kdim)|
-        do i = 1, kdim-1
-            err = abs(R(i+1, i+1)) - abs(R(i, i))
-            call check(error, err <= rtol_dp)
-            if (allocated(error)) exit
-        end do
-        call get_err_str(msg, "max deviation: ", err)
-        call check_test(error, 'test_pivoting_qr_diagonal_ordering_cdp', &
-                              & info='Diagonal ordering', &
-                              & eq='|R(1,1)| >= |R(2,2)| >= ...', context=msg)
-
-        return
-    end subroutine test_pivoting_qr_diagonal_ordering_cdp
 
 
     !--------------------------------------------------------------
