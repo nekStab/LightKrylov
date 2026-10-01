@@ -108,6 +108,7 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(kdim, kdim), source=zero_rsp)
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -170,14 +171,14 @@ contains
         ! Information flag.
         integer :: info
         ! Column to make collinear.
-        integer, parameter :: j_col = 3
+        integer, parameter :: j_col = 3, nzero = 4
         ! Miscellaneous.
         real(sp), allocatable :: Adata(:, :), Qdata(:, :)
         real(sp), allocatable :: G(:, :)
         real(sp) :: err
         character(len=256) :: msg
         real(sp) :: large_tol, beta, alpha
-        integer :: i, k, nzero, rk, idx, perm(kdim)
+        integer :: i, k, rk, idx, perm(kdim)
         logical :: mask(kdim)
 
         ! Use a large tolerance to trigger collinearity detection.
@@ -221,6 +222,7 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(kdim, kdim), source=zero_rsp)
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -440,6 +442,7 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(kdim, kdim), source=zero_rdp)
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -502,14 +505,14 @@ contains
         ! Information flag.
         integer :: info
         ! Column to make collinear.
-        integer, parameter :: j_col = 3
+        integer, parameter :: j_col = 3, nzero = 4
         ! Miscellaneous.
         real(dp), allocatable :: Adata(:, :), Qdata(:, :)
         real(dp), allocatable :: G(:, :)
         real(dp) :: err
         character(len=256) :: msg
         real(dp) :: large_tol, beta, alpha
-        integer :: i, k, nzero, rk, idx, perm(kdim)
+        integer :: i, k, rk, idx, perm(kdim)
         logical :: mask(kdim)
 
         ! Use a large tolerance to trigger collinearity detection.
@@ -553,6 +556,7 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(kdim, kdim), source=zero_rdp)
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -772,6 +776,7 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(kdim, kdim), source=zero_csp)
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -834,14 +839,14 @@ contains
         ! Information flag.
         integer :: info
         ! Column to make collinear.
-        integer, parameter :: j_col = 3
+        integer, parameter :: j_col = 3, nzero = 4
         ! Miscellaneous.
         complex(sp), allocatable :: Adata(:, :), Qdata(:, :)
         complex(sp), allocatable :: G(:, :)
         real(sp) :: err
         character(len=256) :: msg
         real(sp) :: large_tol, beta, alpha
-        integer :: i, k, nzero, rk, idx, perm(kdim)
+        integer :: i, k, rk, idx, perm(kdim)
         logical :: mask(kdim)
 
         ! Use a large tolerance to trigger collinearity detection.
@@ -885,6 +890,7 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(kdim, kdim), source=zero_csp)
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -1104,6 +1110,7 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(kdim, kdim), source=zero_cdp)
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -1166,14 +1173,14 @@ contains
         ! Information flag.
         integer :: info
         ! Column to make collinear.
-        integer, parameter :: j_col = 3
+        integer, parameter :: j_col = 3, nzero = 4
         ! Miscellaneous.
         complex(dp), allocatable :: Adata(:, :), Qdata(:, :)
         complex(dp), allocatable :: G(:, :)
         real(dp) :: err
         character(len=256) :: msg
         real(dp) :: large_tol, beta, alpha
-        integer :: i, k, nzero, rk, idx, perm(kdim)
+        integer :: i, k, rk, idx, perm(kdim)
         logical :: mask(kdim)
 
         ! Use a large tolerance to trigger collinearity detection.
@@ -1217,6 +1224,7 @@ contains
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(kdim, kdim), source=zero_cdp)
         G = Gram(A(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -1445,6 +1453,7 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(kdim, kdim), source=zero_rsp)
         G = Gram(X(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -1730,7 +1739,7 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        ! allocate(G(p*kdim, p*kdim)) ; G = zero_rsp
+        allocate(G(p*kdim, p*kdim), source=zero_rsp)
         G = Gram(X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
@@ -1936,6 +1945,7 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(kdim, kdim), source=zero_rdp)
         G = Gram(X(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -2221,7 +2231,7 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        ! allocate(G(p*kdim, p*kdim)) ; G = zero_rdp
+        allocate(G(p*kdim, p*kdim), source=zero_rdp)
         G = Gram(X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
@@ -2427,6 +2437,7 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(kdim, kdim), source=zero_csp)
         G = Gram(X(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -2715,7 +2726,7 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        ! allocate(G(p*kdim, p*kdim)) ; G = zero_csp
+        allocate(G(p*kdim, p*kdim), source=zero_csp)
         G = Gram(X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
@@ -2921,6 +2932,7 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(kdim, kdim), source=zero_cdp)
         G = Gram(X(:kdim))
 
         ! Check orthonormality of the computed basis.
@@ -3209,7 +3221,7 @@ contains
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
-        ! allocate(G(p*kdim, p*kdim)) ; G = zero_cdp
+        allocate(G(p*kdim, p*kdim), source=zero_cdp)
         G = Gram(X(:p*kdim))
 
         ! Check orthonormality of the computed basis.
@@ -3419,6 +3431,7 @@ contains
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
         ! Compute Gram matrix associated to the left Krylov basis.
+        allocate(G(kdim, kdim), source=zero_rsp)
         G = Gram(U(:kdim))
 
         ! Check orthonormality of the left basis.
@@ -3494,6 +3507,7 @@ contains
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
         ! Compute Gram matrix associated to the left Krylov basis.
+        allocate(G(kdim, kdim), source=zero_rdp)
         G = Gram(U(:kdim))
 
         ! Check orthonormality of the left basis.
@@ -3569,6 +3583,7 @@ contains
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
         ! Compute Gram matrix associated to the left Krylov basis.
+        allocate(G(kdim, kdim), source=zero_csp)
         G = Gram(U(:kdim))
 
         ! Check orthonormality of the left basis.
@@ -3644,6 +3659,7 @@ contains
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
         ! Compute Gram matrix associated to the left Krylov basis.
+        allocate(G(kdim, kdim), source=zero_cdp)
         G = Gram(U(:kdim))
 
         ! Check orthonormality of the left basis.
@@ -3728,7 +3744,7 @@ contains
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        ! allocate(G(kdim, kdim)) ; G = zero_rsp
+        allocate(G(kdim, kdim), source=zero_rsp)
         G = Gram(X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
@@ -3798,7 +3814,7 @@ contains
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        ! allocate(G(kdim, kdim)) ; G = zero_rdp
+        allocate(G(kdim, kdim), source=zero_rdp)
         G = Gram(X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
@@ -3868,7 +3884,7 @@ contains
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        ! allocate(G(kdim, kdim)) ; G = zero_csp
+        allocate(G(kdim, kdim), source=zero_csp)
         G = Gram(X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
@@ -3938,7 +3954,7 @@ contains
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
         ! Compute Gram matrix associated to the right Krylov basis.
-        ! allocate(G(kdim, kdim)) ; G = zero_cdp
+        allocate(G(kdim, kdim), source=zero_cdp)
         G = Gram(X(:kdim))
 
         ! Check orthonormality of the Krylov basis.
@@ -4004,6 +4020,7 @@ contains
                         procedure="test_ssy_tridiag_factorization_rsp")
 
         ! Orthogonality of the column-span basis.
+        allocate(G(kdim, kdim), source=zero_rsp)
         G = Gram(U(:kdim)) ; call save_npy("UG_matrix.npy", G)
         err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
@@ -4085,6 +4102,7 @@ contains
                         procedure="test_ssy_tridiag_factorization_rdp")
 
         ! Orthogonality of the column-span basis.
+        allocate(G(kdim, kdim), source=zero_rdp)
         G = Gram(U(:kdim)) ; call save_npy("UG_matrix.npy", G)
         err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
@@ -4166,6 +4184,7 @@ contains
                         procedure="test_ssy_tridiag_factorization_csp")
 
         ! Orthogonality of the column-span basis.
+        allocate(G(kdim, kdim), source=zero_csp)
         G = Gram(U(:kdim)) ; call save_npy("UG_matrix.npy", G)
         err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
@@ -4247,6 +4266,7 @@ contains
                         procedure="test_ssy_tridiag_factorization_cdp")
 
         ! Orthogonality of the column-span basis.
+        allocate(G(kdim, kdim), source=zero_cdp)
         G = Gram(U(:kdim)) ; call save_npy("UG_matrix.npy", G)
         err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
@@ -4318,6 +4338,7 @@ contains
         call orthonormalize_basis(X)
 
         ! Check orthonormality via Gram matrix.
+        allocate(G(kdim, kdim), source=zero_rsp)
         G = Gram(X)
         err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
@@ -4358,6 +4379,7 @@ contains
             & procedure='test_biorthonormalize_bases_rsp')
 
         ! Check biorthonormality: Y.H @ X = I
+        allocate(G(kdim, kdim), source=zero_rsp)
         G = innerprod(Y, X)
         err = maxval(abs(G - eye(info, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
@@ -4403,6 +4425,7 @@ contains
             & info='Rank detection', eq='nretain == rank', context=msg)
 
         ! Check biorthonormality of the retained subspace.
+        allocate(G(info, info), source=zero_rsp)
         G = innerprod(Y(:info), X(:info))
         err = maxval(abs(G - eye(info, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
@@ -4445,6 +4468,7 @@ contains
         call orthonormalize_basis(X)
 
         ! Check orthonormality via Gram matrix.
+        allocate(G(kdim, kdim), source=zero_rdp)
         G = Gram(X)
         err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
@@ -4485,6 +4509,7 @@ contains
             & procedure='test_biorthonormalize_bases_rdp')
 
         ! Check biorthonormality: Y.H @ X = I
+        allocate(G(kdim, kdim), source=zero_rdp)
         G = innerprod(Y, X)
         err = maxval(abs(G - eye(info, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
@@ -4530,6 +4555,7 @@ contains
             & info='Rank detection', eq='nretain == rank', context=msg)
 
         ! Check biorthonormality of the retained subspace.
+        allocate(G(info, info), source=zero_rdp)
         G = innerprod(Y(:info), X(:info))
         err = maxval(abs(G - eye(info, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
@@ -4572,6 +4598,7 @@ contains
         call orthonormalize_basis(X)
 
         ! Check orthonormality via Gram matrix.
+        allocate(G(kdim, kdim), source=zero_csp)
         G = Gram(X)
         err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
@@ -4612,6 +4639,7 @@ contains
             & procedure='test_biorthonormalize_bases_csp')
 
         ! Check biorthonormality: Y.H @ X = I
+        allocate(G(kdim, kdim), source=zero_csp)
         G = innerprod(Y, X)
         err = maxval(abs(G - eye(info, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
@@ -4657,6 +4685,7 @@ contains
             & info='Rank detection', eq='nretain == rank', context=msg)
 
         ! Check biorthonormality of the retained subspace.
+        allocate(G(info, info), source=zero_csp)
         G = innerprod(Y(:info), X(:info))
         err = maxval(abs(G - eye(info, mold=1.0_sp)))
         call get_err_str(msg, "max err: ", err)
@@ -4699,6 +4728,7 @@ contains
         call orthonormalize_basis(X)
 
         ! Check orthonormality via Gram matrix.
+        allocate(G(kdim, kdim), source=zero_cdp)
         G = Gram(X)
         err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
@@ -4739,6 +4769,7 @@ contains
             & procedure='test_biorthonormalize_bases_cdp')
 
         ! Check biorthonormality: Y.H @ X = I
+        allocate(G(kdim, kdim), source=zero_cdp)
         G = innerprod(Y, X)
         err = maxval(abs(G - eye(info, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
@@ -4784,6 +4815,7 @@ contains
             & info='Rank detection', eq='nretain == rank', context=msg)
 
         ! Check biorthonormality of the retained subspace.
+        allocate(G(info, info), source=zero_cdp)
         G = innerprod(Y(:info), X(:info))
         err = maxval(abs(G - eye(info, mold=1.0_dp)))
         call get_err_str(msg, "max err: ", err)
