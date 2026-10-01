@@ -737,7 +737,7 @@ module LightKrylov_BaseKrylov
             !! Array of `abstract_vector` to be orthogonalized.
             real(sp), intent(out) :: R(:, :)
             !! Upper triangular matrix resulting from the QR factorization.
-            integer, intent(out) :: perm(size(Q))
+            integer, intent(out) :: perm(:)
             !! Permutation matrix.
             integer, intent(out) :: info
             !! Information flag.
@@ -761,7 +761,7 @@ module LightKrylov_BaseKrylov
             !! Array of `abstract_vector` to be orthogonalized.
             real(dp), intent(out) :: R(:, :)
             !! Upper triangular matrix resulting from the QR factorization.
-            integer, intent(out) :: perm(size(Q))
+            integer, intent(out) :: perm(:)
             !! Permutation matrix.
             integer, intent(out) :: info
             !! Information flag.
@@ -785,7 +785,7 @@ module LightKrylov_BaseKrylov
             !! Array of `abstract_vector` to be orthogonalized.
             complex(sp), intent(out) :: R(:, :)
             !! Upper triangular matrix resulting from the QR factorization.
-            integer, intent(out) :: perm(size(Q))
+            integer, intent(out) :: perm(:)
             !! Permutation matrix.
             integer, intent(out) :: info
             !! Information flag.
@@ -809,7 +809,7 @@ module LightKrylov_BaseKrylov
             !! Array of `abstract_vector` to be orthogonalized.
             complex(dp), intent(out) :: R(:, :)
             !! Upper triangular matrix resulting from the QR factorization.
-            integer, intent(out) :: perm(size(Q))
+            integer, intent(out) :: perm(:)
             !! Permutation matrix.
             integer, intent(out) :: info
             !! Information flag.

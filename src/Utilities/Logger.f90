@@ -574,29 +574,35 @@ contains
                               stat=info, errmsg=trim(msg))
                ierr = -1
             end if
-         else if (trim(to_lower(origin)) == 'qr') then
+         else if ((trim(to_lower(origin)) == 'qr') .or. (trim(to_lower(origin)) == 'qr_pivot')) then
             ! qr
-            if (info > 0) then
+            select case (info)
+            case (1:)
                write (msg, '(A,I0,A)') 'QR factorization: Colinear column detected in column ', info,  &
                            & '. NOTE: Other subsequent columns may also be colinear.'
                call log_debug(trim(msg), module=module, procedure=procedure)
-            else
+            case (-1)
+               write (msg, '(A)') 'QR factorization: Q has size 0.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-2)
+               write (msg, '(A)') 'QR factorization: Dimensions of R are inconsistent.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-3)
+               write (msg, '(A)') 'QR factorization: Permutation vector is too small.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-4)
+               write (msg, '(A)') 'QR factorization: User-defined tolerance is negative.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case default
                write (msg, '(A)') "Undocumented error. "//trim(str)
                call log_error(origin, module=module, procedure=procedure, &
                               stat=info, errmsg=trim(msg))
                ierr = -1
-            end if
-         else if (trim(to_lower(origin)) == 'qr_pivot') then
-            ! qr_pivot
-            if (info > 0) then
-               write (msg, '(A,I0,A)') 'QR factorization: Invariant subspace found after ', info, ' steps.'
-               call log_debug(trim(msg), module=module, procedure=procedure)
-            else
-               write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, &
-                              stat=info, errmsg=trim(msg))
-               ierr = -1
-            end if
+            end select
          else if (trim(to_lower(origin)) == 'arnoldi') then
             ! arnoldi
             select case (info)
