@@ -63,10 +63,12 @@ module LightKrylov_BaseKrylov
         !!  Given a square linear operator \( A \), find matrices \( X \) and \( H \) such that
         !!
         !!  \[
-        !!      AX_k = X_k H_k + h_{k+1, k} x_{k+1} e_k^T,
+        !!      A X_k = X_k H_k + H_{k+1,k} X_{k+1} E_k^T,
         !!  \]
         !!
-        !!  where \( X \) is an orthogonal basis and \( H \) is upper Hessenberg.
+        !!  where \( X \) is an orthogonal basis, \( H \) is upper Hessenberg, and for
+        !!  block Arnoldi with block size \( p \), \( H_{k+1,k} \) is a \( p \times p \)
+        !!  matrix (reducing to a scalar \( h_{k+1,k} \) when \( p = 1 \)).
         !!
         !!  **Algorithmic Features**
         !!
@@ -99,14 +101,22 @@ module LightKrylov_BaseKrylov
         !!          the Arnoldi factorization. Additionally, the maximum number of Arnoldi steps
         !!          is equal to `size(X) - 1`. It is an `intent(inout)` argument.
         !!
-        !!  -`H` : `real` or `complex` rank-2 array. On exit, it contains the \( (k+1) \times k\)
-        !!          upper Hessenberg matrix computed from the Arnoldi factorization. It is an
-        !!          `intent(inout)` argument.
+        !!  -`H` : `real` or `complex` rank-2 array. On exit, it contains the
+        !!          \( (k_{max} \times p + p) \times (k_{max} \times p) \) upper Hessenberg matrix
+        !!          computed from the Arnoldi factorization, where \( k_{max} = size(X)/p - 1 \) is the
+        !!          maximum number of Arnoldi steps and \( p \) is the block size (default 1).
+        !!          It is an `intent(inout)` argument.
         !!
         !!  -`info` :   `integer` variable. It is the `LightKrylov` information flag. On exit, if
         !!              `info` > 0, the Arnoldi factorization experienced a lucky breakdown.
         !!              The array of Krylov vectors `X` spans an \(A\)-invariant subpsace of
-        !!              dimension `info`.
+        !!              dimension `info`. If `info` < 0, an input argument is illegal:
+        !!              `info = -3` indicates that `H` is not large enough: it must have
+        !!              leading dimensions at least `(size(X), p*kdim)` with
+        !!              `kdim = (size(X) - p) / p` and block size `p`;
+        !!              `info = -5` indicates an illegal `kstart`; `info = -6` an illegal `kend`;
+        !!              `info = -7` a negative tolerance; `info = -9` an illegal `blksize`
+        !!              (`blksize` \(\leq\) 0 or `size(X)` not divisible by `blksize`).
         !!
         !!  - `kstart` (*optional*) :   `integer` value determining the index of the first Arnoldi
         !!                              step to be computed. By default, `kstart = 1`. It is an
@@ -127,7 +137,9 @@ module LightKrylov_BaseKrylov
         !!
         !!  - `blksize` (*optional*)    :   `integer` value determining the dimension of a block for the
         !!                                  block Arnoldi factorization. It is an optional `intent(in)`
-        !!                                  argument. Default is `blksize=1`.
+        !!                                  argument. Default is `blksize=1`. The block size \( p \) must divide
+        !!                                  `size(X)` evenly, and the maximum number of Arnoldi steps is
+        !!                                  \( k_{max} = (size(X) - p) / p \).
         module subroutine arnoldi_rsp(A, X, H, info, kstart, kend, tol, transpose, blksize)
             implicit none(type, external)
             class(abstract_linop_rsp), intent(inout) :: A

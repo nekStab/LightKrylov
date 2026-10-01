@@ -954,8 +954,15 @@ contains
         class(dense_vector_rsp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         integer :: iostat
+        real(sp) :: alpha
+        logical :: normalize
         character(len=100) :: errmsg
         call random_number(self%data)
+        normalize = optval(ifnorm, .false.)
+        if (normalize) then
+            alpha = self%norm()
+            call self%scal(one_rsp/alpha)
+        end if
     end subroutine dense_rand_rsp
 
     subroutine dense_scal_rsp(self, alpha)
@@ -1037,8 +1044,15 @@ contains
         class(dense_vector_rdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         integer :: iostat
+        real(dp) :: alpha
+        logical :: normalize
         character(len=100) :: errmsg
         call random_number(self%data)
+        normalize = optval(ifnorm, .false.)
+        if (normalize) then
+            alpha = self%norm()
+            call self%scal(one_rdp/alpha)
+        end if
     end subroutine dense_rand_rdp
 
     subroutine dense_scal_rdp(self, alpha)
@@ -1120,12 +1134,19 @@ contains
         class(dense_vector_csp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         integer :: iostat
+        real(sp) :: alpha
+        logical :: normalize
         character(len=100) :: errmsg
         real(sp), allocatable :: y(:, :)
         allocate(y(size(self%data), 2), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "dense_rand_csp")
         call random_number(y)
         self%data%re = y(:, 1) ; self%data%im = y(:, 2)
+        normalize = optval(ifnorm, .false.)
+        if (normalize) then
+            alpha = self%norm()
+            call self%scal(one_csp/alpha)
+        end if
     end subroutine dense_rand_csp
 
     subroutine dense_scal_csp(self, alpha)
@@ -1207,12 +1228,19 @@ contains
         class(dense_vector_cdp), intent(inout) :: self
         logical, optional, intent(in) :: ifnorm
         integer :: iostat
+        real(dp) :: alpha
+        logical :: normalize
         character(len=100) :: errmsg
         real(dp), allocatable :: y(:, :)
         allocate(y(size(self%data), 2), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "dense_rand_cdp")
         call random_number(y)
         self%data%re = y(:, 1) ; self%data%im = y(:, 2)
+        normalize = optval(ifnorm, .false.)
+        if (normalize) then
+            alpha = self%norm()
+            call self%scal(one_cdp/alpha)
+        end if
     end subroutine dense_rand_cdp
 
     subroutine dense_scal_cdp(self, alpha)
@@ -2162,7 +2190,7 @@ contains
         do i = 1, size(X)
             do j = i, size(X)
                 G(i, j) = X(i)%dot(X(j))
-                G(j, i) = G(i, j)
+                G(j, i) = conjg(G(i, j))
             enddo
         enddo
     end function gram_matrix_csp
@@ -2572,7 +2600,7 @@ contains
         do i = 1, size(X)
             do j = i, size(X)
                 G(i, j) = X(i)%dot(X(j))
-                G(j, i) = G(i, j)
+                G(j, i) = conjg(G(i, j))
             enddo
         enddo
     end function gram_matrix_cdp
