@@ -4340,17 +4340,10 @@ contains
         character(len=256) :: msg
 
         ! Initialize random basis.
-        allocate(X(kdim)); call init_rand(X)
-
-        ! Orthonormalize in-place.
-        call orthonormalize_basis(X)
-
-        ! Check orthonormality via Gram matrix.
-        allocate(G(kdim, kdim), source=zero_rsp)
-        G = Gram(X)
-        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        allocate(X(kdim))
+        call initialize_random_orthonormal_basis(X)
+        print *, "IS ORTHO ?:", is_orthonormal(X)
+        call check(error, is_orthonormal(X))
         call check_test(error, 'test_orthonormalize_basis_rsp', &
             & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
         return
@@ -4470,17 +4463,10 @@ contains
         character(len=256) :: msg
 
         ! Initialize random basis.
-        allocate(X(kdim)); call init_rand(X)
-
-        ! Orthonormalize in-place.
-        call orthonormalize_basis(X)
-
-        ! Check orthonormality via Gram matrix.
-        allocate(G(kdim, kdim), source=zero_rdp)
-        G = Gram(X)
-        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        allocate(X(kdim))
+        call initialize_random_orthonormal_basis(X)
+        print *, "IS ORTHO ?:", is_orthonormal(X)
+        call check(error, is_orthonormal(X))
         call check_test(error, 'test_orthonormalize_basis_rdp', &
             & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
         return
@@ -4600,17 +4586,10 @@ contains
         character(len=256) :: msg
 
         ! Initialize random basis.
-        allocate(X(kdim)); call init_rand(X)
-
-        ! Orthonormalize in-place.
-        call orthonormalize_basis(X)
-
-        ! Check orthonormality via Gram matrix.
-        allocate(G(kdim, kdim), source=zero_csp)
-        G = Gram(X)
-        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        allocate(X(kdim))
+        call initialize_random_orthonormal_basis(X)
+        print *, "IS ORTHO ?:", is_orthonormal(X)
+        call check(error, is_orthonormal(X))
         call check_test(error, 'test_orthonormalize_basis_csp', &
             & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
         return
@@ -4730,17 +4709,10 @@ contains
         character(len=256) :: msg
 
         ! Initialize random basis.
-        allocate(X(kdim)); call init_rand(X)
-
-        ! Orthonormalize in-place.
-        call orthonormalize_basis(X)
-
-        ! Check orthonormality via Gram matrix.
-        allocate(G(kdim, kdim), source=zero_cdp)
-        G = Gram(X)
-        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        allocate(X(kdim))
+        call initialize_random_orthonormal_basis(X)
+        print *, "IS ORTHO ?:", is_orthonormal(X)
+        call check(error, is_orthonormal(X))
         call check_test(error, 'test_orthonormalize_basis_cdp', &
             & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
         return

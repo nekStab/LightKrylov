@@ -89,12 +89,8 @@ contains
     #:for kind, type in RC_KINDS_TYPES
     module procedure is_orthonormal_${type[0]}$${kind}$
         ${type}$, dimension(size(X), size(X)) :: G
-        ortho = .true.
         G = Gram(X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal.
-            ortho = .false.
-        end if
+        ortho = mnorm(G - eye(size(X), mold=one_${type[0]}$${kind}$), "Fro") <= rtol_${kind}$
     end procedure is_orthonormal_${type[0]}$${kind}$
 
     #:endfor
