@@ -979,11 +979,76 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
         testsuite = [ &
+             new_unittest("Lanczos invalid inputs", test_lanczos_invalid_params_${type[0]}$${kind}$), &
              new_unittest("Lanczos Tridiagonalization", test_lanczos_tridiag_factorization_${type[0]}$${kind}$) &
             ]
 
         return
     end subroutine collect_lanczos_tridiag_${type[0]}$${kind}$_testsuite
+
+    subroutine test_lanczos_invalid_params_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        #:if type[0] == "r"
+        type(spd_linop_${type[0]}$${kind}$), allocatable :: A
+        #:else
+        type(hermitian_linop_${type[0]}$${kind}$), allocatable :: A
+        #:endif
+        ! Krylov subspace.
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:)
+        ! Tridiagonal matrix.
+        ${type}$, allocatable :: T(:, :)
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        integer, parameter :: kdim = test_size
+
+        ! Common initialization for each case.
+        do
+            ! Initialize operator.
+            #:if type[0] == "r"
+            A = spd_linop_${type[0]}$${kind}$()
+            #:else
+            A = hermitian_linop_${type[0]}$${kind}$()
+            #:endif
+            call init_rand(A)
+            allocate(T(kdim+1, kdim), source=zero_${type[0]}$${kind}$)
+
+            ! --- Case 1: k_start < 1 or k_start > k_end (info = -5) ---
+            allocate(X(kdim+1)) ; call zero_basis(X)
+            call lanczos(A, X, T, info, kstart=0, tol=atol_${kind}$)
+            call check(error, info == -5)
+            if (allocated(error)) exit
+            call lanczos(A, X, T, info, kstart=kdim, kend=1, tol=atol_${kind}$)
+            call check(error, info == -5)
+            if (allocated(error)) exit
+            ! --- Case 2: k_end > kdim (info = -6) ---
+            call lanczos(A, X, T, info, kend=kdim+1, tol=atol_${kind}$)
+            call check(error, info == -6)
+            if (allocated(error)) exit
+            ! --- Case 3: tolerance < 0 (info = -7) ---
+            call lanczos(A, X, T, info, tol=-1.0_${kind}$)
+            call check(error, info == -7)
+            if (allocated(error)) exit
+            ! --- Case 4: T has wrong first dimension (info = -3) ---
+            deallocate(T)
+            allocate(T(kdim, kdim), source=zero_${type[0]}$${kind}$)
+            call lanczos(A, X, T, info, tol=atol_${kind}$)
+            call check(error, info == -3)
+            if (allocated(error)) exit
+            ! --- Case 5: T has wrong second dimension (info = -3) ---
+            deallocate(T)
+            allocate(T(kdim+1, kdim-1), source=zero_${type[0]}$${kind}$)
+            call lanczos(A, X, T, info, tol=atol_${kind}$)
+            call check(error, info == -3)
+            exit
+        end do
+        call check_test(error, 'test_lanczos_invalid_params_${type[0]}$${kind}$', &
+                          & info='Invalid parameters', eq='', context='')
+
+        return
+    end subroutine test_lanczos_invalid_params_${type[0]}$${kind}$
 
     subroutine test_lanczos_tridiag_factorization_${type[0]}$${kind}$(error)
         ! Error type to be returned.

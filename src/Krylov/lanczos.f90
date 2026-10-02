@@ -17,25 +17,49 @@ contains
         tolerance = optval(tol, atol_sp)
         info = 0
 
-        ! Lanczos tridiagonalization.
-        lanczos: do k = k_start, k_end
-            ! Matrix-vector product.
-            call A%apply_matvec(X(k), X(k+1))
-            ! Update tridiagonal matrix.
-            call update_tridiag_matrix_rsp(T, X, k)
-            beta = X(k+1)%norm() ; T(k+1, k) = beta
-
-            ! Exit Lanczos loop if needed.
-            if (beta < tolerance) then
-                ! Dimension of the computed invariant subspace.
-                info = k
-                ! Exit the Lanczos iteration.
-                exit lanczos
+        ! Normalize starting vector if beginning fresh.
+        if (k_start == 1) then
+            beta = X(1)%norm()
+            if (beta <= tolerance) then
+                info = -2
             else
-                ! Normalize the new Krylov vector.
-                call X(k+1)%scal(one_rsp / beta)
+                call X(1)%scal(one_rsp / beta)
             endif
-        enddo lanczos
+        endif
+
+        ! Input validation.
+        if (any(shape(T) < [size(X), kdim])) then
+            info = -3
+        else if ((k_start < 1) .or. (k_start > k_end)) then
+            info = -5
+        else if (k_end > kdim) then
+            info = -6
+        else if (tolerance < 0) then
+            info = -7
+        else
+            info = 0
+        endif
+
+        if (info == 0) then
+            ! Lanczos tridiagonalization.
+            lanczos: do k = k_start, k_end
+                ! Matrix-vector product.
+                call A%apply_matvec(X(k), X(k+1))
+                ! Update tridiagonal matrix.
+                call update_tridiag_matrix_rsp(T, X, k)
+                beta = X(k+1)%norm() ; T(k+1, k) = beta
+                ! Exit Lanczos loop if needed.
+                if (beta <= tolerance) then
+                    ! Dimension of the computed invariant subspace.
+                    info = k
+                    ! Exit the Lanczos iteration.
+                    exit lanczos
+                else
+                    ! Normalize the new Krylov vector.
+                    call X(k+1)%scal(one_rsp / beta)
+                endif
+            enddo lanczos
+        endif
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure lanczos_tridiagonalization_rsp
@@ -76,25 +100,49 @@ contains
         tolerance = optval(tol, atol_dp)
         info = 0
 
-        ! Lanczos tridiagonalization.
-        lanczos: do k = k_start, k_end
-            ! Matrix-vector product.
-            call A%apply_matvec(X(k), X(k+1))
-            ! Update tridiagonal matrix.
-            call update_tridiag_matrix_rdp(T, X, k)
-            beta = X(k+1)%norm() ; T(k+1, k) = beta
-
-            ! Exit Lanczos loop if needed.
-            if (beta < tolerance) then
-                ! Dimension of the computed invariant subspace.
-                info = k
-                ! Exit the Lanczos iteration.
-                exit lanczos
+        ! Normalize starting vector if beginning fresh.
+        if (k_start == 1) then
+            beta = X(1)%norm()
+            if (beta <= tolerance) then
+                info = -2
             else
-                ! Normalize the new Krylov vector.
-                call X(k+1)%scal(one_rdp / beta)
+                call X(1)%scal(one_rdp / beta)
             endif
-        enddo lanczos
+        endif
+
+        ! Input validation.
+        if (any(shape(T) < [size(X), kdim])) then
+            info = -3
+        else if ((k_start < 1) .or. (k_start > k_end)) then
+            info = -5
+        else if (k_end > kdim) then
+            info = -6
+        else if (tolerance < 0) then
+            info = -7
+        else
+            info = 0
+        endif
+
+        if (info == 0) then
+            ! Lanczos tridiagonalization.
+            lanczos: do k = k_start, k_end
+                ! Matrix-vector product.
+                call A%apply_matvec(X(k), X(k+1))
+                ! Update tridiagonal matrix.
+                call update_tridiag_matrix_rdp(T, X, k)
+                beta = X(k+1)%norm() ; T(k+1, k) = beta
+                ! Exit Lanczos loop if needed.
+                if (beta <= tolerance) then
+                    ! Dimension of the computed invariant subspace.
+                    info = k
+                    ! Exit the Lanczos iteration.
+                    exit lanczos
+                else
+                    ! Normalize the new Krylov vector.
+                    call X(k+1)%scal(one_rdp / beta)
+                endif
+            enddo lanczos
+        endif
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure lanczos_tridiagonalization_rdp
@@ -135,25 +183,49 @@ contains
         tolerance = optval(tol, atol_sp)
         info = 0
 
-        ! Lanczos tridiagonalization.
-        lanczos: do k = k_start, k_end
-            ! Matrix-vector product.
-            call A%apply_matvec(X(k), X(k+1))
-            ! Update tridiagonal matrix.
-            call update_tridiag_matrix_csp(T, X, k)
-            beta = X(k+1)%norm() ; T(k+1, k) = beta
-
-            ! Exit Lanczos loop if needed.
-            if (beta < tolerance) then
-                ! Dimension of the computed invariant subspace.
-                info = k
-                ! Exit the Lanczos iteration.
-                exit lanczos
+        ! Normalize starting vector if beginning fresh.
+        if (k_start == 1) then
+            beta = X(1)%norm()
+            if (beta <= tolerance) then
+                info = -2
             else
-                ! Normalize the new Krylov vector.
-                call X(k+1)%scal(one_csp / beta)
+                call X(1)%scal(one_csp / beta)
             endif
-        enddo lanczos
+        endif
+
+        ! Input validation.
+        if (any(shape(T) < [size(X), kdim])) then
+            info = -3
+        else if ((k_start < 1) .or. (k_start > k_end)) then
+            info = -5
+        else if (k_end > kdim) then
+            info = -6
+        else if (tolerance < 0) then
+            info = -7
+        else
+            info = 0
+        endif
+
+        if (info == 0) then
+            ! Lanczos tridiagonalization.
+            lanczos: do k = k_start, k_end
+                ! Matrix-vector product.
+                call A%apply_matvec(X(k), X(k+1))
+                ! Update tridiagonal matrix.
+                call update_tridiag_matrix_csp(T, X, k)
+                beta = X(k+1)%norm() ; T(k+1, k) = beta
+                ! Exit Lanczos loop if needed.
+                if (beta <= tolerance) then
+                    ! Dimension of the computed invariant subspace.
+                    info = k
+                    ! Exit the Lanczos iteration.
+                    exit lanczos
+                else
+                    ! Normalize the new Krylov vector.
+                    call X(k+1)%scal(one_csp / beta)
+                endif
+            enddo lanczos
+        endif
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure lanczos_tridiagonalization_csp
@@ -194,25 +266,49 @@ contains
         tolerance = optval(tol, atol_dp)
         info = 0
 
-        ! Lanczos tridiagonalization.
-        lanczos: do k = k_start, k_end
-            ! Matrix-vector product.
-            call A%apply_matvec(X(k), X(k+1))
-            ! Update tridiagonal matrix.
-            call update_tridiag_matrix_cdp(T, X, k)
-            beta = X(k+1)%norm() ; T(k+1, k) = beta
-
-            ! Exit Lanczos loop if needed.
-            if (beta < tolerance) then
-                ! Dimension of the computed invariant subspace.
-                info = k
-                ! Exit the Lanczos iteration.
-                exit lanczos
+        ! Normalize starting vector if beginning fresh.
+        if (k_start == 1) then
+            beta = X(1)%norm()
+            if (beta <= tolerance) then
+                info = -2
             else
-                ! Normalize the new Krylov vector.
-                call X(k+1)%scal(one_cdp / beta)
+                call X(1)%scal(one_cdp / beta)
             endif
-        enddo lanczos
+        endif
+
+        ! Input validation.
+        if (any(shape(T) < [size(X), kdim])) then
+            info = -3
+        else if ((k_start < 1) .or. (k_start > k_end)) then
+            info = -5
+        else if (k_end > kdim) then
+            info = -6
+        else if (tolerance < 0) then
+            info = -7
+        else
+            info = 0
+        endif
+
+        if (info == 0) then
+            ! Lanczos tridiagonalization.
+            lanczos: do k = k_start, k_end
+                ! Matrix-vector product.
+                call A%apply_matvec(X(k), X(k+1))
+                ! Update tridiagonal matrix.
+                call update_tridiag_matrix_cdp(T, X, k)
+                beta = X(k+1)%norm() ; T(k+1, k) = beta
+                ! Exit Lanczos loop if needed.
+                if (beta <= tolerance) then
+                    ! Dimension of the computed invariant subspace.
+                    info = k
+                    ! Exit the Lanczos iteration.
+                    exit lanczos
+                else
+                    ! Normalize the new Krylov vector.
+                    call X(k+1)%scal(one_cdp / beta)
+                endif
+            enddo lanczos
+        endif
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure lanczos_tridiagonalization_cdp

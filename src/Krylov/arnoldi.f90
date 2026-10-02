@@ -34,7 +34,7 @@ contains
             k_end = optval(kend, kdim)
 
             ! Check Hessenberg matrix dimensions.
-            if ((size(H, 1) < size(X)) .or. (size(H, 2) < p*kdim)) then
+            if (any(shape(H) < [size(X), p*kdim])) then
                 info = -3
             else if ((k_start < 1) .or. (k_start > k_end)) then
                 info = -5
@@ -124,7 +124,7 @@ contains
             k_end = optval(kend, kdim)
 
             ! Check Hessenberg matrix dimensions.
-            if ((size(H, 1) < size(X)) .or. (size(H, 2) < p*kdim)) then
+            if (any(shape(H) < [size(X), p*kdim])) then
                 info = -3
             else if ((k_start < 1) .or. (k_start > k_end)) then
                 info = -5
@@ -214,7 +214,7 @@ contains
             k_end = optval(kend, kdim)
 
             ! Check Hessenberg matrix dimensions.
-            if ((size(H, 1) < size(X)) .or. (size(H, 2) < p*kdim)) then
+            if (any(shape(H) < [size(X), p*kdim])) then
                 info = -3
             else if ((k_start < 1) .or. (k_start > k_end)) then
                 info = -5
@@ -304,7 +304,7 @@ contains
             k_end = optval(kend, kdim)
 
             ! Check Hessenberg matrix dimensions.
-            if ((size(H, 1) < size(X)) .or. (size(H, 2) < p*kdim)) then
+            if (any(shape(H) < [size(X), p*kdim])) then
                 info = -3
             else if ((k_start < 1) .or. (k_start > k_end)) then
                 info = -5

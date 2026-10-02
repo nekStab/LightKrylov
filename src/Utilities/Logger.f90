@@ -648,15 +648,39 @@ contains
             end if
          else if (trim(to_lower(origin)) == 'lanczos') then
             ! lanczos_tridiagonalization
-            if (info > 0) then
+            select case (info)
+            case (1:)
                write (msg, '(A,I0,A)') 'Lanczos Tridiagonalisation: Invariant subspace found after ', info, ' steps.'
                call log_debug(trim(msg), module=module, procedure=procedure)
-            else
+            case (0)
+               write (msg, '(A,I0,A)') 'Lanczos Tridiagonalisation: Completed correctly.'
+               call log_debug(trim(msg), module=module, procedure=procedure)
+            case (-2)
+               write (msg, '(A)') 'Lanczos factorization: Starting vector has norm = 0.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-3)
+               write (msg, '(A)') 'Lanczos factorization: Tridiagonal matrix has incorrect dimensions.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-5)
+               write (msg, '(A)') 'Lanczos factorization: Parameter kstart is invalid (either negative or larger than kend).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-6)
+               write (msg, '(A)') 'Lanczos factorization: Parameter kend is invalid (either less than kstart or larger than kdim).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-7)
+               write (msg, '(A)') 'Lanczos factorization: Parameter tol is invalid (negative).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case default
                write (msg, '(A)') "Undocumented error. "//trim(str)
                call log_error(origin, module=module, procedure=procedure, &
                               stat=info, errmsg=trim(msg))
                ierr = -1
-            end if
+            end select
          else if (trim(to_lower(origin)) == 'ssy') then
             ! ssy_tridiagonalization
             if (info > 0) then
