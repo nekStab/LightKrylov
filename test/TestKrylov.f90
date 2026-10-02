@@ -4570,7 +4570,6 @@ contains
         ! Initialize random basis.
         allocate(X(kdim))
         call initialize_random_orthonormal_basis(X)
-        print *, "IS ORTHO ?:", is_orthonormal(X)
         call check(error, is_orthonormal(X))
         call check_test(error, 'test_orthonormalize_basis_rsp', &
             & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
@@ -4693,7 +4692,6 @@ contains
         ! Initialize random basis.
         allocate(X(kdim))
         call initialize_random_orthonormal_basis(X)
-        print *, "IS ORTHO ?:", is_orthonormal(X)
         call check(error, is_orthonormal(X))
         call check_test(error, 'test_orthonormalize_basis_rdp', &
             & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
@@ -4816,7 +4814,6 @@ contains
         ! Initialize random basis.
         allocate(X(kdim))
         call initialize_random_orthonormal_basis(X)
-        print *, "IS ORTHO ?:", is_orthonormal(X)
         call check(error, is_orthonormal(X))
         call check_test(error, 'test_orthonormalize_basis_csp', &
             & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
@@ -4939,7 +4936,6 @@ contains
         ! Initialize random basis.
         allocate(X(kdim))
         call initialize_random_orthonormal_basis(X)
-        print *, "IS ORTHO ?:", is_orthonormal(X)
         call check(error, is_orthonormal(X))
         call check_test(error, 'test_orthonormalize_basis_cdp', &
             & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
