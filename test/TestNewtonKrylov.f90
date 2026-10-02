@@ -74,13 +74,12 @@ contains
        call newton(sys, X, gmres_rsp, info, rtol=10*atol_sp, atol=10*atol_sp, options=opts)
        call X%sub(fp1)
 
-       ! check fixed point 1
-       !write(infomsg, *) '|| X_newton - fp1 ||_2'
+       ! check fixed point 1 without bisection
+       infomsg = 'Newton without bisection'
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_sp)
-       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x,',',fp1%y,',',fp1%z,')'
-       call check_test(error, 'test_fixedp_rsp', info="", context=msg)
+       call check_test(error, 'test_fixedp_rsp', info=infomsg, context=msg)
 
        X%x = zero_rsp
        X%y = zero_rsp
@@ -88,12 +87,13 @@ contains
        opts%ifbisect = .true.
        call newton(sys, X, gmres_rsp, info, rtol=10*atol_sp, atol=10*atol_sp, options=opts)
        call X%sub(fp1)
-
+       
        ! check fixed point 1 with bisection (if necessary)
+       infomsg = 'Newton with bisection'
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_sp)
-       call check_test(error, 'test_fixedp_rsp', info='Newton with step bisection', context=msg)
+       call check_test(error, 'test_fixedp_rsp', info=infomsg, context=msg)
 
        return
    end subroutine test_fixedp_rsp
@@ -139,13 +139,12 @@ contains
        call newton(sys, X, gmres_rdp, info, rtol=10*atol_dp, atol=10*atol_dp, options=opts)
        call X%sub(fp1)
 
-       ! check fixed point 1
-       !write(infomsg, *) '|| X_newton - fp1 ||_2'
+       ! check fixed point 1 without bisection
+       infomsg = 'Newton without bisection'
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_dp)
-       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x,',',fp1%y,',',fp1%z,')'
-       call check_test(error, 'test_fixedp_rdp', info="", context=msg)
+       call check_test(error, 'test_fixedp_rdp', info=infomsg, context=msg)
 
        X%x = zero_rdp
        X%y = zero_rdp
@@ -153,12 +152,13 @@ contains
        opts%ifbisect = .true.
        call newton(sys, X, gmres_rdp, info, rtol=10*atol_dp, atol=10*atol_dp, options=opts)
        call X%sub(fp1)
-
+       
        ! check fixed point 1 with bisection (if necessary)
+       infomsg = 'Newton with bisection'
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_dp)
-       call check_test(error, 'test_fixedp_rdp', info='Newton with step bisection', context=msg)
+       call check_test(error, 'test_fixedp_rdp', info=infomsg, context=msg)
 
        return
    end subroutine test_fixedp_rdp
@@ -204,16 +204,12 @@ contains
        call newton(sys, X, gmres_csp, info, rtol=10*atol_sp, atol=10*atol_sp, options=opts)
        call X%sub(fp1)
 
-       ! check fixed point 1
-       !write(infomsg, *) '|| X_newton - fp1 ||_2'
+       ! check fixed point 1 without bisection
+       infomsg = 'Newton without bisection'
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_sp)
-       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
-       !call check_test(error, 'test_fixedp_csp', info=infomsg, context=msg)
-       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
-       !write(infomsg, '(A)') 'blank'
-       !call check_test(error, 'test_fixedp_csp', info=infomsg, context=msg)
+       call check_test(error, 'test_fixedp_csp', info=infomsg, context=msg)
 
        X%x = zero_csp
        X%y = zero_csp
@@ -221,12 +217,13 @@ contains
        opts%ifbisect = .true.
        call newton(sys, X, gmres_csp, info, rtol=10*atol_sp, atol=10*atol_sp, options=opts)
        call X%sub(fp1)
-
+       
        ! check fixed point 1 with bisection (if necessary)
+       infomsg = 'Newton with bisection'
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_sp)
-       call check_test(error, 'test_fixedp_csp', info='Newton with step bisection', context=msg)
+       call check_test(error, 'test_fixedp_csp', info=infomsg, context=msg)
 
        return
    end subroutine test_fixedp_csp
@@ -272,16 +269,12 @@ contains
        call newton(sys, X, gmres_cdp, info, rtol=10*atol_dp, atol=10*atol_dp, options=opts)
        call X%sub(fp1)
 
-       ! check fixed point 1
-       !write(infomsg, *) '|| X_newton - fp1 ||_2'
+       ! check fixed point 1 without bisection
+       infomsg = 'Newton without bisection'
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_dp)
-       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
-       !call check_test(error, 'test_fixedp_cdp', info=infomsg, context=msg)
-       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
-       !write(infomsg, '(A)') 'blank'
-       !call check_test(error, 'test_fixedp_cdp', info=infomsg, context=msg)
+       call check_test(error, 'test_fixedp_cdp', info=infomsg, context=msg)
 
        X%x = zero_cdp
        X%y = zero_cdp
@@ -289,12 +282,13 @@ contains
        opts%ifbisect = .true.
        call newton(sys, X, gmres_cdp, info, rtol=10*atol_dp, atol=10*atol_dp, options=opts)
        call X%sub(fp1)
-
+       
        ! check fixed point 1 with bisection (if necessary)
+       infomsg = 'Newton with bisection'
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_dp)
-       call check_test(error, 'test_fixedp_cdp', info='Newton with step bisection', context=msg)
+       call check_test(error, 'test_fixedp_cdp', info=infomsg, context=msg)
 
        return
    end subroutine test_fixedp_cdp

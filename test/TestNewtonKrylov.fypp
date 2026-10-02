@@ -76,20 +76,15 @@ contains
        call newton(sys, X, gmres_${type[0]}$${kind}$, info, rtol=10*atol_${kind}$, atol=10*atol_${kind}$, options=opts)
        call X%sub(fp1)
 
-       ! check fixed point 1
-       !write(infomsg, *) '|| X_newton - fp1 ||_2'
+       ! check fixed point 1 without bisection
+       infomsg = 'Newton without bisection'
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_${kind}$)
        #:if type[0] == "r"
-       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x,',',fp1%y,',',fp1%z,')'
-       call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info="", context=msg)
+       call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
        #:else
-       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
-       !call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
-       !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%im,',',fp1%y%im,',',fp1%z%im,')'
-       !write(infomsg, '(A)') 'blank'
-       !call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
+       call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
        #:endif
 
        X%x = zero_${type[0]}$${kind}$
@@ -98,12 +93,13 @@ contains
        opts%ifbisect = .true.
        call newton(sys, X, gmres_${type[0]}$${kind}$, info, rtol=10*atol_${kind}$, atol=10*atol_${kind}$, options=opts)
        call X%sub(fp1)
-
+       
        ! check fixed point 1 with bisection (if necessary)
+       infomsg = 'Newton with bisection'
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_${kind}$)
-       call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info='Newton with step bisection', context=msg)
+       call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
 
        return
    end subroutine test_fixedp_${type[0]}$${kind}$
