@@ -268,10 +268,12 @@ contains
         ! handle optional tol
         tol_ = optval(tol, atol_sp)
         n = size(X)
-        
+
         ! compute SVD of inner product matrix
+        allocate(M(n, n), source=zero_rsp)
         M = innerprod(Y, X)
-        allocate(S(n), U(n, n), VT(n, n))
+        allocate(S(n), source=zero_rsp)
+        allocate(U(n, n), VT(n, n), source=zero_rsp)
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest
@@ -316,10 +318,12 @@ contains
         ! handle optional tol
         tol_ = optval(tol, atol_dp)
         n = size(X)
-        
+
         ! compute SVD of inner product matrix
+        allocate(M(n, n), source=zero_rdp)
         M = innerprod(Y, X)
-        allocate(S(n), U(n, n), VT(n, n))
+        allocate(S(n), source=zero_rdp)
+        allocate(U(n, n), VT(n, n), source=zero_rdp)
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest
@@ -364,10 +368,12 @@ contains
         ! handle optional tol
         tol_ = optval(tol, atol_sp)
         n = size(X)
-        
+
         ! compute SVD of inner product matrix
+        allocate(M(n, n), source=zero_csp)
         M = innerprod(Y, X)
-        allocate(S(n), U(n, n), VT(n, n))
+        allocate(S(n), source=zero_rsp)
+        allocate(U(n, n), VT(n, n), source=zero_csp)
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest
@@ -412,10 +418,12 @@ contains
         ! handle optional tol
         tol_ = optval(tol, atol_dp)
         n = size(X)
-        
+
         ! compute SVD of inner product matrix
+        allocate(M(n, n), source=zero_cdp)
         M = innerprod(Y, X)
-        allocate(S(n), U(n, n), VT(n, n))
+        allocate(S(n), source=zero_rdp)
+        allocate(U(n, n), VT(n, n), source=zero_cdp)
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest

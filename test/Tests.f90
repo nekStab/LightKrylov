@@ -141,7 +141,7 @@ program Tester
                 new_testsuite("Complex Saunders-Simon-Yip tridiagonalization (sp) Test Suite", collect_ssy_tridiag_csp_testsuite), &
                 new_testsuite("Complex Krylov Utilities (sp) Test Suite", collect_krylov_utilities_csp_testsuite), &
                 new_testsuite("Complex EVP (sp) Test Suite", collect_eig_csp_testsuite), &
-                new_testsuite("Complex SVD (dp) Test Suite", collect_svd_csp_testsuite), &
+                new_testsuite("Complex SVD (sp) Test Suite", collect_svd_csp_testsuite), &
                 new_testsuite("Complex GMRES (sp) Test Suite", collect_gmres_csp_testsuite), &
                 new_testsuite("Complex FGMRES (sp) Test Suite", collect_fgmres_csp_testsuite), &
                 new_testsuite("Complex CG (sp) Test Suite", collect_cg_csp_testsuite), &

@@ -83,7 +83,7 @@ contains
        call check(error, err < rtol_${kind}$)
        #:if type[0] == "r"
        !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x,',',fp1%y,',',fp1%z,')'
-       call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
+       call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info="", context=msg)
        #:else
        !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x%re,',',fp1%y%re,',',fp1%z%re,')'
        !call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
