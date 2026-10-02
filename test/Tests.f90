@@ -186,7 +186,7 @@ program Tester
                 ! new_testsuite("Complex Lanczos bidiagonalization (dp) Test Suite", collect_lanczos_bidiag_cdp_testsuite), &
                 new_testsuite("Complex Lanczos tridiagonalization (dp) Test Suite", collect_lanczos_tridiag_cdp_testsuite), &
                 new_testsuite("Complex Saunders-Simon-Yip tridiagonalization (dp) Test Suite", collect_ssy_tridiag_cdp_testsuite), &
-                new_testsuite("Complex Krylov Utilities (dp) Test Suite", collect_krylov_utilities_csp_testsuite), &
+                new_testsuite("Complex Krylov Utilities (dp) Test Suite", collect_krylov_utilities_cdp_testsuite), &
                 new_testsuite("Complex EVP (dp) Test Suite", collect_eig_cdp_testsuite), &
                 new_testsuite("Complex SVD (dp) Test Suite", collect_svd_cdp_testsuite), &
                 new_testsuite("Complex GMRES (dp) Test Suite", collect_gmres_cdp_testsuite), &
