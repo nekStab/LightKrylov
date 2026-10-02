@@ -1242,17 +1242,9 @@ contains
         character(len=256) :: msg
 
         ! Initialize random basis.
-        allocate(X(kdim)); call init_rand(X)
-
-        ! Orthonormalize in-place.
-        call orthonormalize_basis(X)
-
-        ! Check orthonormality via Gram matrix.
-        allocate(G(kdim, kdim), source=zero_${type[0]}$${kind}$)
-        G = Gram(X)
-        err = norm2(abs(G - eye(kdim, mold=1.0_${kind}$)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_${kind}$)
+        allocate(X(kdim))
+        call initialize_random_orthonormal_basis(X)
+        call check(error, is_orthonormal(X))
         call check_test(error, 'test_orthonormalize_basis_${type[0]}$${kind}$', &
             & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
         return

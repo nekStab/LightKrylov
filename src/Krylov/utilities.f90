@@ -207,42 +207,26 @@ contains
 
     module procedure is_orthonormal_rsp
         real(sp), dimension(size(X), size(X)) :: G
-        ortho = .true.
         G = Gram(X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal.
-            ortho = .false.
-        end if
+        ortho = mnorm(G - eye(size(X), mold=one_rsp), "Fro") <= rtol_sp
     end procedure is_orthonormal_rsp
 
     module procedure is_orthonormal_rdp
         real(dp), dimension(size(X), size(X)) :: G
-        ortho = .true.
         G = Gram(X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal.
-            ortho = .false.
-        end if
+        ortho = mnorm(G - eye(size(X), mold=one_rdp), "Fro") <= rtol_dp
     end procedure is_orthonormal_rdp
 
     module procedure is_orthonormal_csp
         complex(sp), dimension(size(X), size(X)) :: G
-        ortho = .true.
         G = Gram(X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal.
-            ortho = .false.
-        end if
+        ortho = mnorm(G - eye(size(X), mold=one_csp), "Fro") <= rtol_sp
     end procedure is_orthonormal_csp
 
     module procedure is_orthonormal_cdp
         complex(dp), dimension(size(X), size(X)) :: G
-        ortho = .true.
         G = Gram(X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal.
-            ortho = .false.
-        end if
+        ortho = mnorm(G - eye(size(X), mold=one_cdp), "Fro") <= rtol_dp
     end procedure is_orthonormal_cdp
 
     !----------------------------------------------
