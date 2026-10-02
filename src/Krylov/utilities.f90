@@ -207,42 +207,26 @@ contains
 
     module procedure is_orthonormal_rsp
         real(sp), dimension(size(X), size(X)) :: G
-        ortho = .true.
         G = Gram(X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal.
-            ortho = .false.
-        end if
+        ortho = mnorm(G - eye(size(X), mold=one_rsp), "Fro") <= rtol_sp
     end procedure is_orthonormal_rsp
 
     module procedure is_orthonormal_rdp
         real(dp), dimension(size(X), size(X)) :: G
-        ortho = .true.
         G = Gram(X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal.
-            ortho = .false.
-        end if
+        ortho = mnorm(G - eye(size(X), mold=one_rdp), "Fro") <= rtol_dp
     end procedure is_orthonormal_rdp
 
     module procedure is_orthonormal_csp
         complex(sp), dimension(size(X), size(X)) :: G
-        ortho = .true.
         G = Gram(X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal.
-            ortho = .false.
-        end if
+        ortho = mnorm(G - eye(size(X), mold=one_csp), "Fro") <= rtol_sp
     end procedure is_orthonormal_csp
 
     module procedure is_orthonormal_cdp
         complex(dp), dimension(size(X), size(X)) :: G
-        ortho = .true.
         G = Gram(X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal.
-            ortho = .false.
-        end if
+        ortho = mnorm(G - eye(size(X), mold=one_cdp), "Fro") <= rtol_dp
     end procedure is_orthonormal_cdp
 
     !----------------------------------------------
@@ -268,10 +252,12 @@ contains
         ! handle optional tol
         tol_ = optval(tol, atol_sp)
         n = size(X)
-        
+
         ! compute SVD of inner product matrix
+        allocate(M(n, n), source=zero_rsp)
         M = innerprod(Y, X)
-        allocate(S(n), U(n, n), VT(n, n))
+        allocate(S(n), source=zero_rsp)
+        allocate(U(n, n), VT(n, n), source=zero_rsp)
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest
@@ -316,10 +302,12 @@ contains
         ! handle optional tol
         tol_ = optval(tol, atol_dp)
         n = size(X)
-        
+
         ! compute SVD of inner product matrix
+        allocate(M(n, n), source=zero_rdp)
         M = innerprod(Y, X)
-        allocate(S(n), U(n, n), VT(n, n))
+        allocate(S(n), source=zero_rdp)
+        allocate(U(n, n), VT(n, n), source=zero_rdp)
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest
@@ -364,10 +352,12 @@ contains
         ! handle optional tol
         tol_ = optval(tol, atol_sp)
         n = size(X)
-        
+
         ! compute SVD of inner product matrix
+        allocate(M(n, n), source=zero_csp)
         M = innerprod(Y, X)
-        allocate(S(n), U(n, n), VT(n, n))
+        allocate(S(n), source=zero_rsp)
+        allocate(U(n, n), VT(n, n), source=zero_csp)
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest
@@ -412,10 +402,12 @@ contains
         ! handle optional tol
         tol_ = optval(tol, atol_dp)
         n = size(X)
-        
+
         ! compute SVD of inner product matrix
+        allocate(M(n, n), source=zero_cdp)
         M = innerprod(Y, X)
-        allocate(S(n), U(n, n), VT(n, n))
+        allocate(S(n), source=zero_rdp)
+        allocate(U(n, n), VT(n, n), source=zero_cdp)
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest

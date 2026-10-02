@@ -89,12 +89,8 @@ contains
     #:for kind, type in RC_KINDS_TYPES
     module procedure is_orthonormal_${type[0]}$${kind}$
         ${type}$, dimension(size(X), size(X)) :: G
-        ortho = .true.
         G = Gram(X)
-        if (mnorm(G - eye(size(X)), "Fro") > rtol_sp) then
-            ! The basis is not orthonormal.
-            ortho = .false.
-        end if
+        ortho = mnorm(G - eye(size(X), mold=one_${type[0]}$${kind}$), "Fro") <= rtol_${kind}$
     end procedure is_orthonormal_${type[0]}$${kind}$
 
     #:endfor
@@ -122,10 +118,12 @@ contains
         ! handle optional tol
         tol_ = optval(tol, atol_${kind}$)
         n = size(X)
-        
+
         ! compute SVD of inner product matrix
+        allocate(M(n, n), source=zero_${type[0]}$${kind}$)
         M = innerprod(Y, X)
-        allocate(S(n), U(n, n), VT(n, n))
+        allocate(S(n), source=zero_r${kind}$)
+        allocate(U(n, n), VT(n, n), source=zero_${type[0]}$${kind}$)
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest

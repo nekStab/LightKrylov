@@ -445,7 +445,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_arnoldi_factorization_${type[0]}$${kind}$', &
-                              & info='Orthonomality', eq='X.H @ X = I', context=msg)
+                              & info='Orthonormality', eq='X.H @ X = I', context=msg)
 
         block
         ! Krylov subspaces.
@@ -669,6 +669,7 @@ contains
         call check_info(info_shift, 'arnoldi', module=this_module_long, procedure='test_arnoldi_shifted_matrix_${type[0]}$${kind}$')
 
         ! 5. Verify that bases are the same.
+        allocate(G_basis(kdim, kdim), source=zero_${type[0]}$${kind}$)
         G_basis = innerprod(X(:kdim), X_shift(:kdim))
         err = maxval(abs(G_basis - eye(kdim, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
@@ -677,7 +678,7 @@ contains
                               & info='Basis Invariance', eq='X = X_shift', context=msg)
 
         ! 6. Verify that H_shift = H + sigma*I.
-        allocate(H_diff(kdim+1, kdim))
+        allocate(H_diff(kdim+1, kdim), source=zero_${type[0]}$${kind}$)
         H_diff = H_shift - H
         do i = 1, kdim
             H_diff(i, i) = H_diff(i, i) - sigma
@@ -775,6 +776,7 @@ contains
         call arnoldi(A, Xrestart, Hrestart, info, kstart=kstart, blksize=p, tol=atol_${kind}$)
 
         ! Compute inner product between the two bases.
+        allocate(G(p*kdim_, p*kdim_), source=zero_${type[0]}$${kind}$)
         G = innerprod(Xfull(:p*kdim_), Xrestart(:p*kdim_))
         err = maxval(abs(G - eye(p*kdim_, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
@@ -1047,7 +1049,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_lanczos_tridiag_factorization_${type[0]}$${kind}$', &
-                                 & info='Orthonomality', eq='X.H @ X = I', context=msg)
+                                 & info='Orthornomality', eq='X.H @ X = I', context=msg)
 
         return
     end subroutine test_lanczos_tridiag_factorization_${type[0]}$${kind}$
@@ -1113,7 +1115,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_ssy_tridiag_factorization_${type[0]}$${kind}$', &
-                                 & info='Orthonomality', eq='U.H @ U = I', context=msg)
+                                 & info='Orthornomality', eq='U.H @ U = I', context=msg)
 
         ! Orthogonality of the row-span basis.
         G = Gram(V(:kdim))
@@ -1121,7 +1123,7 @@ contains
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
         call check_test(error, 'test_ssy_tridiag_factorization_${type[0]}$${kind}$', &
-                                 & info='Orthonomality', eq='V.H @ V = I', context=msg)
+                                 & info='Orthonormality', eq='V.H @ V = I', context=msg)
 
         ! Check correctness.
         allocate(Udata(test_size, kdim+1)) ; call get_data(Udata, U)
@@ -1175,17 +1177,9 @@ contains
         character(len=256) :: msg
 
         ! Initialize random basis.
-        allocate(X(kdim)); call init_rand(X)
-
-        ! Orthonormalize in-place.
-        call orthonormalize_basis(X)
-
-        ! Check orthonormality via Gram matrix.
-        allocate(G(kdim, kdim), source=zero_${type[0]}$${kind}$)
-        G = Gram(X)
-        err = norm2(abs(G - eye(kdim, mold=1.0_${kind}$)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_${kind}$)
+        allocate(X(kdim))
+        call initialize_random_orthonormal_basis(X)
+        call check(error, is_orthonormal(X))
         call check_test(error, 'test_orthonormalize_basis_${type[0]}$${kind}$', &
             & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
         return

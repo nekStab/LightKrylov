@@ -282,6 +282,7 @@ contains
         end do
         ! Orthonormalize X
         call orthonormalize_basis(X)
+        allocate(G(k, k), source=zero_rsp)
         G = Gram(X)
         call check(error, norm(G - eye(k, mold=1.0_sp), 2) < rtol_sp)
         call check_test(error, 'test_gram_rsp', eq='Gram(X) = I')
@@ -678,6 +679,7 @@ contains
         end do
         ! Orthonormalize X
         call orthonormalize_basis(X)
+        allocate(G(k, k), source=zero_rdp)
         G = Gram(X)
         call check(error, norm(G - eye(k, mold=1.0_dp), 2) < rtol_dp)
         call check_test(error, 'test_gram_rdp', eq='Gram(X) = I')
@@ -1077,6 +1079,7 @@ contains
         end do
         ! Orthonormalize X
         call orthonormalize_basis(X)
+        allocate(G(k, k), source=zero_csp)
         G = Gram(X)
         call check(error, norm(G - eye(k, mold=1.0_sp), 2) < rtol_sp)
         call check_test(error, 'test_gram_csp', eq='Gram(X) = I')
@@ -1478,6 +1481,7 @@ contains
         end do
         ! Orthonormalize X
         call orthonormalize_basis(X)
+        allocate(G(k, k), source=zero_cdp)
         G = Gram(X)
         call check(error, norm(G - eye(k, mold=1.0_dp), 2) < rtol_dp)
         call check_test(error, 'test_gram_cdp', eq='Gram(X) = I')

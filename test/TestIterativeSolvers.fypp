@@ -298,6 +298,7 @@ contains
         call check_test(error, 'test_sym_evp_${type[0]}$${kind}$', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size), source=zero_${type[0]}$${kind}$)
         G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
@@ -382,6 +383,7 @@ contains
         call check_test(error, 'test_hermitian_evp_${type[0]}$${kind}$', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size), source=zero_${type[0]}$${kind}$)
         G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
@@ -489,7 +491,7 @@ contains
         call check_test(error, 'test_svd_${type[0]}$${kind}$', 'Singular values', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
-        ! allocate(G(test_size, test_size)) ; G = zero_${type[0]}$${kind}$
+        allocate(G(test_size, test_size), source=zero_${type[0]}$${kind}$)
         G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
