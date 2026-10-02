@@ -80,7 +80,7 @@ contains
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_sp)
        !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x,',',fp1%y,',',fp1%z,')'
-       call check_test(error, 'test_fixedp_rsp', info=infomsg, context=msg)
+       call check_test(error, 'test_fixedp_rsp', info="", context=msg)
 
        X%x = zero_rsp
        X%y = zero_rsp
@@ -145,7 +145,7 @@ contains
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_dp)
        !write(infomsg, '(A1,E8.2,A1,E9.2,A1,E8.2,A1)') '(',fp1%x,',',fp1%y,',',fp1%z,')'
-       call check_test(error, 'test_fixedp_rdp', info=infomsg, context=msg)
+       call check_test(error, 'test_fixedp_rdp', info="", context=msg)
 
        X%x = zero_rdp
        X%y = zero_rdp

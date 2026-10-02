@@ -122,10 +122,12 @@ contains
         ! handle optional tol
         tol_ = optval(tol, atol_${kind}$)
         n = size(X)
-        
+
         ! compute SVD of inner product matrix
+        allocate(M(n, n), source=zero_${type[0]}$${kind}$)
         M = innerprod(Y, X)
-        allocate(S(n), U(n, n), VT(n, n))
+        allocate(S(n), source=zero_r${kind}$)
+        allocate(U(n, n), VT(n, n), source=zero_${type[0]}$${kind}$)
         call svd(M, S, U, VT)
 
         ! count + renormalize retained singular values; zero the rest

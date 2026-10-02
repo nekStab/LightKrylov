@@ -269,6 +269,7 @@ contains
         call check_test(error, 'test_sym_evp_rsp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size), source=zero_rsp)
         G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
@@ -498,6 +499,7 @@ contains
         call check_test(error, 'test_sym_evp_rdp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size), source=zero_rdp)
         G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
@@ -688,6 +690,7 @@ contains
         call check_test(error, 'test_hermitian_evp_csp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size), source=zero_csp)
         G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
@@ -878,6 +881,7 @@ contains
         call check_test(error, 'test_hermitian_evp_cdp', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size), source=zero_cdp)
         G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
@@ -965,7 +969,7 @@ contains
         call check_test(error, 'test_svd_rsp', 'Singular values', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
-        ! allocate(G(test_size, test_size)) ; G = zero_rsp
+        allocate(G(test_size, test_size), source=zero_rsp)
         G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
@@ -1056,7 +1060,7 @@ contains
         call check_test(error, 'test_svd_rdp', 'Singular values', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
-        ! allocate(G(test_size, test_size)) ; G = zero_rdp
+        allocate(G(test_size, test_size), source=zero_rdp)
         G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
@@ -1148,7 +1152,7 @@ contains
         call check_test(error, 'test_svd_csp', 'Singular values', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
-        ! allocate(G(test_size, test_size)) ; G = zero_csp
+        allocate(G(test_size, test_size), source=zero_csp)
         G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
@@ -1240,7 +1244,7 @@ contains
         call check_test(error, 'test_svd_cdp', 'Singular values', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
-        ! allocate(G(test_size, test_size)) ; G = zero_cdp
+        allocate(G(test_size, test_size), source=zero_cdp)
         G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
