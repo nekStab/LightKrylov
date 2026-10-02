@@ -1,0 +1,366 @@
+submodule (lightkrylov_basekrylov) arnoldi_method
+    use stdlib_linalg, only: svdvals
+    implicit none(type, external)
+contains
+
+    module procedure arnoldi_rsp
+        character(len=*), parameter :: this_procedure = 'arnoldi_rsp'
+        integer :: k_start, k_end, p
+        logical :: trans
+        real(sp) :: tolerance
+        real(sp) :: beta
+        real(sp), allocatable :: res(:)
+        integer :: k, i, kdim, kpm, kp, kpp, iostat
+        character(len=100) :: errmsg
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! Deals with optional non-unity blksize.
+        p = optval(blksize, 1)
+
+        ! Deal with the other optional args.
+        k_start = optval(kstart, 1)
+        tolerance = optval (tol, atol_sp)
+        trans     = optval(transpose, .false.)
+
+        ! Sanity checks.
+        if (p <= 0) then
+            info = -9
+        else if (mod(size(X), p) /= 0) then
+            info = -9
+        else
+            ! Check dimensions.
+            kdim = (size(X) - p) / p
+            k_end = optval(kend, kdim)
+
+            ! Check Hessenberg matrix dimensions.
+            if ((size(H, 1) < size(X)) .or. (size(H, 2) < p*kdim)) then
+                info = -3
+            else if ((k_start < 1) .or. (k_start > k_end)) then
+                info = -5
+            else if (k_end > kdim) then
+                info = -6
+            else if (tolerance < 0) then
+                info = -7
+            else
+                info = 0
+            endif
+        endif
+
+        if (info == 0) then
+            ! Workspace allocation.
+            allocate(res(p), source=zero_rsp, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "arnoldi_rsp")
+            ! Arnoldi factorization.
+            blk_arnoldi: do k = k_start, k_end
+                ! Counters
+                kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+
+                ! Matrix-vector product.
+                if (trans) then
+                    do i = 1, p
+                        call A%apply_rmatvec(X(kpm+i), X(kp+i))
+                    enddo
+                else
+                    do i = 1, p
+                        call A%apply_matvec(X(kpm+i), X(kp+i))
+                    enddo
+                endif
+
+                ! Update Hessenberg matrix via batch double Gram-Schmidt step.
+                call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, &
+                                              if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
+
+                ! Orthogonalize current blk vectors.
+                call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+                call check_info(info, 'qr', this_module, this_procedure)
+
+                ! Extract residual norm.
+                beta = merge(abs(H(kp+1, kp)), minval(svdvals(H(kp+1:kpp, kpm+1:kp))), p == 1)
+
+                ! Exit Arnoldi loop if needed.
+                if (beta < tolerance) then
+                    ! Dimension of the computed invariant subspace.
+                    info = kp
+                    ! Exit the Arnoldi iteration.
+                    exit blk_arnoldi
+                endif
+
+            enddo blk_arnoldi
+        end if
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end procedure arnoldi_rsp
+
+    module procedure arnoldi_rdp
+        character(len=*), parameter :: this_procedure = 'arnoldi_rdp'
+        integer :: k_start, k_end, p
+        logical :: trans
+        real(dp) :: tolerance
+        real(dp) :: beta
+        real(dp), allocatable :: res(:)
+        integer :: k, i, kdim, kpm, kp, kpp, iostat
+        character(len=100) :: errmsg
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! Deals with optional non-unity blksize.
+        p = optval(blksize, 1)
+
+        ! Deal with the other optional args.
+        k_start = optval(kstart, 1)
+        tolerance = optval (tol, atol_dp)
+        trans     = optval(transpose, .false.)
+
+        ! Sanity checks.
+        if (p <= 0) then
+            info = -9
+        else if (mod(size(X), p) /= 0) then
+            info = -9
+        else
+            ! Check dimensions.
+            kdim = (size(X) - p) / p
+            k_end = optval(kend, kdim)
+
+            ! Check Hessenberg matrix dimensions.
+            if ((size(H, 1) < size(X)) .or. (size(H, 2) < p*kdim)) then
+                info = -3
+            else if ((k_start < 1) .or. (k_start > k_end)) then
+                info = -5
+            else if (k_end > kdim) then
+                info = -6
+            else if (tolerance < 0) then
+                info = -7
+            else
+                info = 0
+            endif
+        endif
+
+        if (info == 0) then
+            ! Workspace allocation.
+            allocate(res(p), source=zero_rdp, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "arnoldi_rdp")
+            ! Arnoldi factorization.
+            blk_arnoldi: do k = k_start, k_end
+                ! Counters
+                kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+
+                ! Matrix-vector product.
+                if (trans) then
+                    do i = 1, p
+                        call A%apply_rmatvec(X(kpm+i), X(kp+i))
+                    enddo
+                else
+                    do i = 1, p
+                        call A%apply_matvec(X(kpm+i), X(kp+i))
+                    enddo
+                endif
+
+                ! Update Hessenberg matrix via batch double Gram-Schmidt step.
+                call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, &
+                                              if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
+
+                ! Orthogonalize current blk vectors.
+                call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+                call check_info(info, 'qr', this_module, this_procedure)
+
+                ! Extract residual norm.
+                beta = merge(abs(H(kp+1, kp)), minval(svdvals(H(kp+1:kpp, kpm+1:kp))), p == 1)
+
+                ! Exit Arnoldi loop if needed.
+                if (beta < tolerance) then
+                    ! Dimension of the computed invariant subspace.
+                    info = kp
+                    ! Exit the Arnoldi iteration.
+                    exit blk_arnoldi
+                endif
+
+            enddo blk_arnoldi
+        end if
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end procedure arnoldi_rdp
+
+    module procedure arnoldi_csp
+        character(len=*), parameter :: this_procedure = 'arnoldi_csp'
+        integer :: k_start, k_end, p
+        logical :: trans
+        real(sp) :: tolerance
+        real(sp) :: beta
+        real(sp), allocatable :: res(:)
+        integer :: k, i, kdim, kpm, kp, kpp, iostat
+        character(len=100) :: errmsg
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! Deals with optional non-unity blksize.
+        p = optval(blksize, 1)
+
+        ! Deal with the other optional args.
+        k_start = optval(kstart, 1)
+        tolerance = optval (tol, atol_sp)
+        trans     = optval(transpose, .false.)
+
+        ! Sanity checks.
+        if (p <= 0) then
+            info = -9
+        else if (mod(size(X), p) /= 0) then
+            info = -9
+        else
+            ! Check dimensions.
+            kdim = (size(X) - p) / p
+            k_end = optval(kend, kdim)
+
+            ! Check Hessenberg matrix dimensions.
+            if ((size(H, 1) < size(X)) .or. (size(H, 2) < p*kdim)) then
+                info = -3
+            else if ((k_start < 1) .or. (k_start > k_end)) then
+                info = -5
+            else if (k_end > kdim) then
+                info = -6
+            else if (tolerance < 0) then
+                info = -7
+            else
+                info = 0
+            endif
+        endif
+
+        if (info == 0) then
+            ! Workspace allocation.
+            allocate(res(p), source=zero_rsp, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "arnoldi_csp")
+            ! Arnoldi factorization.
+            blk_arnoldi: do k = k_start, k_end
+                ! Counters
+                kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+
+                ! Matrix-vector product.
+                if (trans) then
+                    do i = 1, p
+                        call A%apply_rmatvec(X(kpm+i), X(kp+i))
+                    enddo
+                else
+                    do i = 1, p
+                        call A%apply_matvec(X(kpm+i), X(kp+i))
+                    enddo
+                endif
+
+                ! Update Hessenberg matrix via batch double Gram-Schmidt step.
+                call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, &
+                                              if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
+
+                ! Orthogonalize current blk vectors.
+                call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+                call check_info(info, 'qr', this_module, this_procedure)
+
+                ! Extract residual norm.
+                beta = merge(abs(H(kp+1, kp)), minval(svdvals(H(kp+1:kpp, kpm+1:kp))), p == 1)
+
+                ! Exit Arnoldi loop if needed.
+                if (beta < tolerance) then
+                    ! Dimension of the computed invariant subspace.
+                    info = kp
+                    ! Exit the Arnoldi iteration.
+                    exit blk_arnoldi
+                endif
+
+            enddo blk_arnoldi
+        end if
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end procedure arnoldi_csp
+
+    module procedure arnoldi_cdp
+        character(len=*), parameter :: this_procedure = 'arnoldi_cdp'
+        integer :: k_start, k_end, p
+        logical :: trans
+        real(dp) :: tolerance
+        real(dp) :: beta
+        real(dp), allocatable :: res(:)
+        integer :: k, i, kdim, kpm, kp, kpp, iostat
+        character(len=100) :: errmsg
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! Deals with optional non-unity blksize.
+        p = optval(blksize, 1)
+
+        ! Deal with the other optional args.
+        k_start = optval(kstart, 1)
+        tolerance = optval (tol, atol_dp)
+        trans     = optval(transpose, .false.)
+
+        ! Sanity checks.
+        if (p <= 0) then
+            info = -9
+        else if (mod(size(X), p) /= 0) then
+            info = -9
+        else
+            ! Check dimensions.
+            kdim = (size(X) - p) / p
+            k_end = optval(kend, kdim)
+
+            ! Check Hessenberg matrix dimensions.
+            if ((size(H, 1) < size(X)) .or. (size(H, 2) < p*kdim)) then
+                info = -3
+            else if ((k_start < 1) .or. (k_start > k_end)) then
+                info = -5
+            else if (k_end > kdim) then
+                info = -6
+            else if (tolerance < 0) then
+                info = -7
+            else
+                info = 0
+            endif
+        endif
+
+        if (info == 0) then
+            ! Workspace allocation.
+            allocate(res(p), source=zero_rdp, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "arnoldi_cdp")
+            ! Arnoldi factorization.
+            blk_arnoldi: do k = k_start, k_end
+                ! Counters
+                kpm = (k - 1) * p ; kp = kpm + p ; kpp = kp + p
+
+                ! Matrix-vector product.
+                if (trans) then
+                    do i = 1, p
+                        call A%apply_rmatvec(X(kpm+i), X(kp+i))
+                    enddo
+                else
+                    do i = 1, p
+                        call A%apply_matvec(X(kpm+i), X(kp+i))
+                    enddo
+                endif
+
+                ! Update Hessenberg matrix via batch double Gram-Schmidt step.
+                call double_gram_schmidt_step(X(kp+1:kpp), X(:kp), info, &
+                                              if_chk_orthonormal=.false., beta=H(:kp, kpm+1:kp))
+                call check_info(info, 'double_gram_schmidt_step', this_module, this_procedure)
+
+                ! Orthogonalize current blk vectors.
+                call qr(X(kp+1:kpp), H(kp+1:kpp, kpm+1:kp), info)
+                call check_info(info, 'qr', this_module, this_procedure)
+
+                ! Extract residual norm.
+                beta = merge(abs(H(kp+1, kp)), minval(svdvals(H(kp+1:kpp, kpm+1:kp))), p == 1)
+
+                ! Exit Arnoldi loop if needed.
+                if (beta < tolerance) then
+                    ! Dimension of the computed invariant subspace.
+                    info = kp
+                    ! Exit the Arnoldi iteration.
+                    exit blk_arnoldi
+                endif
+
+            enddo blk_arnoldi
+        end if
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end procedure arnoldi_cdp
+
+end submodule arnoldi_method
