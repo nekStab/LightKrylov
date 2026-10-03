@@ -82,7 +82,6 @@ contains
         integer :: info
         ! Miscellaneous.
         real(sp), allocatable :: Adata(:, :), Qdata(:, :)
-        real(sp), allocatable :: G(:, :)
         real(sp) :: err
         integer :: perm(kdim), i
         character(len=256) :: msg
@@ -107,14 +106,8 @@ contains
         call check_test(error, 'test_qr_factorization_rsp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim), source=zero_rsp)
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(A))
         call check_test(error, 'test_qr_factorization_rsp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -135,13 +128,8 @@ contains
         call check_test(error, 'test_qr_factorization_rsp', &
                               & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(A))
         call check_test(error, 'test_qr_factorization_rsp', &
                               & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -200,6 +188,7 @@ contains
         do
             ! In-place QR factorization.
             call qr(A, R, info, tol=large_tol)
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_rsp')
 
             ! Check correct column has been flagged.
             call check(error, info == j_col)
@@ -221,14 +210,8 @@ contains
         call check_test(error, 'test_qr_rank_deficient_rsp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim), source=zero_rsp)
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(A(:kdim)))
         call check_test(error, 'test_qr_rank_deficient_rsp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -302,28 +285,34 @@ contains
             call check(error, info == -1)
             if (allocated(error)) exit test_loop
             call qr(A, R, perm, info)   ! Pivoting QR
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_rsp')
             call check(error, info == -1)
             if (allocated(error)) exit test_loop
 
             ! Test matrix R with inconsistent dimensions.
             deallocate(A) ; allocate(A(5)) ; call init_rand(A)
             call qr(A, Rsmall, info)    ! Standard QR
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_rsp')
             call check(error, info==-2)
             if (allocated(error)) exit test_loop
             call qr(A, Rsmall, perm, info)  ! Pivoting QR
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_rsp')
             call check(error, info==-2)
             if (allocated(error)) exit test_loop
 
             ! Test perm too small on qr_with_pivoting.
             call qr(A, R, perm_small, info, tol=atol_sp)
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_rsp')
             call check(error, info == -3)
             if (allocated(error)) exit test_loop
 
             ! Test negative tolerance.
             call qr(A, R, info, tol=-1.0_sp)  ! Standard QR
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_rsp')
             call check(error, info == -4)
             if (allocated(error)) exit test_loop
             call qr(A, R, perm, info, tol=-1.0_sp)    ! Pivoting QR
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_rsp')
             call check(error, info == -4)
             exit test_loop
         end do test_loop
@@ -417,7 +406,6 @@ contains
         integer :: info
         ! Miscellaneous.
         real(dp), allocatable :: Adata(:, :), Qdata(:, :)
-        real(dp), allocatable :: G(:, :)
         real(dp) :: err
         integer :: perm(kdim), i
         character(len=256) :: msg
@@ -442,14 +430,8 @@ contains
         call check_test(error, 'test_qr_factorization_rdp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim), source=zero_rdp)
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(A))
         call check_test(error, 'test_qr_factorization_rdp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -470,13 +452,8 @@ contains
         call check_test(error, 'test_qr_factorization_rdp', &
                               & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(A))
         call check_test(error, 'test_qr_factorization_rdp', &
                               & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -535,6 +512,7 @@ contains
         do
             ! In-place QR factorization.
             call qr(A, R, info, tol=large_tol)
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_rdp')
 
             ! Check correct column has been flagged.
             call check(error, info == j_col)
@@ -556,14 +534,8 @@ contains
         call check_test(error, 'test_qr_rank_deficient_rdp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim), source=zero_rdp)
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(A(:kdim)))
         call check_test(error, 'test_qr_rank_deficient_rdp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -637,28 +609,34 @@ contains
             call check(error, info == -1)
             if (allocated(error)) exit test_loop
             call qr(A, R, perm, info)   ! Pivoting QR
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_rdp')
             call check(error, info == -1)
             if (allocated(error)) exit test_loop
 
             ! Test matrix R with inconsistent dimensions.
             deallocate(A) ; allocate(A(5)) ; call init_rand(A)
             call qr(A, Rsmall, info)    ! Standard QR
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_rdp')
             call check(error, info==-2)
             if (allocated(error)) exit test_loop
             call qr(A, Rsmall, perm, info)  ! Pivoting QR
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_rdp')
             call check(error, info==-2)
             if (allocated(error)) exit test_loop
 
             ! Test perm too small on qr_with_pivoting.
             call qr(A, R, perm_small, info, tol=atol_dp)
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_rdp')
             call check(error, info == -3)
             if (allocated(error)) exit test_loop
 
             ! Test negative tolerance.
             call qr(A, R, info, tol=-1.0_dp)  ! Standard QR
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_rdp')
             call check(error, info == -4)
             if (allocated(error)) exit test_loop
             call qr(A, R, perm, info, tol=-1.0_dp)    ! Pivoting QR
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_rdp')
             call check(error, info == -4)
             exit test_loop
         end do test_loop
@@ -752,7 +730,6 @@ contains
         integer :: info
         ! Miscellaneous.
         complex(sp), allocatable :: Adata(:, :), Qdata(:, :)
-        complex(sp), allocatable :: G(:, :)
         real(sp) :: err
         integer :: perm(kdim), i
         character(len=256) :: msg
@@ -777,14 +754,8 @@ contains
         call check_test(error, 'test_qr_factorization_csp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim), source=zero_csp)
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(A))
         call check_test(error, 'test_qr_factorization_csp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -805,13 +776,8 @@ contains
         call check_test(error, 'test_qr_factorization_csp', &
                               & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(A))
         call check_test(error, 'test_qr_factorization_csp', &
                               & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -870,6 +836,7 @@ contains
         do
             ! In-place QR factorization.
             call qr(A, R, info, tol=large_tol)
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_csp')
 
             ! Check correct column has been flagged.
             call check(error, info == j_col)
@@ -891,14 +858,8 @@ contains
         call check_test(error, 'test_qr_rank_deficient_csp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim), source=zero_csp)
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(A(:kdim)))
         call check_test(error, 'test_qr_rank_deficient_csp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -972,28 +933,34 @@ contains
             call check(error, info == -1)
             if (allocated(error)) exit test_loop
             call qr(A, R, perm, info)   ! Pivoting QR
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_csp')
             call check(error, info == -1)
             if (allocated(error)) exit test_loop
 
             ! Test matrix R with inconsistent dimensions.
             deallocate(A) ; allocate(A(5)) ; call init_rand(A)
             call qr(A, Rsmall, info)    ! Standard QR
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_csp')
             call check(error, info==-2)
             if (allocated(error)) exit test_loop
             call qr(A, Rsmall, perm, info)  ! Pivoting QR
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_csp')
             call check(error, info==-2)
             if (allocated(error)) exit test_loop
 
             ! Test perm too small on qr_with_pivoting.
             call qr(A, R, perm_small, info, tol=atol_sp)
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_csp')
             call check(error, info == -3)
             if (allocated(error)) exit test_loop
 
             ! Test negative tolerance.
             call qr(A, R, info, tol=-1.0_sp)  ! Standard QR
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_csp')
             call check(error, info == -4)
             if (allocated(error)) exit test_loop
             call qr(A, R, perm, info, tol=-1.0_sp)    ! Pivoting QR
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_csp')
             call check(error, info == -4)
             exit test_loop
         end do test_loop
@@ -1087,7 +1054,6 @@ contains
         integer :: info
         ! Miscellaneous.
         complex(dp), allocatable :: Adata(:, :), Qdata(:, :)
-        complex(dp), allocatable :: G(:, :)
         real(dp) :: err
         integer :: perm(kdim), i
         character(len=256) :: msg
@@ -1112,14 +1078,8 @@ contains
         call check_test(error, 'test_qr_factorization_cdp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim), source=zero_cdp)
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(A))
         call check_test(error, 'test_qr_factorization_cdp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -1140,13 +1100,8 @@ contains
         call check_test(error, 'test_qr_factorization_cdp', &
                               & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(A))
         call check_test(error, 'test_qr_factorization_cdp', &
                               & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -1205,6 +1160,7 @@ contains
         do
             ! In-place QR factorization.
             call qr(A, R, info, tol=large_tol)
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_cdp')
 
             ! Check correct column has been flagged.
             call check(error, info == j_col)
@@ -1226,14 +1182,8 @@ contains
         call check_test(error, 'test_qr_rank_deficient_cdp', &
                               & info='Factorization', eq='A = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim), source=zero_cdp)
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(A(:kdim)))
         call check_test(error, 'test_qr_rank_deficient_cdp', &
                               & info='Basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -1307,28 +1257,34 @@ contains
             call check(error, info == -1)
             if (allocated(error)) exit test_loop
             call qr(A, R, perm, info)   ! Pivoting QR
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_cdp')
             call check(error, info == -1)
             if (allocated(error)) exit test_loop
 
             ! Test matrix R with inconsistent dimensions.
             deallocate(A) ; allocate(A(5)) ; call init_rand(A)
             call qr(A, Rsmall, info)    ! Standard QR
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_cdp')
             call check(error, info==-2)
             if (allocated(error)) exit test_loop
             call qr(A, Rsmall, perm, info)  ! Pivoting QR
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_cdp')
             call check(error, info==-2)
             if (allocated(error)) exit test_loop
 
             ! Test perm too small on qr_with_pivoting.
             call qr(A, R, perm_small, info, tol=atol_dp)
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_cdp')
             call check(error, info == -3)
             if (allocated(error)) exit test_loop
 
             ! Test negative tolerance.
             call qr(A, R, info, tol=-1.0_dp)  ! Standard QR
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_cdp')
             call check(error, info == -4)
             if (allocated(error)) exit test_loop
             call qr(A, R, perm, info, tol=-1.0_dp)    ! Pivoting QR
+            call check_info(info, 'qr_pivot', module=this_module_long, procedure='test_qr_invalid_inputs_cdp')
             call check(error, info == -4)
             exit test_loop
         end do test_loop
