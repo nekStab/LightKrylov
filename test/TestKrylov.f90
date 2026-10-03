@@ -298,6 +298,7 @@ contains
         test_loop: do
             allocate(A(0))
             call qr(A, R, info) ! Standard QR
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_rsp')
             call check(error, info == -1)
             if (allocated(error)) exit test_loop
             call qr(A, R, perm, info)   ! Pivoting QR
@@ -632,6 +633,7 @@ contains
         test_loop: do
             allocate(A(0))
             call qr(A, R, info) ! Standard QR
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_rdp')
             call check(error, info == -1)
             if (allocated(error)) exit test_loop
             call qr(A, R, perm, info)   ! Pivoting QR
@@ -966,6 +968,7 @@ contains
         test_loop: do
             allocate(A(0))
             call qr(A, R, info) ! Standard QR
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_csp')
             call check(error, info == -1)
             if (allocated(error)) exit test_loop
             call qr(A, R, perm, info)   ! Pivoting QR
@@ -1300,6 +1303,7 @@ contains
         test_loop: do
             allocate(A(0))
             call qr(A, R, info) ! Standard QR
+            call check_info(info, 'qr', module=this_module_long, procedure='test_qr_invalid_inputs_cdp')
             call check(error, info == -1)
             if (allocated(error)) exit test_loop
             call qr(A, R, perm, info)   ! Pivoting QR
