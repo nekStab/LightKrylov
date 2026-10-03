@@ -251,13 +251,8 @@ contains
         call check_test(error, 'test_qr_rank_deficient_rsp', &
                               & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(A(:kdim)))
         call check_test(error, 'test_qr_rank_deficient_rsp', &
                               & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -575,13 +570,8 @@ contains
         call check_test(error, 'test_qr_rank_deficient_rdp', &
                               & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(A(:kdim)))
         call check_test(error, 'test_qr_rank_deficient_rdp', &
                               & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -899,13 +889,8 @@ contains
         call check_test(error, 'test_qr_rank_deficient_csp', &
                               & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(A(:kdim)))
         call check_test(error, 'test_qr_rank_deficient_csp', &
                               & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -1223,13 +1208,8 @@ contains
         call check_test(error, 'test_qr_rank_deficient_cdp', &
                               & info='Pivoted factorization', eq='AP = Q @ R', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        G = Gram(A(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = norm2(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(A(:kdim)))
         call check_test(error, 'test_qr_rank_deficient_cdp', &
                               & info='Pivoted basis orthonormality', eq='Q.H @ Q = I', context=msg)
 
@@ -1412,14 +1392,8 @@ contains
         call check_test(error, 'test_arnoldi_factorization_rsp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim), source=zero_rsp)
-        G = Gram(X(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(X(:kdim)))
         call check_test(error, 'test_arnoldi_factorization_rsp', &
                               & info='Orthonormality', eq='X.H @ X = I', context=msg)
 
@@ -1449,6 +1423,7 @@ contains
 
         ! Restart Arnoldi factorization.
         call arnoldi(A, Xrestart, Hrestart, info, kstart=kstart, tol=atol_sp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_rsp')
 
         ! Compute inner product between the two bases.
         G = innerprod(Xfull(:kdim), Xrestart(:kdim))
@@ -1486,6 +1461,7 @@ contains
 
         deallocate(H) ; allocate(H(k_max+1, k_max), source=zero_rsp)
         call arnoldi(A, X, H, info, tol=atol_sp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_rsp')
 
         ! 1. Check if Arnoldi detected the invariant subspace dimension
         call check(error, info == k_inv)
@@ -1531,28 +1507,34 @@ contains
             ! --- Case 1: k_start < 1 or k_start > k_end (info = -5) ---
             allocate(X(kdim+1)) ; call zero_basis(X)
             call arnoldi(A, X, H, info, kstart=0, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rsp')
             call check(error, info == -5)
             if (allocated(error)) exit
             call arnoldi(A, X, H, info, kstart=kdim, kend=1, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rsp')
             call check(error, info == -5)
             if (allocated(error)) exit
             ! --- Case 2: k_end > kdim (info = -6) ---
             call arnoldi(A, X, H, info, kend=kdim+1, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rsp')
             call check(error, info == -6)
             if (allocated(error)) exit
             ! --- Case 3: tolerance < 0 (info = -7) ---
             call arnoldi(A, X, H, info, tol=-1.0_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rsp')
             call check(error, info == -7)
             if (allocated(error)) exit
             ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
             ! If kdim=20, size(X)=21. p=2 does not divide 21.
             p = 2
             call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rsp')
             call check(error, info == -9)
             if (allocated(error)) exit
             ! --- Case 5: blksize <= 0 (info = -9) ---
             p = 0
             call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rsp')
             call check(error, info == -9)
             if (allocated(error)) exit
             ! --- Case 6: H has wrong first dimension (info = -3) ---
@@ -1560,12 +1542,14 @@ contains
             deallocate(H)
             allocate(H(kdim, kdim)) ; H = zero_rsp
             call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rsp')
             call check(error, info == -3)
             if (allocated(error)) exit
             ! --- Case 7: H has wrong second dimension (info = -3) ---
             deallocate(H)
             allocate(H(kdim+1, kdim-1)) ; H = zero_rsp
             call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rsp')
             call check(error, info == -3)
             if (allocated(error)) exit
             ! --- Case 8: block Arnoldi with too-small H (info = -3) ---
@@ -1579,6 +1563,7 @@ contains
                 call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
                 allocate(H(p_block*(kdim_block+1) - 1, p_block*kdim_block)) ; H = zero_rsp
                 call arnoldi(A, X, H, info, blksize=p_block, tol=atol_sp)
+                call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rsp')
                 call check(error, info == -3)
            end block
             exit
@@ -1699,14 +1684,8 @@ contains
         call check_test(error, 'test_block_arnoldi_factorization_rsp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(p*kdim, p*kdim), source=zero_rsp)
-        G = Gram(X(:p*kdim))
-
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(p*kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(X(:p*kdim)))
         call check_test(error, 'test_block_arnoldi_factorization_rsp', &
                               & info='Basis orthonormality', eq='X.H @ X = I', context=msg)
 
@@ -1741,6 +1720,7 @@ contains
 
         ! Restart block Arnoldi factorization.
         call arnoldi(A, Xrestart, Hrestart, info, kstart=kstart, blksize=p, tol=atol_sp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_rsp')
 
         ! Compute inner product between the two bases.
         allocate(G(p*kdim_, p*kdim_), source=zero_rsp)
@@ -1781,6 +1761,7 @@ contains
 
         deallocate(H) ; allocate(H(p*(kdim_+1), p*kdim_), source=zero_rsp)
         call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_rsp')
 
         ! 1. Check if block Arnoldi detected the invariant subspace dimension.
         ! For block Arnoldi with p=2 and k_inv=2, we expect info = k_inv = 2.
@@ -1906,14 +1887,8 @@ contains
         call check_test(error, 'test_arnoldi_factorization_rdp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim), source=zero_rdp)
-        G = Gram(X(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(X(:kdim)))
         call check_test(error, 'test_arnoldi_factorization_rdp', &
                               & info='Orthonormality', eq='X.H @ X = I', context=msg)
 
@@ -1943,6 +1918,7 @@ contains
 
         ! Restart Arnoldi factorization.
         call arnoldi(A, Xrestart, Hrestart, info, kstart=kstart, tol=atol_dp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_rdp')
 
         ! Compute inner product between the two bases.
         G = innerprod(Xfull(:kdim), Xrestart(:kdim))
@@ -1980,6 +1956,7 @@ contains
 
         deallocate(H) ; allocate(H(k_max+1, k_max), source=zero_rdp)
         call arnoldi(A, X, H, info, tol=atol_dp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_rdp')
 
         ! 1. Check if Arnoldi detected the invariant subspace dimension
         call check(error, info == k_inv)
@@ -2025,28 +2002,34 @@ contains
             ! --- Case 1: k_start < 1 or k_start > k_end (info = -5) ---
             allocate(X(kdim+1)) ; call zero_basis(X)
             call arnoldi(A, X, H, info, kstart=0, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rdp')
             call check(error, info == -5)
             if (allocated(error)) exit
             call arnoldi(A, X, H, info, kstart=kdim, kend=1, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rdp')
             call check(error, info == -5)
             if (allocated(error)) exit
             ! --- Case 2: k_end > kdim (info = -6) ---
             call arnoldi(A, X, H, info, kend=kdim+1, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rdp')
             call check(error, info == -6)
             if (allocated(error)) exit
             ! --- Case 3: tolerance < 0 (info = -7) ---
             call arnoldi(A, X, H, info, tol=-1.0_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rdp')
             call check(error, info == -7)
             if (allocated(error)) exit
             ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
             ! If kdim=20, size(X)=21. p=2 does not divide 21.
             p = 2
             call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rdp')
             call check(error, info == -9)
             if (allocated(error)) exit
             ! --- Case 5: blksize <= 0 (info = -9) ---
             p = 0
             call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rdp')
             call check(error, info == -9)
             if (allocated(error)) exit
             ! --- Case 6: H has wrong first dimension (info = -3) ---
@@ -2054,12 +2037,14 @@ contains
             deallocate(H)
             allocate(H(kdim, kdim)) ; H = zero_rdp
             call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rdp')
             call check(error, info == -3)
             if (allocated(error)) exit
             ! --- Case 7: H has wrong second dimension (info = -3) ---
             deallocate(H)
             allocate(H(kdim+1, kdim-1)) ; H = zero_rdp
             call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rdp')
             call check(error, info == -3)
             if (allocated(error)) exit
             ! --- Case 8: block Arnoldi with too-small H (info = -3) ---
@@ -2073,6 +2058,7 @@ contains
                 call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
                 allocate(H(p_block*(kdim_block+1) - 1, p_block*kdim_block)) ; H = zero_rdp
                 call arnoldi(A, X, H, info, blksize=p_block, tol=atol_dp)
+                call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_rdp')
                 call check(error, info == -3)
            end block
             exit
@@ -2193,14 +2179,8 @@ contains
         call check_test(error, 'test_block_arnoldi_factorization_rdp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(p*kdim, p*kdim), source=zero_rdp)
-        G = Gram(X(:p*kdim))
-
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(p*kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(X(:p*kdim)))
         call check_test(error, 'test_block_arnoldi_factorization_rdp', &
                               & info='Basis orthonormality', eq='X.H @ X = I', context=msg)
 
@@ -2235,6 +2215,7 @@ contains
 
         ! Restart block Arnoldi factorization.
         call arnoldi(A, Xrestart, Hrestart, info, kstart=kstart, blksize=p, tol=atol_dp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_rdp')
 
         ! Compute inner product between the two bases.
         allocate(G(p*kdim_, p*kdim_), source=zero_rdp)
@@ -2275,6 +2256,7 @@ contains
 
         deallocate(H) ; allocate(H(p*(kdim_+1), p*kdim_), source=zero_rdp)
         call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_rdp')
 
         ! 1. Check if block Arnoldi detected the invariant subspace dimension.
         ! For block Arnoldi with p=2 and k_inv=2, we expect info = k_inv = 2.
@@ -2400,14 +2382,8 @@ contains
         call check_test(error, 'test_arnoldi_factorization_csp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim), source=zero_csp)
-        G = Gram(X(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(X(:kdim)))
         call check_test(error, 'test_arnoldi_factorization_csp', &
                               & info='Orthonormality', eq='X.H @ X = I', context=msg)
 
@@ -2437,6 +2413,7 @@ contains
 
         ! Restart Arnoldi factorization.
         call arnoldi(A, Xrestart, Hrestart, info, kstart=kstart, tol=atol_sp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_csp')
 
         ! Compute inner product between the two bases.
         G = innerprod(Xfull(:kdim), Xrestart(:kdim))
@@ -2474,6 +2451,7 @@ contains
 
         deallocate(H) ; allocate(H(k_max+1, k_max), source=zero_csp)
         call arnoldi(A, X, H, info, tol=atol_sp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_csp')
 
         ! 1. Check if Arnoldi detected the invariant subspace dimension
         call check(error, info == k_inv)
@@ -2519,28 +2497,34 @@ contains
             ! --- Case 1: k_start < 1 or k_start > k_end (info = -5) ---
             allocate(X(kdim+1)) ; call zero_basis(X)
             call arnoldi(A, X, H, info, kstart=0, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_csp')
             call check(error, info == -5)
             if (allocated(error)) exit
             call arnoldi(A, X, H, info, kstart=kdim, kend=1, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_csp')
             call check(error, info == -5)
             if (allocated(error)) exit
             ! --- Case 2: k_end > kdim (info = -6) ---
             call arnoldi(A, X, H, info, kend=kdim+1, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_csp')
             call check(error, info == -6)
             if (allocated(error)) exit
             ! --- Case 3: tolerance < 0 (info = -7) ---
             call arnoldi(A, X, H, info, tol=-1.0_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_csp')
             call check(error, info == -7)
             if (allocated(error)) exit
             ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
             ! If kdim=20, size(X)=21. p=2 does not divide 21.
             p = 2
             call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_csp')
             call check(error, info == -9)
             if (allocated(error)) exit
             ! --- Case 5: blksize <= 0 (info = -9) ---
             p = 0
             call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_csp')
             call check(error, info == -9)
             if (allocated(error)) exit
             ! --- Case 6: H has wrong first dimension (info = -3) ---
@@ -2548,12 +2532,14 @@ contains
             deallocate(H)
             allocate(H(kdim, kdim)) ; H = zero_csp
             call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_csp')
             call check(error, info == -3)
             if (allocated(error)) exit
             ! --- Case 7: H has wrong second dimension (info = -3) ---
             deallocate(H)
             allocate(H(kdim+1, kdim-1)) ; H = zero_csp
             call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_csp')
             call check(error, info == -3)
             if (allocated(error)) exit
             ! --- Case 8: block Arnoldi with too-small H (info = -3) ---
@@ -2567,6 +2553,7 @@ contains
                 call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
                 allocate(H(p_block*(kdim_block+1) - 1, p_block*kdim_block)) ; H = zero_csp
                 call arnoldi(A, X, H, info, blksize=p_block, tol=atol_sp)
+                call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_csp')
                 call check(error, info == -3)
            end block
             exit
@@ -2690,14 +2677,8 @@ contains
         call check_test(error, 'test_block_arnoldi_factorization_csp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(p*kdim, p*kdim), source=zero_csp)
-        G = Gram(X(:p*kdim))
-
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(p*kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(X(:p*kdim)))
         call check_test(error, 'test_block_arnoldi_factorization_csp', &
                               & info='Basis orthonormality', eq='X.H @ X = I', context=msg)
 
@@ -2732,6 +2713,7 @@ contains
 
         ! Restart block Arnoldi factorization.
         call arnoldi(A, Xrestart, Hrestart, info, kstart=kstart, blksize=p, tol=atol_sp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_csp')
 
         ! Compute inner product between the two bases.
         allocate(G(p*kdim_, p*kdim_), source=zero_csp)
@@ -2772,6 +2754,7 @@ contains
 
         deallocate(H) ; allocate(H(p*(kdim_+1), p*kdim_), source=zero_csp)
         call arnoldi(A, X, H, info, blksize=p, tol=atol_sp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_csp')
 
         ! 1. Check if block Arnoldi detected the invariant subspace dimension.
         ! For block Arnoldi with p=2 and k_inv=2, we expect info = k_inv = 2.
@@ -2897,14 +2880,8 @@ contains
         call check_test(error, 'test_arnoldi_factorization_cdp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(kdim, kdim), source=zero_cdp)
-        G = Gram(X(:kdim))
-
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(X(:kdim)))
         call check_test(error, 'test_arnoldi_factorization_cdp', &
                               & info='Orthonormality', eq='X.H @ X = I', context=msg)
 
@@ -2934,6 +2911,7 @@ contains
 
         ! Restart Arnoldi factorization.
         call arnoldi(A, Xrestart, Hrestart, info, kstart=kstart, tol=atol_dp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_cdp')
 
         ! Compute inner product between the two bases.
         G = innerprod(Xfull(:kdim), Xrestart(:kdim))
@@ -2971,6 +2949,7 @@ contains
 
         deallocate(H) ; allocate(H(k_max+1, k_max), source=zero_cdp)
         call arnoldi(A, X, H, info, tol=atol_dp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_factorization_cdp')
 
         ! 1. Check if Arnoldi detected the invariant subspace dimension
         call check(error, info == k_inv)
@@ -3016,28 +2995,34 @@ contains
             ! --- Case 1: k_start < 1 or k_start > k_end (info = -5) ---
             allocate(X(kdim+1)) ; call zero_basis(X)
             call arnoldi(A, X, H, info, kstart=0, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_cdp')
             call check(error, info == -5)
             if (allocated(error)) exit
             call arnoldi(A, X, H, info, kstart=kdim, kend=1, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_cdp')
             call check(error, info == -5)
             if (allocated(error)) exit
             ! --- Case 2: k_end > kdim (info = -6) ---
             call arnoldi(A, X, H, info, kend=kdim+1, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_cdp')
             call check(error, info == -6)
             if (allocated(error)) exit
             ! --- Case 3: tolerance < 0 (info = -7) ---
             call arnoldi(A, X, H, info, tol=-1.0_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_cdp')
             call check(error, info == -7)
             if (allocated(error)) exit
             ! --- Case 4: mod(size(X), p) /= 0 (info = -9) ---
             ! If kdim=20, size(X)=21. p=2 does not divide 21.
             p = 2
             call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_cdp')
             call check(error, info == -9)
             if (allocated(error)) exit
             ! --- Case 5: blksize <= 0 (info = -9) ---
             p = 0
             call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_cdp')
             call check(error, info == -9)
             if (allocated(error)) exit
             ! --- Case 6: H has wrong first dimension (info = -3) ---
@@ -3045,12 +3030,14 @@ contains
             deallocate(H)
             allocate(H(kdim, kdim)) ; H = zero_cdp
             call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_cdp')
             call check(error, info == -3)
             if (allocated(error)) exit
             ! --- Case 7: H has wrong second dimension (info = -3) ---
             deallocate(H)
             allocate(H(kdim+1, kdim-1)) ; H = zero_cdp
             call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
+            call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_cdp')
             call check(error, info == -3)
             if (allocated(error)) exit
             ! --- Case 8: block Arnoldi with too-small H (info = -3) ---
@@ -3064,6 +3051,7 @@ contains
                 call init_rand(X0) ; call initialize_krylov_subspace(X, X0)
                 allocate(H(p_block*(kdim_block+1) - 1, p_block*kdim_block)) ; H = zero_cdp
                 call arnoldi(A, X, H, info, blksize=p_block, tol=atol_dp)
+                call check_info(info, 'arnoldi', module=this_module_long, procedure='test_arnoldi_invalid_params_cdp')
                 call check(error, info == -3)
            end block
             exit
@@ -3187,14 +3175,8 @@ contains
         call check_test(error, 'test_block_arnoldi_factorization_cdp', &
                               & info='Factorization', eq='A @ X = X_ @ H_', context=msg)
 
-        ! Compute Gram matrix associated to the Krylov basis.
-        allocate(G(p*kdim, p*kdim), source=zero_cdp)
-        G = Gram(X(:p*kdim))
-
         ! Check orthonormality of the computed basis.
-        err = maxval(abs(G - eye(p*kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(X(:p*kdim)))
         call check_test(error, 'test_block_arnoldi_factorization_cdp', &
                               & info='Basis orthonormality', eq='X.H @ X = I', context=msg)
 
@@ -3229,6 +3211,7 @@ contains
 
         ! Restart block Arnoldi factorization.
         call arnoldi(A, Xrestart, Hrestart, info, kstart=kstart, blksize=p, tol=atol_dp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_cdp')
 
         ! Compute inner product between the two bases.
         allocate(G(p*kdim_, p*kdim_), source=zero_cdp)
@@ -3269,6 +3252,7 @@ contains
 
         deallocate(H) ; allocate(H(p*(kdim_+1), p*kdim_), source=zero_cdp)
         call arnoldi(A, X, H, info, blksize=p, tol=atol_dp)
+        call check_info(info, 'arnoldi', module=this_module_long, procedure='test_block_arnoldi_factorization_cdp')
 
         ! 1. Check if block Arnoldi detected the invariant subspace dimension.
         ! For block Arnoldi with p=2 and k_inv=2, we expect info = k_inv = 2.
@@ -3398,24 +3382,13 @@ contains
         call check_test(error, 'test_lanczos_bidiag_factorization_rsp', &
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
-        ! Compute Gram matrix associated to the left Krylov basis.
-        allocate(G(kdim, kdim), source=zero_rsp)
-        G = Gram(U(:kdim))
-
         ! Check orthonormality of the left basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(U(:kdim)))
         call check_test(error, 'test_lanczos_bidiag_factorization_rsp', &
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
 
-        ! Compute Gram matrix associated to the right Krylov basis.
-        G = Gram(V(:kdim))
-
         ! Check orthonormality of the right basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(V(:kdim)))
         call check_test(error, 'test_lanczos_bidiag_factorization_rsp', &
                               & info='Basis orthonormality (right)', eq='V.H @ V = I', context=msg)
 
@@ -3474,24 +3447,13 @@ contains
         call check_test(error, 'test_lanczos_bidiag_factorization_rdp', &
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
-        ! Compute Gram matrix associated to the left Krylov basis.
-        allocate(G(kdim, kdim), source=zero_rdp)
-        G = Gram(U(:kdim))
-
         ! Check orthonormality of the left basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(U(:kdim)))
         call check_test(error, 'test_lanczos_bidiag_factorization_rdp', &
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
 
-        ! Compute Gram matrix associated to the right Krylov basis.
-        G = Gram(V(:kdim))
-
         ! Check orthonormality of the right basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(V(:kdim)))
         call check_test(error, 'test_lanczos_bidiag_factorization_rdp', &
                               & info='Basis orthonormality (right)', eq='V.H @ V = I', context=msg)
 
@@ -3550,24 +3512,13 @@ contains
         call check_test(error, 'test_lanczos_bidiag_factorization_csp', &
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
-        ! Compute Gram matrix associated to the left Krylov basis.
-        allocate(G(kdim, kdim), source=zero_csp)
-        G = Gram(U(:kdim))
-
         ! Check orthonormality of the left basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(U(:kdim)))
         call check_test(error, 'test_lanczos_bidiag_factorization_csp', &
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
 
-        ! Compute Gram matrix associated to the right Krylov basis.
-        G = Gram(V(:kdim))
-
         ! Check orthonormality of the right basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(V(:kdim)))
         call check_test(error, 'test_lanczos_bidiag_factorization_csp', &
                               & info='Basis orthonormality (right)', eq='V.H @ V = I', context=msg)
 
@@ -3626,24 +3577,13 @@ contains
         call check_test(error, 'test_lanczos_bidiag_factorization_cdp', &
                               & info='Factorization', eq='A @ V = U_ @ B_', context=msg)
 
-        ! Compute Gram matrix associated to the left Krylov basis.
-        allocate(G(kdim, kdim), source=zero_cdp)
-        G = Gram(U(:kdim))
-
         ! Check orthonormality of the left basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(U(:kdim)))
         call check_test(error, 'test_lanczos_bidiag_factorization_cdp', &
                               & info='Basis orthonormality (left)', eq='U.H @ U = I', context=msg)
 
-        ! Compute Gram matrix associated to the right Krylov basis.
-        G = Gram(V(:kdim))
-
         ! Check orthonormality of the right basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(V(:kdim)))
         call check_test(error, 'test_lanczos_bidiag_factorization_cdp', &
                               & info='Basis orthonormality (right)', eq='V.H @ V = I', context=msg)
 
@@ -3768,14 +3708,8 @@ contains
         call check_test(error, 'test_lanczos_tridiag_factorization_rsp', &
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
-        ! Compute Gram matrix associated to the right Krylov basis.
-        allocate(G(kdim, kdim), source=zero_rsp)
-        G = Gram(X(:kdim))
-
         ! Check orthonormality of the Krylov basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(X(:kdim)))
         call check_test(error, 'test_lanczos_tridiag_factorization_rsp', &
                                  & info='Orthornomality', eq='X.H @ X = I', context=msg)
 
@@ -3895,14 +3829,8 @@ contains
         call check_test(error, 'test_lanczos_tridiag_factorization_rdp', &
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
-        ! Compute Gram matrix associated to the right Krylov basis.
-        allocate(G(kdim, kdim), source=zero_rdp)
-        G = Gram(X(:kdim))
-
         ! Check orthonormality of the Krylov basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(X(:kdim)))
         call check_test(error, 'test_lanczos_tridiag_factorization_rdp', &
                                  & info='Orthornomality', eq='X.H @ X = I', context=msg)
 
@@ -4022,14 +3950,8 @@ contains
         call check_test(error, 'test_lanczos_tridiag_factorization_csp', &
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
-        ! Compute Gram matrix associated to the right Krylov basis.
-        allocate(G(kdim, kdim), source=zero_csp)
-        G = Gram(X(:kdim))
-
         ! Check orthonormality of the Krylov basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(X(:kdim)))
         call check_test(error, 'test_lanczos_tridiag_factorization_csp', &
                                  & info='Orthornomality', eq='X.H @ X = I', context=msg)
 
@@ -4149,14 +4071,8 @@ contains
         call check_test(error, 'test_lanczos_tridiag_factorization_cdp', &
                                  & info='Factorization', eq='A @ X = X_ @ T_', context=msg)
 
-        ! Compute Gram matrix associated to the right Krylov basis.
-        allocate(G(kdim, kdim), source=zero_cdp)
-        G = Gram(X(:kdim))
-
         ! Check orthonormality of the Krylov basis.
-        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(X(:kdim)))
         call check_test(error, 'test_lanczos_tridiag_factorization_cdp', &
                                  & info='Orthornomality', eq='X.H @ X = I', context=msg)
 
@@ -4216,19 +4132,12 @@ contains
                         procedure="test_ssy_tridiag_factorization_rsp")
 
         ! Orthogonality of the column-span basis.
-        allocate(G(kdim, kdim), source=zero_rsp)
-        G = Gram(U(:kdim)) ; call save_npy("UG_matrix.npy", G)
-        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(U(:kdim)))
         call check_test(error, 'test_ssy_tridiag_factorization_rsp', &
                                  & info='Orthornomality', eq='U.H @ U = I', context=msg)
 
         ! Orthogonality of the row-span basis.
-        G = Gram(V(:kdim))
-        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(V(:kdim)))
         call check_test(error, 'test_ssy_tridiag_factorization_rsp', &
                                  & info='Orthonormality', eq='V.H @ V = I', context=msg)
 
@@ -4298,19 +4207,12 @@ contains
                         procedure="test_ssy_tridiag_factorization_rdp")
 
         ! Orthogonality of the column-span basis.
-        allocate(G(kdim, kdim), source=zero_rdp)
-        G = Gram(U(:kdim)) ; call save_npy("UG_matrix.npy", G)
-        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(U(:kdim)))
         call check_test(error, 'test_ssy_tridiag_factorization_rdp', &
                                  & info='Orthornomality', eq='U.H @ U = I', context=msg)
 
         ! Orthogonality of the row-span basis.
-        G = Gram(V(:kdim))
-        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(V(:kdim)))
         call check_test(error, 'test_ssy_tridiag_factorization_rdp', &
                                  & info='Orthonormality', eq='V.H @ V = I', context=msg)
 
@@ -4380,19 +4282,12 @@ contains
                         procedure="test_ssy_tridiag_factorization_csp")
 
         ! Orthogonality of the column-span basis.
-        allocate(G(kdim, kdim), source=zero_csp)
-        G = Gram(U(:kdim)) ; call save_npy("UG_matrix.npy", G)
-        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(U(:kdim)))
         call check_test(error, 'test_ssy_tridiag_factorization_csp', &
                                  & info='Orthornomality', eq='U.H @ U = I', context=msg)
 
         ! Orthogonality of the row-span basis.
-        G = Gram(V(:kdim))
-        err = maxval(abs(G - eye(kdim, mold=1.0_sp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_sp)
+        call check(error, is_orthonormal(V(:kdim)))
         call check_test(error, 'test_ssy_tridiag_factorization_csp', &
                                  & info='Orthonormality', eq='V.H @ V = I', context=msg)
 
@@ -4462,19 +4357,12 @@ contains
                         procedure="test_ssy_tridiag_factorization_cdp")
 
         ! Orthogonality of the column-span basis.
-        allocate(G(kdim, kdim), source=zero_cdp)
-        G = Gram(U(:kdim)) ; call save_npy("UG_matrix.npy", G)
-        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(U(:kdim)))
         call check_test(error, 'test_ssy_tridiag_factorization_cdp', &
                                  & info='Orthornomality', eq='U.H @ U = I', context=msg)
 
         ! Orthogonality of the row-span basis.
-        G = Gram(V(:kdim))
-        err = maxval(abs(G - eye(kdim, mold=1.0_dp)))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < rtol_dp)
+        call check(error, is_orthonormal(V(:kdim)))
         call check_test(error, 'test_ssy_tridiag_factorization_cdp', &
                                  & info='Orthonormality', eq='V.H @ V = I', context=msg)
 
@@ -4521,8 +4409,6 @@ contains
         ! Test vectors.
         integer, parameter :: kdim = test_size
         type(vector_rsp), allocatable :: X(:)
-        ! Gram matrix.
-        real(sp), allocatable :: G(:,:)
         ! Miscellaneous.
         real(sp) :: err
         character(len=256) :: msg
@@ -4643,8 +4529,6 @@ contains
         ! Test vectors.
         integer, parameter :: kdim = test_size
         type(vector_rdp), allocatable :: X(:)
-        ! Gram matrix.
-        real(dp), allocatable :: G(:,:)
         ! Miscellaneous.
         real(dp) :: err
         character(len=256) :: msg
@@ -4765,8 +4649,6 @@ contains
         ! Test vectors.
         integer, parameter :: kdim = test_size
         type(vector_csp), allocatable :: X(:)
-        ! Gram matrix.
-        complex(sp), allocatable :: G(:,:)
         ! Miscellaneous.
         real(sp) :: err
         character(len=256) :: msg
@@ -4887,8 +4769,6 @@ contains
         ! Test vectors.
         integer, parameter :: kdim = test_size
         type(vector_cdp), allocatable :: X(:)
-        ! Gram matrix.
-        complex(dp), allocatable :: G(:,:)
         ! Miscellaneous.
         real(dp) :: err
         character(len=256) :: msg
