@@ -240,13 +240,10 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            block
-                class(abstract_vector_rsp), allocatable :: dx
-                call linear_combination(dx, V(:k), e(:k))
-                if (ifprecond) call preconditioner%apply(dx)
-                call x%add(dx)
-                call dx%free()
-            end block
+            ! dx = V e, computed in the (idle) work vector to avoid an allocation per restart.
+            call linear_combination(wrk, V(:k), e(:k))
+            if (ifprecond) call preconditioner%apply(wrk)
+            call x%add(wrk)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -443,13 +440,10 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            block
-                class(abstract_vector_rdp), allocatable :: dx
-                call linear_combination(dx, V(:k), e(:k))
-                if (ifprecond) call preconditioner%apply(dx)
-                call x%add(dx)
-                call dx%free()
-            end block
+            ! dx = V e, computed in the (idle) work vector to avoid an allocation per restart.
+            call linear_combination(wrk, V(:k), e(:k))
+            if (ifprecond) call preconditioner%apply(wrk)
+            call x%add(wrk)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -646,13 +640,10 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            block
-                class(abstract_vector_csp), allocatable :: dx
-                call linear_combination(dx, V(:k), e(:k))
-                if (ifprecond) call preconditioner%apply(dx)
-                call x%add(dx)
-                call dx%free()
-            end block
+            ! dx = V e, computed in the (idle) work vector to avoid an allocation per restart.
+            call linear_combination(wrk, V(:k), e(:k))
+            if (ifprecond) call preconditioner%apply(wrk)
+            call x%add(wrk)
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -849,13 +840,10 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            block
-                class(abstract_vector_cdp), allocatable :: dx
-                call linear_combination(dx, V(:k), e(:k))
-                if (ifprecond) call preconditioner%apply(dx)
-                call x%add(dx)
-                call dx%free()
-            end block
+            ! dx = V e, computed in the (idle) work vector to avoid an allocation per restart.
+            call linear_combination(wrk, V(:k), e(:k))
+            if (ifprecond) call preconditioner%apply(wrk)
+            call x%add(wrk)
 
             ! Recompute residual for sanity check.
             if (trans) then

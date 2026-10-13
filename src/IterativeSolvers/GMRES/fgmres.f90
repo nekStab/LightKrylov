@@ -126,7 +126,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'fgmres_rsp'
-        integer :: k, iostat
+        integer :: i, k, iostat
         class(abstract_vector_rsp), allocatable :: wrk
         character(len=256) :: msg
 
@@ -247,12 +247,10 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            block
-                class(abstract_vector_rsp), allocatable :: dx
-                call linear_combination(dx, Z(:k), e(:k))
-                call x%add(dx)
-                call dx%free()
-            end block
+            ! x <- x + Z e, accumulated directly into x (no temporary vector).
+            do i = 1, k
+                call x%axpby(e(i), Z(i), one_rsp)
+            enddo
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -333,7 +331,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'fgmres_rdp'
-        integer :: k, iostat
+        integer :: i, k, iostat
         class(abstract_vector_rdp), allocatable :: wrk
         character(len=256) :: msg
 
@@ -454,12 +452,10 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            block
-                class(abstract_vector_rdp), allocatable :: dx
-                call linear_combination(dx, Z(:k), e(:k))
-                call x%add(dx)
-                call dx%free()
-            end block
+            ! x <- x + Z e, accumulated directly into x (no temporary vector).
+            do i = 1, k
+                call x%axpby(e(i), Z(i), one_rdp)
+            enddo
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -540,7 +536,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'fgmres_csp'
-        integer :: k, iostat
+        integer :: i, k, iostat
         class(abstract_vector_csp), allocatable :: wrk
         character(len=256) :: msg
 
@@ -661,12 +657,10 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            block
-                class(abstract_vector_csp), allocatable :: dx
-                call linear_combination(dx, Z(:k), e(:k))
-                call x%add(dx)
-                call dx%free()
-            end block
+            ! x <- x + Z e, accumulated directly into x (no temporary vector).
+            do i = 1, k
+                call x%axpby(e(i), Z(i), one_csp)
+            enddo
 
             ! Recompute residual for sanity check.
             if (trans) then
@@ -747,7 +741,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'fgmres_cdp'
-        integer :: k, iostat
+        integer :: i, k, iostat
         class(abstract_vector_cdp), allocatable :: wrk
         character(len=256) :: msg
 
@@ -868,12 +862,10 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            block
-                class(abstract_vector_cdp), allocatable :: dx
-                call linear_combination(dx, Z(:k), e(:k))
-                call x%add(dx)
-                call dx%free()
-            end block
+            ! x <- x + Z e, accumulated directly into x (no temporary vector).
+            do i = 1, k
+                call x%axpby(e(i), Z(i), one_cdp)
+            enddo
 
             ! Recompute residual for sanity check.
             if (trans) then

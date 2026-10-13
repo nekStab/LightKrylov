@@ -85,7 +85,7 @@ contains
 
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'fgmres_${type[0]}$${kind}$'
-        integer :: k, iostat
+        integer :: i, k, iostat
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
         character(len=256) :: msg
 
@@ -206,12 +206,10 @@ contains
             ! Update solution.
             k = min(k, kdim)
             y(1:k, 1:1) => e(:k) ; call trtrs("u", "n", "n", k, 1, H(:k, :k), k, y, k, info)
-            block
-                class(abstract_vector_${type[0]}$${kind}$), allocatable :: dx
-                call linear_combination(dx, Z(:k), e(:k))
-                call x%add(dx)
-                call dx%free()
-            end block
+            ! x <- x + Z e, accumulated directly into x (no temporary vector).
+            do i = 1, k
+                call x%axpby(e(i), Z(i), one_${type[0]}$${kind}$)
+            enddo
 
             ! Recompute residual for sanity check.
             if (trans) then
