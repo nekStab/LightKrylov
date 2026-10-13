@@ -22,6 +22,7 @@ module LightKrylov_ExpmLib
     use LightKrylov_AbstractVectors
     use LightKrylov_AbstractLinops
     use LightKrylov_BaseKrylov
+    use LightKrylov_Timing, only: timer => global_lightkrylov_timer, time_lightkrylov
 
     implicit none(type, external)
     private
@@ -173,6 +174,71 @@ module LightKrylov_ExpmLib
     end type kexpm_dp_metadata
 
 
+    !--------------------------------------------------------
+    !-----     Reusable workspace (Krylov basis, H, E)     -----
+    !--------------------------------------------------------
+
+    type, public :: kexpm_workspace_rsp
+        !! Reusable workspace for `kexpm` and `kexpm_substep`: the Krylov basis `X`, the Hessenberg
+        !! matrix `H` and the dense exponential `E`. Pass the same object (`work=`) to successive
+        !! calls: it is allocated on first use and only re-allocated when it is too small, or when
+        !! the type or size of the vectors changes. Call `free()` to release the memory.
+        private
+        class(abstract_vector_rsp), allocatable :: X(:)
+        real(sp), allocatable :: H(:, :)
+        real(sp), allocatable :: Ebuf(:)
+        !! Contiguous storage for the dense exponential (n x n, column-major), so that stdlib's
+        !! `matrix_exp` never needs a temporary copy of a non-contiguous section.
+    contains
+        procedure, pass(self), public :: free => free_kexpm_workspace_rsp
+    end type kexpm_workspace_rsp
+
+    type, public :: kexpm_workspace_rdp
+        !! Reusable workspace for `kexpm` and `kexpm_substep`: the Krylov basis `X`, the Hessenberg
+        !! matrix `H` and the dense exponential `E`. Pass the same object (`work=`) to successive
+        !! calls: it is allocated on first use and only re-allocated when it is too small, or when
+        !! the type or size of the vectors changes. Call `free()` to release the memory.
+        private
+        class(abstract_vector_rdp), allocatable :: X(:)
+        real(dp), allocatable :: H(:, :)
+        real(dp), allocatable :: Ebuf(:)
+        !! Contiguous storage for the dense exponential (n x n, column-major), so that stdlib's
+        !! `matrix_exp` never needs a temporary copy of a non-contiguous section.
+    contains
+        procedure, pass(self), public :: free => free_kexpm_workspace_rdp
+    end type kexpm_workspace_rdp
+
+    type, public :: kexpm_workspace_csp
+        !! Reusable workspace for `kexpm` and `kexpm_substep`: the Krylov basis `X`, the Hessenberg
+        !! matrix `H` and the dense exponential `E`. Pass the same object (`work=`) to successive
+        !! calls: it is allocated on first use and only re-allocated when it is too small, or when
+        !! the type or size of the vectors changes. Call `free()` to release the memory.
+        private
+        class(abstract_vector_csp), allocatable :: X(:)
+        complex(sp), allocatable :: H(:, :)
+        complex(sp), allocatable :: Ebuf(:)
+        !! Contiguous storage for the dense exponential (n x n, column-major), so that stdlib's
+        !! `matrix_exp` never needs a temporary copy of a non-contiguous section.
+    contains
+        procedure, pass(self), public :: free => free_kexpm_workspace_csp
+    end type kexpm_workspace_csp
+
+    type, public :: kexpm_workspace_cdp
+        !! Reusable workspace for `kexpm` and `kexpm_substep`: the Krylov basis `X`, the Hessenberg
+        !! matrix `H` and the dense exponential `E`. Pass the same object (`work=`) to successive
+        !! calls: it is allocated on first use and only re-allocated when it is too small, or when
+        !! the type or size of the vectors changes. Call `free()` to release the memory.
+        private
+        class(abstract_vector_cdp), allocatable :: X(:)
+        complex(dp), allocatable :: H(:, :)
+        complex(dp), allocatable :: Ebuf(:)
+        !! Contiguous storage for the dense exponential (n x n, column-major), so that stdlib's
+        !! `matrix_exp` never needs a temporary copy of a non-contiguous section.
+    contains
+        procedure, pass(self), public :: free => free_kexpm_workspace_cdp
+    end type kexpm_workspace_cdp
+
+
     abstract interface
         subroutine abstract_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
             !! Abstract interface to define the matrix exponential-vector product.
@@ -265,7 +331,7 @@ module LightKrylov_ExpmLib
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call kexpm(c, A, b, tau, tol, info [, trans] [, kdim] [, X])
+        !!      call kexpm(c, A, b, tau, tol, info [, trans] [, kdim] [, X] [, work])
         !!  ```
         !!
         !!  ### Arguments
@@ -302,6 +368,10 @@ module LightKrylov_ExpmLib
         !!                              multiple of the block size `p` and at least `2p`. When present,
         !!                              no Krylov vector is allocated and the number of steps is
         !!                              `min(kdim, size(X)/p - 1)`. On exit it contains the Krylov basis.
+        !!
+        !!  - `work` (optional)     :   `kexpm_workspace_*` object re-used between calls. It holds the
+        !!                              Krylov basis (unless `X` is given), the Hessenberg matrix and the
+        !!                              dense exponential: after the first call, no memory is allocated.
         module procedure kexpm_vec_rsp
         module procedure kexpm_mat_rsp
         module procedure kexpm_vec_rdp
@@ -332,27 +402,46 @@ module LightKrylov_ExpmLib
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call kexpm_substep(c, A, b, tau, tol, info [, trans] [, options] [, meta])
+        !!      call kexpm_substep(c, A, b, tau, tol, info [, trans] [, options] [, meta] [, work])
+        !!      call kexpm_substep(C, A, B, tau, tol, info [, trans] [, options] [, meta] [, work])
         !!  ```
+        !!
+        !!  **Basis version.** For `B(:)`, each column is propagated by the single-vector algorithm,
+        !!  in order, sharing one workspace and one metadata object. The sub-step count learned on the
+        !!  first columns is re-used by the following ones and by later calls; `meta%n_calls` counts
+        !!  columns. Columns are treated separately rather than with block Arnoldi on purpose: the
+        !!  linear operator is applied one vector at a time, so a block Krylov basis needs the same
+        !!  number of matvecs but p times more orthogonalization (and its running block would
+        !!  eventually become rank deficient, which block Arnoldi cannot handle without deflation).
         !!
         !!  ### Arguments
         !!
-        !!  - `c`       :   Output vector. `intent(out)`.
+        !!  - `c` / `C(:)`  :   Output vector(s). `intent(out)`.
         !!  - `A`       :   Linear operator to be exponentiated. `intent(inout)`.
-        !!  - `b`       :   Input vector. `intent(in)`.
+        !!  - `b` / `B(:)`  :   Input vector(s). `intent(in)`. For the basis version, `tol` applies to
+        !!                      each column.
         !!  - `tau`     :   Time horizon (may be negative). `intent(in)`.
         !!  - `tol`     :   Absolute tolerance on the accumulated error estimate. `intent(in)`.
         !!  - `info`    :   Total number of matrix-vector products on success, -1 if not converged,
         !!                  -4 if `opts%kdim < 1`, -5 if `tol < 0`, -7 if `opts%max_rejections < 1`
         !!                  or `opts%max_substeps < 1` (nothing is computed for invalid inputs).
+        !!                  Basis version: total over the columns on success, -6 if `B` is empty or
+        !!                  `size(C) /= size(B)`; on failure, the code of the first failing column is
+        !!                  returned and the following columns are not computed.
         !!  - `trans` (optional)   :   Use \( A^H \) instead of \( A \) (default `.false.`).
         !!  - `options` (optional) :   `kexpm_sp_opts` / `kexpm_dp_opts`.
         !!  - `meta` (optional)    :   `kexpm_sp_metadata` / `kexpm_dp_metadata`, `intent(inout)`:
         !!                             counters and learned settings, kept between calls.
-        module procedure kexpm_substep_rsp
-        module procedure kexpm_substep_rdp
-        module procedure kexpm_substep_csp
-        module procedure kexpm_substep_cdp
+        !!  - `work` (optional)    :   `kexpm_workspace_*` object re-used between calls (Krylov basis,
+        !!                             H and E): after the first call, no memory is allocated.
+        module procedure kexpm_substep_vec_rsp
+        module procedure kexpm_substep_mat_rsp
+        module procedure kexpm_substep_vec_rdp
+        module procedure kexpm_substep_mat_rdp
+        module procedure kexpm_substep_vec_csp
+        module procedure kexpm_substep_mat_csp
+        module procedure kexpm_substep_vec_cdp
+        module procedure kexpm_substep_mat_cdp
     end interface
 
     interface krylov_exptA
@@ -394,7 +483,7 @@ contains
     !-----     Public driver : single vector, fixed time horizon     -----
     !-------------------------------------------------------------------
 
-    subroutine kexpm_vec_rsp(c, A, b, tau, tol, info, trans, kdim, X)
+    subroutine kexpm_vec_rsp(c, A, b, tau, tol, info, trans, kdim, X, work)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_rsp), intent(out) :: c
@@ -414,13 +503,14 @@ contains
         integer, optional, intent(in) :: kdim
         !! Maximum number of Arnoldi steps.
         class(abstract_vector_rsp), optional, intent(inout) :: X(:)
-        !! Optional workspace for the Krylov basis (avoids allocating it at every call).
+        !! Optional user-supplied Krylov basis (takes precedence over the one in `work`).
+        type(kexpm_workspace_rsp), optional, intent(inout) :: work
+        !! Optional reusable workspace (basis, H, E): no allocation after the first call.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_rsp'
-        class(abstract_vector_rsp), allocatable :: Xloc(:)
-        integer :: nsteps, iostat
-        character(len=256) :: msg
+        type(kexpm_workspace_rsp) :: wloc
+        integer :: nsteps
 
         ! Sanity checks (no work is done for invalid inputs).
         info = 0
@@ -436,21 +526,48 @@ contains
             return
         endif
 
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
         if (present(X)) then
             nsteps = min(optval(kdim, size(X)-1), size(X)-1)
-            call kexpm_vec_kernel_rsp(c, A, b, tau, tol, info, optval(trans, .false.), X(:nsteps+1))
         else
             nsteps = optval(kdim, kmax)
-            ! `mold` : no copy of b into every basis vector (the kernel zeroes the basis anyway).
-            allocate(Xloc(nsteps+1), mold=b, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            call kexpm_vec_kernel_rsp(c, A, b, tau, tol, info, optval(trans, .false.), Xloc)
-            ! Xloc is allocatable: automatically deallocated on return (no leak).
         endif
+
+        if (present(work)) then
+            call kexpm_vec_dispatch_rsp(c, A, b, tau, tol, info, optval(trans, .false.), nsteps+1, work, X)
+        else
+            ! Local workspace: deallocated automatically on return.
+            call kexpm_vec_dispatch_rsp(c, A, b, tau, tol, info, optval(trans, .false.), nsteps+1, wloc, X)
+        endif
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine kexpm_vec_rsp
 
-    subroutine kexpm_vec_kernel_rsp(c, A, b, tau, tol, info, transpose, X)
-        !! Worker for `kexpm_vec`: the Krylov basis `X` is a plain (non-optional) dummy argument.
+    subroutine kexpm_vec_dispatch_rsp(c, A, b, tau, tol, info, transpose, nvec, work, X)
+        !! Selects the Krylov basis (user `X` or workspace) and sizes the workspace.
+        implicit none(type, external)
+        class(abstract_vector_rsp), intent(out) :: c
+        class(abstract_linop_rsp), intent(inout) :: A
+        class(abstract_vector_rsp), intent(in) :: b
+        real(sp), intent(in) :: tau, tol
+        integer, intent(out) :: info
+        logical, intent(in) :: transpose
+        integer, intent(in) :: nvec
+        type(kexpm_workspace_rsp), intent(inout) :: work
+        class(abstract_vector_rsp), optional, intent(inout) :: X(:)
+
+        call ensure_dense_rsp(work, nvec)
+        if (present(X)) then
+            call kexpm_vec_kernel_rsp(c, A, b, tau, tol, info, transpose, X(:nvec), work%H, work%Ebuf)
+        else
+            call ensure_basis_rsp(work, nvec, b)
+            call kexpm_vec_kernel_rsp(c, A, b, tau, tol, info, transpose, work%X(:nvec), work%H, work%Ebuf)
+        endif
+    end subroutine kexpm_vec_dispatch_rsp
+
+    subroutine kexpm_vec_kernel_rsp(c, A, b, tau, tol, info, transpose, X, H, Ebuf)
+        !! Worker for `kexpm_vec`. No allocation: X, H and Ebuf are provided by the caller.
         implicit none(type, external)
         class(abstract_vector_rsp), intent(out) :: c
         class(abstract_linop_rsp), intent(inout) :: A
@@ -459,39 +576,36 @@ contains
         integer, intent(out) :: info
         logical, intent(in) :: transpose
         class(abstract_vector_rsp), intent(inout) :: X(:)
+        real(sp), intent(inout) :: H(:, :)
+        real(sp), intent(inout), target, contiguous :: Ebuf(:)
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_rsp'
-        real(sp), allocatable :: H(:, :), E(:, :)
         real(sp) :: beta, err_est
-        integer :: nk, kp, ksteps, iostat
+        integer :: kp, ksteps
         logical :: breakdown
         character(len=256) :: msg
 
-        nk = size(X) - 1
-
         beta = b%norm()
         if (beta == 0.0_sp) then
-            ! Input is zero => Output is zero.
-            call c%zero()
+            ! Input is zero => Output is zero. `copy` (not `zero`): c is intent(out), its components
+            ! are reset on entry and must not be relied upon (e.g. the size of a dense_vector).
+            call copy(c, b)
             info = 1
             call log_information('Zero input vector, zero output.', this_module, this_procedure)
             return
         endif
 
-        allocate(H(nk+1, nk+1), E(nk+1, nk+1), source=zero_rsp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-
-        ! Initialize Krylov subspace with the normalized input vector.
-        call zero_basis(X)
-        call X(1)%add(b) ; call X(1)%scal(one_rsp / beta)
+        ! Initialize the Krylov subspace with the normalized input vector. Only X(1) is set:
+        ! every other basis vector is overwritten by the matrix-vector product before being used.
+        call X(1)%zero() ; call X(1)%axpby(one_rsp / beta, b, one_rsp)
 
         ! Grow the Krylov subspace until the error estimate is below tol.
-        call arnoldi_expm_rsp(A, X, H, E, beta, tau, tol, transpose, &
+        call arnoldi_expm_rsp(A, X, H, Ebuf, beta, tau, tol, transpose, &
                                               & ksteps, kp, err_est, breakdown)
 
         ! Single projection back onto the full space: c = beta * X(:kp) @ E(:kp, 1).
-        call project_rsp(c, X(:kp), beta*E(:kp, 1))
+        call project_rsp(c, X(:kp), Ebuf(:kp), beta)
 
         if (err_est <= tol) then
             info = kp
@@ -509,7 +623,7 @@ contains
     !-----     Public driver : block version, fixed horizon     -----
     !----------------------------------------------------------------
 
-    subroutine kexpm_mat_rsp(C, A, B, tau, tol, info, trans, kdim, X)
+    subroutine kexpm_mat_rsp(C, A, B, tau, tol, info, trans, kdim, X, work)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
         class(abstract_vector_rsp), intent(out) :: C(:)
@@ -529,13 +643,14 @@ contains
         integer, optional, intent(in) :: kdim
         !! Maximum number of block-Arnoldi steps.
         class(abstract_vector_rsp), optional, intent(inout) :: X(:)
-        !! Optional workspace for the block Krylov basis (size multiple of size(B)).
+        !! Optional user-supplied block Krylov basis (size multiple of size(B)).
+        type(kexpm_workspace_rsp), optional, intent(inout) :: work
+        !! Optional reusable workspace (basis, H, E): no allocation after the first call.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_rsp'
-        class(abstract_vector_rsp), allocatable :: Xloc(:)
-        integer :: p, nsteps, iostat
-        character(len=256) :: msg
+        type(kexpm_workspace_rsp) :: wloc
+        integer :: p, nsteps
 
         p = size(B)
 
@@ -555,21 +670,48 @@ contains
             return
         endif
 
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! NOTE: kdim counts block steps. The basis holds p*(kdim+1) vectors.
         if (present(X)) then
             nsteps = min(optval(kdim, size(X)/p - 1), size(X)/p - 1)
-            call kexpm_mat_kernel_rsp(C, A, B, tau, tol, info, optval(trans, .false.), X(:p*(nsteps+1)))
         else
-            ! NOTE: kdim counts block steps. The basis holds p*(kdim+1) vectors
-            !       (previously p*(p*kdim+1) because the block size was counted twice).
             nsteps = optval(kdim, kmax)
-            allocate(Xloc(p*(nsteps+1)), mold=B(1), stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            call kexpm_mat_kernel_rsp(C, A, B, tau, tol, info, optval(trans, .false.), Xloc)
         endif
+
+        if (present(work)) then
+            call kexpm_mat_dispatch_rsp(C, A, B, tau, tol, info, optval(trans, .false.), p*(nsteps+1), work, X)
+        else
+            call kexpm_mat_dispatch_rsp(C, A, B, tau, tol, info, optval(trans, .false.), p*(nsteps+1), wloc, X)
+        endif
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine kexpm_mat_rsp
 
-    subroutine kexpm_mat_kernel_rsp(C, A, B, tau, tol, info, transpose, X)
-        !! Worker for `kexpm_mat`.
+    subroutine kexpm_mat_dispatch_rsp(C, A, B, tau, tol, info, transpose, nvec, work, X)
+        !! Selects the block Krylov basis (user `X` or workspace) and sizes the workspace.
+        implicit none(type, external)
+        class(abstract_vector_rsp), intent(out) :: C(:)
+        class(abstract_linop_rsp), intent(inout) :: A
+        class(abstract_vector_rsp), intent(in) :: B(:)
+        real(sp), intent(in) :: tau, tol
+        integer, intent(out) :: info
+        logical, intent(in) :: transpose
+        integer, intent(in) :: nvec
+        type(kexpm_workspace_rsp), intent(inout) :: work
+        class(abstract_vector_rsp), optional, intent(inout) :: X(:)
+
+        call ensure_dense_rsp(work, nvec)
+        if (present(X)) then
+            call kexpm_mat_kernel_rsp(C, A, B, tau, tol, info, transpose, X(:nvec), work%H, work%Ebuf)
+        else
+            call ensure_basis_rsp(work, nvec, B(1))
+            call kexpm_mat_kernel_rsp(C, A, B, tau, tol, info, transpose, work%X(:nvec), work%H, work%Ebuf)
+        endif
+    end subroutine kexpm_mat_dispatch_rsp
+
+    subroutine kexpm_mat_kernel_rsp(C, A, B, tau, tol, info, transpose, X, H, Ebuf)
+        !! Worker for `kexpm_mat`. The basis X, H and Ebuf are provided by the caller.
         implicit none(type, external)
         class(abstract_vector_rsp), intent(out) :: C(:)
         class(abstract_linop_rsp), intent(inout) :: A
@@ -578,35 +720,35 @@ contains
         integer, intent(out) :: info
         logical, intent(in) :: transpose
         class(abstract_vector_rsp), intent(inout) :: X(:)
+        real(sp), intent(inout) :: H(:, :)
+        real(sp), intent(inout), target, contiguous :: Ebuf(:)
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_rsp'
-        real(sp), allocatable :: H(:, :), E(:, :), R(:, :), coef(:, :)
-        integer, allocatable :: perm(:)
+        real(sp) :: R(size(B), size(B))
+        real(sp), pointer, contiguous :: E(:, :)
+        integer :: perm(size(B))
         real(sp) :: err_est
-        integer :: p, nk, k, kpm, kp, kpp, iostat
+        integer :: p, nk, k, kpm, kp, kpp, i
         logical :: breakdown, partial_breakdown
         character(len=256) :: msg
 
         p  = size(B)
         nk = size(X)/p - 1
-
-        allocate(R(p, p), H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), &
-                 source=zero_rsp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(perm(p), source=0, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
+        R = zero_rsp ; perm = 0
 
         ! Orthonormalize the input block directly inside the Krylov basis: B = X(:p) @ R.
-        call zero_basis(X)
-        call copy(X(:p), B)
+        ! Only X(:p) is set: the other basis vectors are overwritten by the matvecs before use.
+        do i = 1, p
+            call X(i)%zero() ; call X(i)%axpby(one_rsp, B(i), one_rsp)
+        enddo
         call qr(X(:p), R, perm, info)
         call check_info(info, 'qr_pivot', this_module, this_procedure)
         call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_sp) then
-            ! Input matrix is zero.
-            call zero_basis(C)
+            ! Input matrix is zero (C is intent(out): rebuilt from B rather than zeroed in place).
+            call copy(C, B)
             info = p
             call log_information('Zero input block, zero output.', this_module, this_procedure)
             return
@@ -635,13 +777,15 @@ contains
             if (breakdown) then
                 ! Exact invariant subspace: do not consider the extended matrix.
                 kpp = kp
-                call small_expm_rsp(E, H, kpp, kpp, tau)
+                call small_expm_rsp(Ebuf, H, kpp, kpp, tau)
+                E(1:kpp, 1:kpp) => Ebuf(1:kpp*kpp)
                 err_est = 0.0_sp
                 exit expm_arnoldi
             endif
 
             ! Dense exponential of the extended block-Hessenberg matrix.
-            call small_expm_rsp(E, H, kpp, kp, tau)
+            call small_expm_rsp(Ebuf, H, kpp, kp, tau)
+            E(1:kpp, 1:kpp) => Ebuf(1:kpp*kpp)
 
             ! Cheap (conservative) error estimate.
             err_est = mnorm(matmul(E(kp+1:kpp, :p), R), "fro")
@@ -650,8 +794,7 @@ contains
         enddo expm_arnoldi
 
         ! Single projection back to the full space: C = X(:kpp) @ (E(:kpp, :p) @ R).
-        coef = matmul(E(:kpp, :p), R)
-        call project_block_rsp(C, X(:kpp), coef)
+        call project_block_rsp(C, X(:kpp), matmul(E(:kpp, :p), R))
 
         if (err_est <= tol) then
             info = kpp
@@ -697,16 +840,110 @@ contains
         character(len=*), parameter :: this_procedure = 'krylov_exptA_rsp'
         real(sp) :: tol
 
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
         ! Tolerance relative to the norm of the input (identical to the former atol for unit vectors).
         tol = atol_sp * vec_in%norm()
 
-        call kexpm_substep_rsp(vec_out, A, vec_in, tau, tol, info, trans=trans)
+        call kexpm_substep_vec_rsp(vec_out, A, vec_in, tau, tol, info, trans=trans)
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         call check_info(info, 'kexpm', this_module, this_procedure)
     end subroutine krylov_exptA_rsp
 
-    subroutine kexpm_substep_rsp(c, A, b, tau, tol, info, trans, options, meta)
+    subroutine kexpm_substep_vec_rsp(c, A, b, tau, tol, info, trans, options, meta, work)
         !! Sub-stepped Krylov approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) with optional
-        !! warm start (see the `kexpm_substep` interface).
+        !! warm start and reusable workspace (see the `kexpm_substep` interface).
+        implicit none(type, external)
+        class(abstract_vector_rsp), intent(out) :: c
+        class(abstract_linop_rsp), intent(inout) :: A
+        class(abstract_vector_rsp), intent(in) :: b
+        real(sp), intent(in) :: tau, tol
+        integer, intent(out) :: info
+        logical, optional, intent(in) :: trans
+        class(abstract_opts), optional, intent(in) :: options
+        class(abstract_metadata), optional, intent(inout) :: meta
+        type(kexpm_workspace_rsp), optional, intent(inout) :: work
+        !! Optional reusable workspace (basis, H, E): no allocation after the first call.
+        character(len=*), parameter :: this_procedure = 'kexpm_substep_vec_rsp'
+        type(kexpm_workspace_rsp) :: wloc
+
+        ! Sanity checks before the timer starts (invalid calls are not timed, nothing is computed).
+        call check_substep_inputs_sp(tol, options, info, this_procedure)
+        if (info /= 0) return
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+        if (present(work)) then
+            call kexpm_substep_vec_impl_rsp(c, A, b, tau, tol, info, work, trans, options, meta)
+        else
+            call kexpm_substep_vec_impl_rsp(c, A, b, tau, tol, info, wloc, trans, options, meta)
+        endif
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end subroutine kexpm_substep_vec_rsp
+
+    subroutine kexpm_substep_mat_rsp(C, A, B, tau, tol, info, trans, options, meta, work)
+        !! Sub-stepped Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \),
+        !! column by column with a shared workspace and metadata (see the `kexpm_substep` interface).
+        implicit none(type, external)
+        class(abstract_vector_rsp), intent(out) :: C(:)
+        !! Output vectors.
+        class(abstract_linop_rsp), intent(inout) :: A
+        !! Linear operator to be exponentiated.
+        class(abstract_vector_rsp), intent(in) :: B(:)
+        !! Input vectors.
+        real(sp), intent(in) :: tau
+        !! Time horizon (may be negative).
+        real(sp), intent(in) :: tol
+        !! Absolute tolerance on the accumulated error estimate, for each column.
+        integer, intent(out) :: info
+        !! Total number of matvecs on success, error code of the first failing column otherwise.
+        logical, optional, intent(in) :: trans
+        !! Use adjoint?
+        class(abstract_opts), optional, intent(in) :: options
+        !! `kexpm_sp_opts`.
+        class(abstract_metadata), optional, intent(inout) :: meta
+        !! `kexpm_sp_metadata`, shared by all columns.
+        type(kexpm_workspace_rsp), optional, intent(inout) :: work
+        !! Optional reusable workspace, shared by all columns.
+
+        ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'kexpm_substep_mat_rsp'
+        type(kexpm_workspace_rsp) :: wloc
+        integer :: j, info_j, nmatvec
+
+        ! Sanity checks before the timer starts (invalid calls are not timed, nothing is computed).
+        info = 0
+        if (size(B) < 1 .or. size(C) /= size(B)) then
+            info = -6
+            call log_kexpm_invalid_input(info, this_procedure)
+            return
+        endif
+        call check_substep_inputs_sp(tol, options, info, this_procedure)
+        if (info /= 0) return
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        nmatvec = 0
+        do j = 1, size(B)
+            if (present(work)) then
+                call kexpm_substep_vec_impl_rsp(C(j), A, B(j), tau, tol, info_j, work, trans, options, meta)
+            else
+                ! One local workspace for all the columns.
+                call kexpm_substep_vec_impl_rsp(C(j), A, B(j), tau, tol, info_j, wloc, trans, options, meta)
+            endif
+            if (info_j < 0) then
+                info = info_j
+                exit
+            endif
+            nmatvec = nmatvec + info_j
+        enddo
+        if (info == 0) info = nmatvec
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end subroutine kexpm_substep_mat_rsp
+
+    subroutine kexpm_substep_vec_impl_rsp(c, A, b, tau, tol, info, work, trans, options, meta)
+        !! Implementation of `kexpm_substep` (the workspace is always present here).
         implicit none(type, external)
         class(abstract_vector_rsp), intent(out) :: c
         !! Output vector.
@@ -720,6 +957,8 @@ contains
         !! Absolute tolerance on the accumulated error estimate.
         integer, intent(out) :: info
         !! Total number of matvecs on success, -1 otherwise.
+        type(kexpm_workspace_rsp), intent(inout) :: work
+        !! Workspace (basis, H, E).
         logical, optional, intent(in) :: trans
         !! Use adjoint?
         class(abstract_opts), optional, intent(in) :: options
@@ -728,14 +967,12 @@ contains
         !! `kexpm_sp_metadata` (counters and learned settings, kept between calls).
 
         ! ----- Internal variables -----
-        character(len=*), parameter :: this_procedure = 'kexpm_substep_rsp'
+        character(len=*), parameter :: this_procedure = 'kexpm_substep_vec_rsp'
         real(sp), parameter :: safety = 0.9_sp, fac_min = 0.2_sp, fac_max = 5.0_sp
         type(kexpm_sp_opts) :: opts
         type(kexpm_sp_metadata) :: lmeta
-        class(abstract_vector_rsp), allocatable :: X(:)
-        real(sp), allocatable :: H(:, :), E(:, :)
         real(sp) :: t_end, sgn, t, dt, beta, err, tol_loc, fac, floor_tol, tol_rel
-        integer :: m, ksteps, kp, nsub, nmatvec, nrej, nrej_tot, n_uniform, iostat
+        integer :: m, ksteps, kp, nsub, nmatvec, nrej, nrej_tot, n_uniform
         logical :: transpose, breakdown, last, uniform, used_uniform, fallback
         character(len=256) :: msg
 
@@ -758,19 +995,9 @@ contains
             end select
         endif
 
-        ! Sanity checks (no work is done and the metadata is left untouched for invalid inputs).
-        info = 0
-        if (opts%kdim < 1) then
-            info = -4
-        else if (tol < 0.0_sp) then
-            info = -5
-        else if (opts%max_rejections < 1 .or. opts%max_substeps < 1) then
-            info = -7
-        endif
-        if (info /= 0) then
-            call log_kexpm_invalid_input(info, this_procedure)
-            return
-        endif
+        ! Sanity checks (already done by the public drivers; kept so that the kernel is safe on its own).
+        call check_substep_inputs_sp(tol, options, info, this_procedure)
+        if (info /= 0) return
 
         transpose = optval(trans, .false.)
         m = opts%kdim
@@ -792,16 +1019,14 @@ contains
         uniform = used_uniform ; fallback = .false.
 
         ! c holds the running solution w(t).
-        call c%zero() ; call c%add(b)
+        call copy(c, b)
         beta = c%norm()
         t = 0.0_sp ; nsub = 0 ; nmatvec = 0 ; nrej_tot = 0 ; info = 0
 
         if (beta /= 0.0_sp .and. t_end /= 0.0_sp) then
-            ! Workspace (allocated once, reused by every sub-step).
-            allocate(X(m+1), mold=b, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            allocate(H(m+1, m+1), E(m+1, m+1), source=zero_rsp, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
+            ! Workspace: re-used by every sub-step, and across calls when `work` is passed.
+            call ensure_basis_rsp(work, m+1, b)
+            call ensure_dense_rsp(work, m+1)
 
             dt = merge(t_end/max(n_uniform, 1), t_end, uniform)
 
@@ -821,18 +1046,18 @@ contains
                 floor_tol = 2*epsilon(1.0_sp)*beta
                 tol_loc = max(tol*dt/t_end, floor_tol)
 
-                ! Fresh Krylov basis started from the current solution.
-                call zero_basis(X) ; H = zero_rsp
-                call X(1)%add(c) ; call X(1)%scal(one_rsp / beta)
+                ! Fresh Krylov basis started from the current solution. Only X(1) is set, and H needs
+                ! no reset: Arnoldi rewrites every entry on or above the subdiagonal that is used.
+                call work%X(1)%zero() ; call work%X(1)%axpby(one_rsp / beta, c, one_rsp)
 
-                call arnoldi_expm_rsp(A, X, H, E, beta, sgn*dt, tol_loc, transpose, &
+                call arnoldi_expm_rsp(A, work%X(:m+1), work%H, work%Ebuf, beta, sgn*dt, tol_loc, transpose, &
                                                       & ksteps, kp, err, breakdown)
                 nmatvec = nmatvec + ksteps
 
                 if (breakdown) then
                     ! Invariant subspace: exact for any dt, finish the horizon in one go.
                     dt = t_end - t ; last = .true.
-                    call small_expm_rsp(E, H, kp, kp, sgn*dt)
+                    call small_expm_rsp(work%Ebuf, work%H, kp, kp, sgn*dt)
                     err = 0.0_sp
                 else if (err > tol_loc) then
                     ! Krylov basis exhausted. Safety net: a learned uniform step that is too large
@@ -846,8 +1071,8 @@ contains
                         fac = min(safety, max(0.1_sp, safety*(tol_loc/err)**(1.0_sp/m)))
                         dt  = fac*dt
                         tol_loc = max(tol*dt/t_end, floor_tol)
-                        call small_expm_rsp(E, H, kp, ksteps, sgn*dt)
-                        err = beta*abs(E(kp, 1))
+                        call small_expm_rsp(work%Ebuf, work%H, kp, ksteps, sgn*dt)
+                        err = beta*abs(work%Ebuf(kp))
                         nrej_tot = nrej_tot + 1
                         if (err <= tol_loc) exit
                     enddo
@@ -857,7 +1082,7 @@ contains
                 endif
 
                 ! Advance: w(t+dt) = beta * X(:kp) @ E(:kp, 1).
-                call project_rsp(c, X(:kp), beta*E(:kp, 1))
+                call project_rsp(c, work%X(:kp), work%Ebuf(:kp), beta)
                 if (last) then
                     t = t_end
                 else
@@ -907,21 +1132,23 @@ contains
                 meta = lmeta
             end select
         endif
-    end subroutine kexpm_substep_rsp
+    end subroutine kexpm_substep_vec_impl_rsp
 
     !----------------------------------------
     !-----     Private helper kernels     -----
     !----------------------------------------
 
-    subroutine arnoldi_expm_rsp(A, X, H, E, beta, tau, tol, transpose, ksteps, kp, err_est, breakdown)
+    subroutine arnoldi_expm_rsp(A, X, H, Ebuf, beta, tau, tol, transpose, ksteps, kp, err_est, breakdown)
         !! Grows the Arnoldi basis `X` (with `X(1)` already normalized) one vector at a time and
         !! evaluates the exponential of the extended Hessenberg matrix after each step, until
         !! `beta*|E(kp,1)| <= tol`, breakdown, or `size(X)-1` steps.
-        !! On exit `E(:kp, :kp)` holds the dense exponential used for the projection.
+        !! On exit `Ebuf(1:kp*kp)` holds the kp x kp dense exponential (column-major), so that
+        !! its first column is `Ebuf(1:kp)`.
         implicit none(type, external)
         class(abstract_linop_rsp), intent(inout) :: A
         class(abstract_vector_rsp), intent(inout) :: X(:)
-        real(sp), intent(inout) :: H(:, :), E(:, :)
+        real(sp), intent(inout) :: H(:, :)
+        real(sp), intent(inout), target, contiguous :: Ebuf(:)
         real(sp), intent(in) :: beta, tau, tol
         logical, intent(in) :: transpose
         integer, intent(out) :: ksteps, kp
@@ -942,46 +1169,56 @@ contains
             if (breakdown) then
                 ! Invariant subspace: the approximation is exact, drop the extended row.
                 kp = k
-                call small_expm_rsp(E, H, kp, kp, tau)
+                call small_expm_rsp(Ebuf, H, kp, kp, tau)
                 err_est = 0.0_sp
                 return
             endif
 
             ! Exponential of the (k+1)x(k+1) extended Hessenberg matrix [H_k 0; h e_k^T 0].
             kp = k + 1
-            call small_expm_rsp(E, H, kp, k, tau)
+            call small_expm_rsp(Ebuf, H, kp, k, tau)
 
             ! Cheap error estimate (magnitude of the last included correction, conservative).
-            err_est = beta*abs(E(kp, 1))
+            err_est = beta*abs(Ebuf(kp))     ! = beta * |E(kp, 1)|
             if (err_est <= tol) return
         enddo
     end subroutine arnoldi_expm_rsp
 
-    subroutine small_expm_rsp(E, H, n, ncols, tau)
-        !! E(:n, :n) = exp(tau * Hbar) where Hbar holds the first `ncols` columns of H(:n, :)
-        !! and zeros elsewhere. Only the leading n x n block of E is touched (no full reset),
-        !! and stale columns of H (e.g. from a previous sub-step) are never used.
+    subroutine small_expm_rsp(Ebuf, H, n, ncols, tau)
+        !! E = exp(tau * Hbar), stored column-major in the contiguous buffer Ebuf(1:n*n). Hbar holds
+        !! the first `ncols` columns of H(:n, :) and zeros elsewhere, so stale columns of H (e.g. from
+        !! a previous sub-step) are never used. Contiguous storage: stdlib's matrix_exp works in place
+        !! without any temporary copy (a section E(:n, :n) of a larger array would be packed at every
+        !! call).
         implicit none(type, external)
-        real(sp), intent(inout) :: E(:, :)
+        real(sp), intent(inout), target, contiguous :: Ebuf(:)
         real(sp), intent(in) :: H(:, :)
         integer, intent(in) :: n, ncols
         real(sp), intent(in) :: tau
+        real(sp), pointer, contiguous :: E(:, :)
 
-        E(:n, :ncols) = tau*H(:n, :ncols)
-        if (ncols < n) E(:n, ncols+1:n) = zero_rsp
-        call matrix_exp(E(:n, :n))
+        E(1:n, 1:n) => Ebuf(1:n*n)
+        E(:, :ncols) = tau*H(:n, :ncols)
+        if (ncols < n) E(:, ncols+1:n) = zero_rsp
+        call matrix_exp(E)
     end subroutine small_expm_rsp
 
-    subroutine project_rsp(c, X, v)
-        !! c = X @ v, written directly into the (non-allocatable) output vector.
+    subroutine project_rsp(c, X, v, alpha)
+        !! c = alpha * X @ v, written directly into the output vector (no temporary array).
+        !! c is fully overwritten: it is first rebuilt from X(1) with `copy`, so that its previous
+        !! state is never read (it may be an intent(out) argument whose components were reset).
         implicit none(type, external)
         class(abstract_vector_rsp), intent(inout) :: c
         class(abstract_vector_rsp), intent(in) :: X(:)
         real(sp), intent(in) :: v(:)
+        real(sp), optional, intent(in) :: alpha
+        real(sp) :: a
         integer :: i
-        call c%zero()
-        do i = 1, size(X)
-            call c%axpby(v(i), X(i), one_rsp)
+        a = optval(alpha, 1.0_sp)
+        call copy(c, X(1))
+        call c%scal(a*v(1))
+        do i = 2, size(X)
+            call c%axpby(a*v(i), X(i), one_rsp)
         enddo
     end subroutine project_rsp
 
@@ -997,11 +1234,71 @@ contains
         enddo
     end subroutine project_block_rsp
 
+    !------------------------------------------
+    !-----     Workspace management     -----
+    !------------------------------------------
+
+    subroutine ensure_basis_rsp(work, nvec, b)
+        !! Makes sure work%X holds at least `nvec` vectors of the same type and size as `b`.
+        !! Allocated with `source=b` so that vector types with allocatable components are fully
+        !! initialized (with `mold=` their components would be unallocated and their sizes undefined).
+        implicit none(type, external)
+        type(kexpm_workspace_rsp), intent(inout) :: work
+        integer, intent(in) :: nvec
+        class(abstract_vector_rsp), intent(in) :: b
+        character(len=*), parameter :: this_procedure = 'ensure_basis_rsp'
+        logical :: ok
+        integer :: iostat
+        character(len=256) :: msg
+
+        ok = allocated(work%X)
+        if (ok) ok = size(work%X) >= nvec
+        if (ok) ok = same_type_as(work%X(1), b)
+        if (ok) ok = work%X(1)%get_size() == b%get_size()
+        if (.not. ok) then
+            if (allocated(work%X)) deallocate(work%X)
+            allocate(work%X(nvec), source=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+        endif
+    end subroutine ensure_basis_rsp
+
+    subroutine ensure_dense_rsp(work, nh)
+        !! Makes sure work%H is at least nh x nh and work%Ebuf holds nh*nh entries, then zeroes the
+        !! leading nh x nh block of H (entries below the subdiagonal must be zero, and a re-used H
+        !! may hold entries from a previous call with another block size).
+        implicit none(type, external)
+        type(kexpm_workspace_rsp), intent(inout) :: work
+        integer, intent(in) :: nh
+        character(len=*), parameter :: this_procedure = 'ensure_dense_rsp'
+        logical :: ok
+        integer :: iostat
+        character(len=256) :: msg
+
+        ok = allocated(work%H) .and. allocated(work%Ebuf)
+        if (ok) ok = size(work%H, 1) >= nh .and. size(work%H, 2) >= nh .and. size(work%Ebuf) >= nh*nh
+        if (.not. ok) then
+            if (allocated(work%H)) deallocate(work%H)
+            if (allocated(work%Ebuf)) deallocate(work%Ebuf)
+            allocate(work%H(nh, nh), work%Ebuf(nh*nh), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+        endif
+        work%H(:nh, :nh) = zero_rsp
+    end subroutine ensure_dense_rsp
+
+    subroutine free_kexpm_workspace_rsp(self)
+        !! Releases the memory held by the workspace.
+        implicit none(type, external)
+        class(kexpm_workspace_rsp), intent(inout) :: self
+        if (allocated(self%X)) deallocate(self%X)
+        if (allocated(self%H)) deallocate(self%H)
+        if (allocated(self%Ebuf)) deallocate(self%Ebuf)
+    end subroutine free_kexpm_workspace_rsp
+
     !-------------------------------------------------------------------
     !-----     Public driver : single vector, fixed time horizon     -----
     !-------------------------------------------------------------------
 
-    subroutine kexpm_vec_rdp(c, A, b, tau, tol, info, trans, kdim, X)
+    subroutine kexpm_vec_rdp(c, A, b, tau, tol, info, trans, kdim, X, work)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_rdp), intent(out) :: c
@@ -1021,13 +1318,14 @@ contains
         integer, optional, intent(in) :: kdim
         !! Maximum number of Arnoldi steps.
         class(abstract_vector_rdp), optional, intent(inout) :: X(:)
-        !! Optional workspace for the Krylov basis (avoids allocating it at every call).
+        !! Optional user-supplied Krylov basis (takes precedence over the one in `work`).
+        type(kexpm_workspace_rdp), optional, intent(inout) :: work
+        !! Optional reusable workspace (basis, H, E): no allocation after the first call.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_rdp'
-        class(abstract_vector_rdp), allocatable :: Xloc(:)
-        integer :: nsteps, iostat
-        character(len=256) :: msg
+        type(kexpm_workspace_rdp) :: wloc
+        integer :: nsteps
 
         ! Sanity checks (no work is done for invalid inputs).
         info = 0
@@ -1043,21 +1341,48 @@ contains
             return
         endif
 
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
         if (present(X)) then
             nsteps = min(optval(kdim, size(X)-1), size(X)-1)
-            call kexpm_vec_kernel_rdp(c, A, b, tau, tol, info, optval(trans, .false.), X(:nsteps+1))
         else
             nsteps = optval(kdim, kmax)
-            ! `mold` : no copy of b into every basis vector (the kernel zeroes the basis anyway).
-            allocate(Xloc(nsteps+1), mold=b, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            call kexpm_vec_kernel_rdp(c, A, b, tau, tol, info, optval(trans, .false.), Xloc)
-            ! Xloc is allocatable: automatically deallocated on return (no leak).
         endif
+
+        if (present(work)) then
+            call kexpm_vec_dispatch_rdp(c, A, b, tau, tol, info, optval(trans, .false.), nsteps+1, work, X)
+        else
+            ! Local workspace: deallocated automatically on return.
+            call kexpm_vec_dispatch_rdp(c, A, b, tau, tol, info, optval(trans, .false.), nsteps+1, wloc, X)
+        endif
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine kexpm_vec_rdp
 
-    subroutine kexpm_vec_kernel_rdp(c, A, b, tau, tol, info, transpose, X)
-        !! Worker for `kexpm_vec`: the Krylov basis `X` is a plain (non-optional) dummy argument.
+    subroutine kexpm_vec_dispatch_rdp(c, A, b, tau, tol, info, transpose, nvec, work, X)
+        !! Selects the Krylov basis (user `X` or workspace) and sizes the workspace.
+        implicit none(type, external)
+        class(abstract_vector_rdp), intent(out) :: c
+        class(abstract_linop_rdp), intent(inout) :: A
+        class(abstract_vector_rdp), intent(in) :: b
+        real(dp), intent(in) :: tau, tol
+        integer, intent(out) :: info
+        logical, intent(in) :: transpose
+        integer, intent(in) :: nvec
+        type(kexpm_workspace_rdp), intent(inout) :: work
+        class(abstract_vector_rdp), optional, intent(inout) :: X(:)
+
+        call ensure_dense_rdp(work, nvec)
+        if (present(X)) then
+            call kexpm_vec_kernel_rdp(c, A, b, tau, tol, info, transpose, X(:nvec), work%H, work%Ebuf)
+        else
+            call ensure_basis_rdp(work, nvec, b)
+            call kexpm_vec_kernel_rdp(c, A, b, tau, tol, info, transpose, work%X(:nvec), work%H, work%Ebuf)
+        endif
+    end subroutine kexpm_vec_dispatch_rdp
+
+    subroutine kexpm_vec_kernel_rdp(c, A, b, tau, tol, info, transpose, X, H, Ebuf)
+        !! Worker for `kexpm_vec`. No allocation: X, H and Ebuf are provided by the caller.
         implicit none(type, external)
         class(abstract_vector_rdp), intent(out) :: c
         class(abstract_linop_rdp), intent(inout) :: A
@@ -1066,39 +1391,36 @@ contains
         integer, intent(out) :: info
         logical, intent(in) :: transpose
         class(abstract_vector_rdp), intent(inout) :: X(:)
+        real(dp), intent(inout) :: H(:, :)
+        real(dp), intent(inout), target, contiguous :: Ebuf(:)
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_rdp'
-        real(dp), allocatable :: H(:, :), E(:, :)
         real(dp) :: beta, err_est
-        integer :: nk, kp, ksteps, iostat
+        integer :: kp, ksteps
         logical :: breakdown
         character(len=256) :: msg
 
-        nk = size(X) - 1
-
         beta = b%norm()
         if (beta == 0.0_dp) then
-            ! Input is zero => Output is zero.
-            call c%zero()
+            ! Input is zero => Output is zero. `copy` (not `zero`): c is intent(out), its components
+            ! are reset on entry and must not be relied upon (e.g. the size of a dense_vector).
+            call copy(c, b)
             info = 1
             call log_information('Zero input vector, zero output.', this_module, this_procedure)
             return
         endif
 
-        allocate(H(nk+1, nk+1), E(nk+1, nk+1), source=zero_rdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-
-        ! Initialize Krylov subspace with the normalized input vector.
-        call zero_basis(X)
-        call X(1)%add(b) ; call X(1)%scal(one_rdp / beta)
+        ! Initialize the Krylov subspace with the normalized input vector. Only X(1) is set:
+        ! every other basis vector is overwritten by the matrix-vector product before being used.
+        call X(1)%zero() ; call X(1)%axpby(one_rdp / beta, b, one_rdp)
 
         ! Grow the Krylov subspace until the error estimate is below tol.
-        call arnoldi_expm_rdp(A, X, H, E, beta, tau, tol, transpose, &
+        call arnoldi_expm_rdp(A, X, H, Ebuf, beta, tau, tol, transpose, &
                                               & ksteps, kp, err_est, breakdown)
 
         ! Single projection back onto the full space: c = beta * X(:kp) @ E(:kp, 1).
-        call project_rdp(c, X(:kp), beta*E(:kp, 1))
+        call project_rdp(c, X(:kp), Ebuf(:kp), beta)
 
         if (err_est <= tol) then
             info = kp
@@ -1116,7 +1438,7 @@ contains
     !-----     Public driver : block version, fixed horizon     -----
     !----------------------------------------------------------------
 
-    subroutine kexpm_mat_rdp(C, A, B, tau, tol, info, trans, kdim, X)
+    subroutine kexpm_mat_rdp(C, A, B, tau, tol, info, trans, kdim, X, work)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
         class(abstract_vector_rdp), intent(out) :: C(:)
@@ -1136,13 +1458,14 @@ contains
         integer, optional, intent(in) :: kdim
         !! Maximum number of block-Arnoldi steps.
         class(abstract_vector_rdp), optional, intent(inout) :: X(:)
-        !! Optional workspace for the block Krylov basis (size multiple of size(B)).
+        !! Optional user-supplied block Krylov basis (size multiple of size(B)).
+        type(kexpm_workspace_rdp), optional, intent(inout) :: work
+        !! Optional reusable workspace (basis, H, E): no allocation after the first call.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_rdp'
-        class(abstract_vector_rdp), allocatable :: Xloc(:)
-        integer :: p, nsteps, iostat
-        character(len=256) :: msg
+        type(kexpm_workspace_rdp) :: wloc
+        integer :: p, nsteps
 
         p = size(B)
 
@@ -1162,21 +1485,48 @@ contains
             return
         endif
 
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! NOTE: kdim counts block steps. The basis holds p*(kdim+1) vectors.
         if (present(X)) then
             nsteps = min(optval(kdim, size(X)/p - 1), size(X)/p - 1)
-            call kexpm_mat_kernel_rdp(C, A, B, tau, tol, info, optval(trans, .false.), X(:p*(nsteps+1)))
         else
-            ! NOTE: kdim counts block steps. The basis holds p*(kdim+1) vectors
-            !       (previously p*(p*kdim+1) because the block size was counted twice).
             nsteps = optval(kdim, kmax)
-            allocate(Xloc(p*(nsteps+1)), mold=B(1), stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            call kexpm_mat_kernel_rdp(C, A, B, tau, tol, info, optval(trans, .false.), Xloc)
         endif
+
+        if (present(work)) then
+            call kexpm_mat_dispatch_rdp(C, A, B, tau, tol, info, optval(trans, .false.), p*(nsteps+1), work, X)
+        else
+            call kexpm_mat_dispatch_rdp(C, A, B, tau, tol, info, optval(trans, .false.), p*(nsteps+1), wloc, X)
+        endif
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine kexpm_mat_rdp
 
-    subroutine kexpm_mat_kernel_rdp(C, A, B, tau, tol, info, transpose, X)
-        !! Worker for `kexpm_mat`.
+    subroutine kexpm_mat_dispatch_rdp(C, A, B, tau, tol, info, transpose, nvec, work, X)
+        !! Selects the block Krylov basis (user `X` or workspace) and sizes the workspace.
+        implicit none(type, external)
+        class(abstract_vector_rdp), intent(out) :: C(:)
+        class(abstract_linop_rdp), intent(inout) :: A
+        class(abstract_vector_rdp), intent(in) :: B(:)
+        real(dp), intent(in) :: tau, tol
+        integer, intent(out) :: info
+        logical, intent(in) :: transpose
+        integer, intent(in) :: nvec
+        type(kexpm_workspace_rdp), intent(inout) :: work
+        class(abstract_vector_rdp), optional, intent(inout) :: X(:)
+
+        call ensure_dense_rdp(work, nvec)
+        if (present(X)) then
+            call kexpm_mat_kernel_rdp(C, A, B, tau, tol, info, transpose, X(:nvec), work%H, work%Ebuf)
+        else
+            call ensure_basis_rdp(work, nvec, B(1))
+            call kexpm_mat_kernel_rdp(C, A, B, tau, tol, info, transpose, work%X(:nvec), work%H, work%Ebuf)
+        endif
+    end subroutine kexpm_mat_dispatch_rdp
+
+    subroutine kexpm_mat_kernel_rdp(C, A, B, tau, tol, info, transpose, X, H, Ebuf)
+        !! Worker for `kexpm_mat`. The basis X, H and Ebuf are provided by the caller.
         implicit none(type, external)
         class(abstract_vector_rdp), intent(out) :: C(:)
         class(abstract_linop_rdp), intent(inout) :: A
@@ -1185,35 +1535,35 @@ contains
         integer, intent(out) :: info
         logical, intent(in) :: transpose
         class(abstract_vector_rdp), intent(inout) :: X(:)
+        real(dp), intent(inout) :: H(:, :)
+        real(dp), intent(inout), target, contiguous :: Ebuf(:)
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_rdp'
-        real(dp), allocatable :: H(:, :), E(:, :), R(:, :), coef(:, :)
-        integer, allocatable :: perm(:)
+        real(dp) :: R(size(B), size(B))
+        real(dp), pointer, contiguous :: E(:, :)
+        integer :: perm(size(B))
         real(dp) :: err_est
-        integer :: p, nk, k, kpm, kp, kpp, iostat
+        integer :: p, nk, k, kpm, kp, kpp, i
         logical :: breakdown, partial_breakdown
         character(len=256) :: msg
 
         p  = size(B)
         nk = size(X)/p - 1
-
-        allocate(R(p, p), H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), &
-                 source=zero_rdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(perm(p), source=0, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
+        R = zero_rdp ; perm = 0
 
         ! Orthonormalize the input block directly inside the Krylov basis: B = X(:p) @ R.
-        call zero_basis(X)
-        call copy(X(:p), B)
+        ! Only X(:p) is set: the other basis vectors are overwritten by the matvecs before use.
+        do i = 1, p
+            call X(i)%zero() ; call X(i)%axpby(one_rdp, B(i), one_rdp)
+        enddo
         call qr(X(:p), R, perm, info)
         call check_info(info, 'qr_pivot', this_module, this_procedure)
         call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_dp) then
-            ! Input matrix is zero.
-            call zero_basis(C)
+            ! Input matrix is zero (C is intent(out): rebuilt from B rather than zeroed in place).
+            call copy(C, B)
             info = p
             call log_information('Zero input block, zero output.', this_module, this_procedure)
             return
@@ -1242,13 +1592,15 @@ contains
             if (breakdown) then
                 ! Exact invariant subspace: do not consider the extended matrix.
                 kpp = kp
-                call small_expm_rdp(E, H, kpp, kpp, tau)
+                call small_expm_rdp(Ebuf, H, kpp, kpp, tau)
+                E(1:kpp, 1:kpp) => Ebuf(1:kpp*kpp)
                 err_est = 0.0_dp
                 exit expm_arnoldi
             endif
 
             ! Dense exponential of the extended block-Hessenberg matrix.
-            call small_expm_rdp(E, H, kpp, kp, tau)
+            call small_expm_rdp(Ebuf, H, kpp, kp, tau)
+            E(1:kpp, 1:kpp) => Ebuf(1:kpp*kpp)
 
             ! Cheap (conservative) error estimate.
             err_est = mnorm(matmul(E(kp+1:kpp, :p), R), "fro")
@@ -1257,8 +1609,7 @@ contains
         enddo expm_arnoldi
 
         ! Single projection back to the full space: C = X(:kpp) @ (E(:kpp, :p) @ R).
-        coef = matmul(E(:kpp, :p), R)
-        call project_block_rdp(C, X(:kpp), coef)
+        call project_block_rdp(C, X(:kpp), matmul(E(:kpp, :p), R))
 
         if (err_est <= tol) then
             info = kpp
@@ -1304,16 +1655,110 @@ contains
         character(len=*), parameter :: this_procedure = 'krylov_exptA_rdp'
         real(dp) :: tol
 
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
         ! Tolerance relative to the norm of the input (identical to the former atol for unit vectors).
         tol = atol_dp * vec_in%norm()
 
-        call kexpm_substep_rdp(vec_out, A, vec_in, tau, tol, info, trans=trans)
+        call kexpm_substep_vec_rdp(vec_out, A, vec_in, tau, tol, info, trans=trans)
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         call check_info(info, 'kexpm', this_module, this_procedure)
     end subroutine krylov_exptA_rdp
 
-    subroutine kexpm_substep_rdp(c, A, b, tau, tol, info, trans, options, meta)
+    subroutine kexpm_substep_vec_rdp(c, A, b, tau, tol, info, trans, options, meta, work)
         !! Sub-stepped Krylov approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) with optional
-        !! warm start (see the `kexpm_substep` interface).
+        !! warm start and reusable workspace (see the `kexpm_substep` interface).
+        implicit none(type, external)
+        class(abstract_vector_rdp), intent(out) :: c
+        class(abstract_linop_rdp), intent(inout) :: A
+        class(abstract_vector_rdp), intent(in) :: b
+        real(dp), intent(in) :: tau, tol
+        integer, intent(out) :: info
+        logical, optional, intent(in) :: trans
+        class(abstract_opts), optional, intent(in) :: options
+        class(abstract_metadata), optional, intent(inout) :: meta
+        type(kexpm_workspace_rdp), optional, intent(inout) :: work
+        !! Optional reusable workspace (basis, H, E): no allocation after the first call.
+        character(len=*), parameter :: this_procedure = 'kexpm_substep_vec_rdp'
+        type(kexpm_workspace_rdp) :: wloc
+
+        ! Sanity checks before the timer starts (invalid calls are not timed, nothing is computed).
+        call check_substep_inputs_dp(tol, options, info, this_procedure)
+        if (info /= 0) return
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+        if (present(work)) then
+            call kexpm_substep_vec_impl_rdp(c, A, b, tau, tol, info, work, trans, options, meta)
+        else
+            call kexpm_substep_vec_impl_rdp(c, A, b, tau, tol, info, wloc, trans, options, meta)
+        endif
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end subroutine kexpm_substep_vec_rdp
+
+    subroutine kexpm_substep_mat_rdp(C, A, B, tau, tol, info, trans, options, meta, work)
+        !! Sub-stepped Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \),
+        !! column by column with a shared workspace and metadata (see the `kexpm_substep` interface).
+        implicit none(type, external)
+        class(abstract_vector_rdp), intent(out) :: C(:)
+        !! Output vectors.
+        class(abstract_linop_rdp), intent(inout) :: A
+        !! Linear operator to be exponentiated.
+        class(abstract_vector_rdp), intent(in) :: B(:)
+        !! Input vectors.
+        real(dp), intent(in) :: tau
+        !! Time horizon (may be negative).
+        real(dp), intent(in) :: tol
+        !! Absolute tolerance on the accumulated error estimate, for each column.
+        integer, intent(out) :: info
+        !! Total number of matvecs on success, error code of the first failing column otherwise.
+        logical, optional, intent(in) :: trans
+        !! Use adjoint?
+        class(abstract_opts), optional, intent(in) :: options
+        !! `kexpm_dp_opts`.
+        class(abstract_metadata), optional, intent(inout) :: meta
+        !! `kexpm_dp_metadata`, shared by all columns.
+        type(kexpm_workspace_rdp), optional, intent(inout) :: work
+        !! Optional reusable workspace, shared by all columns.
+
+        ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'kexpm_substep_mat_rdp'
+        type(kexpm_workspace_rdp) :: wloc
+        integer :: j, info_j, nmatvec
+
+        ! Sanity checks before the timer starts (invalid calls are not timed, nothing is computed).
+        info = 0
+        if (size(B) < 1 .or. size(C) /= size(B)) then
+            info = -6
+            call log_kexpm_invalid_input(info, this_procedure)
+            return
+        endif
+        call check_substep_inputs_dp(tol, options, info, this_procedure)
+        if (info /= 0) return
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        nmatvec = 0
+        do j = 1, size(B)
+            if (present(work)) then
+                call kexpm_substep_vec_impl_rdp(C(j), A, B(j), tau, tol, info_j, work, trans, options, meta)
+            else
+                ! One local workspace for all the columns.
+                call kexpm_substep_vec_impl_rdp(C(j), A, B(j), tau, tol, info_j, wloc, trans, options, meta)
+            endif
+            if (info_j < 0) then
+                info = info_j
+                exit
+            endif
+            nmatvec = nmatvec + info_j
+        enddo
+        if (info == 0) info = nmatvec
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end subroutine kexpm_substep_mat_rdp
+
+    subroutine kexpm_substep_vec_impl_rdp(c, A, b, tau, tol, info, work, trans, options, meta)
+        !! Implementation of `kexpm_substep` (the workspace is always present here).
         implicit none(type, external)
         class(abstract_vector_rdp), intent(out) :: c
         !! Output vector.
@@ -1327,6 +1772,8 @@ contains
         !! Absolute tolerance on the accumulated error estimate.
         integer, intent(out) :: info
         !! Total number of matvecs on success, -1 otherwise.
+        type(kexpm_workspace_rdp), intent(inout) :: work
+        !! Workspace (basis, H, E).
         logical, optional, intent(in) :: trans
         !! Use adjoint?
         class(abstract_opts), optional, intent(in) :: options
@@ -1335,14 +1782,12 @@ contains
         !! `kexpm_dp_metadata` (counters and learned settings, kept between calls).
 
         ! ----- Internal variables -----
-        character(len=*), parameter :: this_procedure = 'kexpm_substep_rdp'
+        character(len=*), parameter :: this_procedure = 'kexpm_substep_vec_rdp'
         real(dp), parameter :: safety = 0.9_dp, fac_min = 0.2_dp, fac_max = 5.0_dp
         type(kexpm_dp_opts) :: opts
         type(kexpm_dp_metadata) :: lmeta
-        class(abstract_vector_rdp), allocatable :: X(:)
-        real(dp), allocatable :: H(:, :), E(:, :)
         real(dp) :: t_end, sgn, t, dt, beta, err, tol_loc, fac, floor_tol, tol_rel
-        integer :: m, ksteps, kp, nsub, nmatvec, nrej, nrej_tot, n_uniform, iostat
+        integer :: m, ksteps, kp, nsub, nmatvec, nrej, nrej_tot, n_uniform
         logical :: transpose, breakdown, last, uniform, used_uniform, fallback
         character(len=256) :: msg
 
@@ -1365,19 +1810,9 @@ contains
             end select
         endif
 
-        ! Sanity checks (no work is done and the metadata is left untouched for invalid inputs).
-        info = 0
-        if (opts%kdim < 1) then
-            info = -4
-        else if (tol < 0.0_dp) then
-            info = -5
-        else if (opts%max_rejections < 1 .or. opts%max_substeps < 1) then
-            info = -7
-        endif
-        if (info /= 0) then
-            call log_kexpm_invalid_input(info, this_procedure)
-            return
-        endif
+        ! Sanity checks (already done by the public drivers; kept so that the kernel is safe on its own).
+        call check_substep_inputs_dp(tol, options, info, this_procedure)
+        if (info /= 0) return
 
         transpose = optval(trans, .false.)
         m = opts%kdim
@@ -1399,16 +1834,14 @@ contains
         uniform = used_uniform ; fallback = .false.
 
         ! c holds the running solution w(t).
-        call c%zero() ; call c%add(b)
+        call copy(c, b)
         beta = c%norm()
         t = 0.0_dp ; nsub = 0 ; nmatvec = 0 ; nrej_tot = 0 ; info = 0
 
         if (beta /= 0.0_dp .and. t_end /= 0.0_dp) then
-            ! Workspace (allocated once, reused by every sub-step).
-            allocate(X(m+1), mold=b, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            allocate(H(m+1, m+1), E(m+1, m+1), source=zero_rdp, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
+            ! Workspace: re-used by every sub-step, and across calls when `work` is passed.
+            call ensure_basis_rdp(work, m+1, b)
+            call ensure_dense_rdp(work, m+1)
 
             dt = merge(t_end/max(n_uniform, 1), t_end, uniform)
 
@@ -1428,18 +1861,18 @@ contains
                 floor_tol = 2*epsilon(1.0_dp)*beta
                 tol_loc = max(tol*dt/t_end, floor_tol)
 
-                ! Fresh Krylov basis started from the current solution.
-                call zero_basis(X) ; H = zero_rdp
-                call X(1)%add(c) ; call X(1)%scal(one_rdp / beta)
+                ! Fresh Krylov basis started from the current solution. Only X(1) is set, and H needs
+                ! no reset: Arnoldi rewrites every entry on or above the subdiagonal that is used.
+                call work%X(1)%zero() ; call work%X(1)%axpby(one_rdp / beta, c, one_rdp)
 
-                call arnoldi_expm_rdp(A, X, H, E, beta, sgn*dt, tol_loc, transpose, &
+                call arnoldi_expm_rdp(A, work%X(:m+1), work%H, work%Ebuf, beta, sgn*dt, tol_loc, transpose, &
                                                       & ksteps, kp, err, breakdown)
                 nmatvec = nmatvec + ksteps
 
                 if (breakdown) then
                     ! Invariant subspace: exact for any dt, finish the horizon in one go.
                     dt = t_end - t ; last = .true.
-                    call small_expm_rdp(E, H, kp, kp, sgn*dt)
+                    call small_expm_rdp(work%Ebuf, work%H, kp, kp, sgn*dt)
                     err = 0.0_dp
                 else if (err > tol_loc) then
                     ! Krylov basis exhausted. Safety net: a learned uniform step that is too large
@@ -1453,8 +1886,8 @@ contains
                         fac = min(safety, max(0.1_dp, safety*(tol_loc/err)**(1.0_dp/m)))
                         dt  = fac*dt
                         tol_loc = max(tol*dt/t_end, floor_tol)
-                        call small_expm_rdp(E, H, kp, ksteps, sgn*dt)
-                        err = beta*abs(E(kp, 1))
+                        call small_expm_rdp(work%Ebuf, work%H, kp, ksteps, sgn*dt)
+                        err = beta*abs(work%Ebuf(kp))
                         nrej_tot = nrej_tot + 1
                         if (err <= tol_loc) exit
                     enddo
@@ -1464,7 +1897,7 @@ contains
                 endif
 
                 ! Advance: w(t+dt) = beta * X(:kp) @ E(:kp, 1).
-                call project_rdp(c, X(:kp), beta*E(:kp, 1))
+                call project_rdp(c, work%X(:kp), work%Ebuf(:kp), beta)
                 if (last) then
                     t = t_end
                 else
@@ -1514,21 +1947,23 @@ contains
                 meta = lmeta
             end select
         endif
-    end subroutine kexpm_substep_rdp
+    end subroutine kexpm_substep_vec_impl_rdp
 
     !----------------------------------------
     !-----     Private helper kernels     -----
     !----------------------------------------
 
-    subroutine arnoldi_expm_rdp(A, X, H, E, beta, tau, tol, transpose, ksteps, kp, err_est, breakdown)
+    subroutine arnoldi_expm_rdp(A, X, H, Ebuf, beta, tau, tol, transpose, ksteps, kp, err_est, breakdown)
         !! Grows the Arnoldi basis `X` (with `X(1)` already normalized) one vector at a time and
         !! evaluates the exponential of the extended Hessenberg matrix after each step, until
         !! `beta*|E(kp,1)| <= tol`, breakdown, or `size(X)-1` steps.
-        !! On exit `E(:kp, :kp)` holds the dense exponential used for the projection.
+        !! On exit `Ebuf(1:kp*kp)` holds the kp x kp dense exponential (column-major), so that
+        !! its first column is `Ebuf(1:kp)`.
         implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: A
         class(abstract_vector_rdp), intent(inout) :: X(:)
-        real(dp), intent(inout) :: H(:, :), E(:, :)
+        real(dp), intent(inout) :: H(:, :)
+        real(dp), intent(inout), target, contiguous :: Ebuf(:)
         real(dp), intent(in) :: beta, tau, tol
         logical, intent(in) :: transpose
         integer, intent(out) :: ksteps, kp
@@ -1549,46 +1984,56 @@ contains
             if (breakdown) then
                 ! Invariant subspace: the approximation is exact, drop the extended row.
                 kp = k
-                call small_expm_rdp(E, H, kp, kp, tau)
+                call small_expm_rdp(Ebuf, H, kp, kp, tau)
                 err_est = 0.0_dp
                 return
             endif
 
             ! Exponential of the (k+1)x(k+1) extended Hessenberg matrix [H_k 0; h e_k^T 0].
             kp = k + 1
-            call small_expm_rdp(E, H, kp, k, tau)
+            call small_expm_rdp(Ebuf, H, kp, k, tau)
 
             ! Cheap error estimate (magnitude of the last included correction, conservative).
-            err_est = beta*abs(E(kp, 1))
+            err_est = beta*abs(Ebuf(kp))     ! = beta * |E(kp, 1)|
             if (err_est <= tol) return
         enddo
     end subroutine arnoldi_expm_rdp
 
-    subroutine small_expm_rdp(E, H, n, ncols, tau)
-        !! E(:n, :n) = exp(tau * Hbar) where Hbar holds the first `ncols` columns of H(:n, :)
-        !! and zeros elsewhere. Only the leading n x n block of E is touched (no full reset),
-        !! and stale columns of H (e.g. from a previous sub-step) are never used.
+    subroutine small_expm_rdp(Ebuf, H, n, ncols, tau)
+        !! E = exp(tau * Hbar), stored column-major in the contiguous buffer Ebuf(1:n*n). Hbar holds
+        !! the first `ncols` columns of H(:n, :) and zeros elsewhere, so stale columns of H (e.g. from
+        !! a previous sub-step) are never used. Contiguous storage: stdlib's matrix_exp works in place
+        !! without any temporary copy (a section E(:n, :n) of a larger array would be packed at every
+        !! call).
         implicit none(type, external)
-        real(dp), intent(inout) :: E(:, :)
+        real(dp), intent(inout), target, contiguous :: Ebuf(:)
         real(dp), intent(in) :: H(:, :)
         integer, intent(in) :: n, ncols
         real(dp), intent(in) :: tau
+        real(dp), pointer, contiguous :: E(:, :)
 
-        E(:n, :ncols) = tau*H(:n, :ncols)
-        if (ncols < n) E(:n, ncols+1:n) = zero_rdp
-        call matrix_exp(E(:n, :n))
+        E(1:n, 1:n) => Ebuf(1:n*n)
+        E(:, :ncols) = tau*H(:n, :ncols)
+        if (ncols < n) E(:, ncols+1:n) = zero_rdp
+        call matrix_exp(E)
     end subroutine small_expm_rdp
 
-    subroutine project_rdp(c, X, v)
-        !! c = X @ v, written directly into the (non-allocatable) output vector.
+    subroutine project_rdp(c, X, v, alpha)
+        !! c = alpha * X @ v, written directly into the output vector (no temporary array).
+        !! c is fully overwritten: it is first rebuilt from X(1) with `copy`, so that its previous
+        !! state is never read (it may be an intent(out) argument whose components were reset).
         implicit none(type, external)
         class(abstract_vector_rdp), intent(inout) :: c
         class(abstract_vector_rdp), intent(in) :: X(:)
         real(dp), intent(in) :: v(:)
+        real(dp), optional, intent(in) :: alpha
+        real(dp) :: a
         integer :: i
-        call c%zero()
-        do i = 1, size(X)
-            call c%axpby(v(i), X(i), one_rdp)
+        a = optval(alpha, 1.0_dp)
+        call copy(c, X(1))
+        call c%scal(a*v(1))
+        do i = 2, size(X)
+            call c%axpby(a*v(i), X(i), one_rdp)
         enddo
     end subroutine project_rdp
 
@@ -1604,11 +2049,71 @@ contains
         enddo
     end subroutine project_block_rdp
 
+    !------------------------------------------
+    !-----     Workspace management     -----
+    !------------------------------------------
+
+    subroutine ensure_basis_rdp(work, nvec, b)
+        !! Makes sure work%X holds at least `nvec` vectors of the same type and size as `b`.
+        !! Allocated with `source=b` so that vector types with allocatable components are fully
+        !! initialized (with `mold=` their components would be unallocated and their sizes undefined).
+        implicit none(type, external)
+        type(kexpm_workspace_rdp), intent(inout) :: work
+        integer, intent(in) :: nvec
+        class(abstract_vector_rdp), intent(in) :: b
+        character(len=*), parameter :: this_procedure = 'ensure_basis_rdp'
+        logical :: ok
+        integer :: iostat
+        character(len=256) :: msg
+
+        ok = allocated(work%X)
+        if (ok) ok = size(work%X) >= nvec
+        if (ok) ok = same_type_as(work%X(1), b)
+        if (ok) ok = work%X(1)%get_size() == b%get_size()
+        if (.not. ok) then
+            if (allocated(work%X)) deallocate(work%X)
+            allocate(work%X(nvec), source=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+        endif
+    end subroutine ensure_basis_rdp
+
+    subroutine ensure_dense_rdp(work, nh)
+        !! Makes sure work%H is at least nh x nh and work%Ebuf holds nh*nh entries, then zeroes the
+        !! leading nh x nh block of H (entries below the subdiagonal must be zero, and a re-used H
+        !! may hold entries from a previous call with another block size).
+        implicit none(type, external)
+        type(kexpm_workspace_rdp), intent(inout) :: work
+        integer, intent(in) :: nh
+        character(len=*), parameter :: this_procedure = 'ensure_dense_rdp'
+        logical :: ok
+        integer :: iostat
+        character(len=256) :: msg
+
+        ok = allocated(work%H) .and. allocated(work%Ebuf)
+        if (ok) ok = size(work%H, 1) >= nh .and. size(work%H, 2) >= nh .and. size(work%Ebuf) >= nh*nh
+        if (.not. ok) then
+            if (allocated(work%H)) deallocate(work%H)
+            if (allocated(work%Ebuf)) deallocate(work%Ebuf)
+            allocate(work%H(nh, nh), work%Ebuf(nh*nh), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+        endif
+        work%H(:nh, :nh) = zero_rdp
+    end subroutine ensure_dense_rdp
+
+    subroutine free_kexpm_workspace_rdp(self)
+        !! Releases the memory held by the workspace.
+        implicit none(type, external)
+        class(kexpm_workspace_rdp), intent(inout) :: self
+        if (allocated(self%X)) deallocate(self%X)
+        if (allocated(self%H)) deallocate(self%H)
+        if (allocated(self%Ebuf)) deallocate(self%Ebuf)
+    end subroutine free_kexpm_workspace_rdp
+
     !-------------------------------------------------------------------
     !-----     Public driver : single vector, fixed time horizon     -----
     !-------------------------------------------------------------------
 
-    subroutine kexpm_vec_csp(c, A, b, tau, tol, info, trans, kdim, X)
+    subroutine kexpm_vec_csp(c, A, b, tau, tol, info, trans, kdim, X, work)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_csp), intent(out) :: c
@@ -1628,13 +2133,14 @@ contains
         integer, optional, intent(in) :: kdim
         !! Maximum number of Arnoldi steps.
         class(abstract_vector_csp), optional, intent(inout) :: X(:)
-        !! Optional workspace for the Krylov basis (avoids allocating it at every call).
+        !! Optional user-supplied Krylov basis (takes precedence over the one in `work`).
+        type(kexpm_workspace_csp), optional, intent(inout) :: work
+        !! Optional reusable workspace (basis, H, E): no allocation after the first call.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_csp'
-        class(abstract_vector_csp), allocatable :: Xloc(:)
-        integer :: nsteps, iostat
-        character(len=256) :: msg
+        type(kexpm_workspace_csp) :: wloc
+        integer :: nsteps
 
         ! Sanity checks (no work is done for invalid inputs).
         info = 0
@@ -1650,21 +2156,48 @@ contains
             return
         endif
 
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
         if (present(X)) then
             nsteps = min(optval(kdim, size(X)-1), size(X)-1)
-            call kexpm_vec_kernel_csp(c, A, b, tau, tol, info, optval(trans, .false.), X(:nsteps+1))
         else
             nsteps = optval(kdim, kmax)
-            ! `mold` : no copy of b into every basis vector (the kernel zeroes the basis anyway).
-            allocate(Xloc(nsteps+1), mold=b, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            call kexpm_vec_kernel_csp(c, A, b, tau, tol, info, optval(trans, .false.), Xloc)
-            ! Xloc is allocatable: automatically deallocated on return (no leak).
         endif
+
+        if (present(work)) then
+            call kexpm_vec_dispatch_csp(c, A, b, tau, tol, info, optval(trans, .false.), nsteps+1, work, X)
+        else
+            ! Local workspace: deallocated automatically on return.
+            call kexpm_vec_dispatch_csp(c, A, b, tau, tol, info, optval(trans, .false.), nsteps+1, wloc, X)
+        endif
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine kexpm_vec_csp
 
-    subroutine kexpm_vec_kernel_csp(c, A, b, tau, tol, info, transpose, X)
-        !! Worker for `kexpm_vec`: the Krylov basis `X` is a plain (non-optional) dummy argument.
+    subroutine kexpm_vec_dispatch_csp(c, A, b, tau, tol, info, transpose, nvec, work, X)
+        !! Selects the Krylov basis (user `X` or workspace) and sizes the workspace.
+        implicit none(type, external)
+        class(abstract_vector_csp), intent(out) :: c
+        class(abstract_linop_csp), intent(inout) :: A
+        class(abstract_vector_csp), intent(in) :: b
+        real(sp), intent(in) :: tau, tol
+        integer, intent(out) :: info
+        logical, intent(in) :: transpose
+        integer, intent(in) :: nvec
+        type(kexpm_workspace_csp), intent(inout) :: work
+        class(abstract_vector_csp), optional, intent(inout) :: X(:)
+
+        call ensure_dense_csp(work, nvec)
+        if (present(X)) then
+            call kexpm_vec_kernel_csp(c, A, b, tau, tol, info, transpose, X(:nvec), work%H, work%Ebuf)
+        else
+            call ensure_basis_csp(work, nvec, b)
+            call kexpm_vec_kernel_csp(c, A, b, tau, tol, info, transpose, work%X(:nvec), work%H, work%Ebuf)
+        endif
+    end subroutine kexpm_vec_dispatch_csp
+
+    subroutine kexpm_vec_kernel_csp(c, A, b, tau, tol, info, transpose, X, H, Ebuf)
+        !! Worker for `kexpm_vec`. No allocation: X, H and Ebuf are provided by the caller.
         implicit none(type, external)
         class(abstract_vector_csp), intent(out) :: c
         class(abstract_linop_csp), intent(inout) :: A
@@ -1673,39 +2206,36 @@ contains
         integer, intent(out) :: info
         logical, intent(in) :: transpose
         class(abstract_vector_csp), intent(inout) :: X(:)
+        complex(sp), intent(inout) :: H(:, :)
+        complex(sp), intent(inout), target, contiguous :: Ebuf(:)
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_csp'
-        complex(sp), allocatable :: H(:, :), E(:, :)
         real(sp) :: beta, err_est
-        integer :: nk, kp, ksteps, iostat
+        integer :: kp, ksteps
         logical :: breakdown
         character(len=256) :: msg
 
-        nk = size(X) - 1
-
         beta = b%norm()
         if (beta == 0.0_sp) then
-            ! Input is zero => Output is zero.
-            call c%zero()
+            ! Input is zero => Output is zero. `copy` (not `zero`): c is intent(out), its components
+            ! are reset on entry and must not be relied upon (e.g. the size of a dense_vector).
+            call copy(c, b)
             info = 1
             call log_information('Zero input vector, zero output.', this_module, this_procedure)
             return
         endif
 
-        allocate(H(nk+1, nk+1), E(nk+1, nk+1), source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-
-        ! Initialize Krylov subspace with the normalized input vector.
-        call zero_basis(X)
-        call X(1)%add(b) ; call X(1)%scal(one_csp / beta)
+        ! Initialize the Krylov subspace with the normalized input vector. Only X(1) is set:
+        ! every other basis vector is overwritten by the matrix-vector product before being used.
+        call X(1)%zero() ; call X(1)%axpby(one_csp / beta, b, one_csp)
 
         ! Grow the Krylov subspace until the error estimate is below tol.
-        call arnoldi_expm_csp(A, X, H, E, beta, tau, tol, transpose, &
+        call arnoldi_expm_csp(A, X, H, Ebuf, beta, tau, tol, transpose, &
                                               & ksteps, kp, err_est, breakdown)
 
         ! Single projection back onto the full space: c = beta * X(:kp) @ E(:kp, 1).
-        call project_csp(c, X(:kp), beta*E(:kp, 1))
+        call project_csp(c, X(:kp), Ebuf(:kp), beta)
 
         if (err_est <= tol) then
             info = kp
@@ -1723,7 +2253,7 @@ contains
     !-----     Public driver : block version, fixed horizon     -----
     !----------------------------------------------------------------
 
-    subroutine kexpm_mat_csp(C, A, B, tau, tol, info, trans, kdim, X)
+    subroutine kexpm_mat_csp(C, A, B, tau, tol, info, trans, kdim, X, work)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
         class(abstract_vector_csp), intent(out) :: C(:)
@@ -1743,13 +2273,14 @@ contains
         integer, optional, intent(in) :: kdim
         !! Maximum number of block-Arnoldi steps.
         class(abstract_vector_csp), optional, intent(inout) :: X(:)
-        !! Optional workspace for the block Krylov basis (size multiple of size(B)).
+        !! Optional user-supplied block Krylov basis (size multiple of size(B)).
+        type(kexpm_workspace_csp), optional, intent(inout) :: work
+        !! Optional reusable workspace (basis, H, E): no allocation after the first call.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_csp'
-        class(abstract_vector_csp), allocatable :: Xloc(:)
-        integer :: p, nsteps, iostat
-        character(len=256) :: msg
+        type(kexpm_workspace_csp) :: wloc
+        integer :: p, nsteps
 
         p = size(B)
 
@@ -1769,21 +2300,48 @@ contains
             return
         endif
 
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! NOTE: kdim counts block steps. The basis holds p*(kdim+1) vectors.
         if (present(X)) then
             nsteps = min(optval(kdim, size(X)/p - 1), size(X)/p - 1)
-            call kexpm_mat_kernel_csp(C, A, B, tau, tol, info, optval(trans, .false.), X(:p*(nsteps+1)))
         else
-            ! NOTE: kdim counts block steps. The basis holds p*(kdim+1) vectors
-            !       (previously p*(p*kdim+1) because the block size was counted twice).
             nsteps = optval(kdim, kmax)
-            allocate(Xloc(p*(nsteps+1)), mold=B(1), stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            call kexpm_mat_kernel_csp(C, A, B, tau, tol, info, optval(trans, .false.), Xloc)
         endif
+
+        if (present(work)) then
+            call kexpm_mat_dispatch_csp(C, A, B, tau, tol, info, optval(trans, .false.), p*(nsteps+1), work, X)
+        else
+            call kexpm_mat_dispatch_csp(C, A, B, tau, tol, info, optval(trans, .false.), p*(nsteps+1), wloc, X)
+        endif
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine kexpm_mat_csp
 
-    subroutine kexpm_mat_kernel_csp(C, A, B, tau, tol, info, transpose, X)
-        !! Worker for `kexpm_mat`.
+    subroutine kexpm_mat_dispatch_csp(C, A, B, tau, tol, info, transpose, nvec, work, X)
+        !! Selects the block Krylov basis (user `X` or workspace) and sizes the workspace.
+        implicit none(type, external)
+        class(abstract_vector_csp), intent(out) :: C(:)
+        class(abstract_linop_csp), intent(inout) :: A
+        class(abstract_vector_csp), intent(in) :: B(:)
+        real(sp), intent(in) :: tau, tol
+        integer, intent(out) :: info
+        logical, intent(in) :: transpose
+        integer, intent(in) :: nvec
+        type(kexpm_workspace_csp), intent(inout) :: work
+        class(abstract_vector_csp), optional, intent(inout) :: X(:)
+
+        call ensure_dense_csp(work, nvec)
+        if (present(X)) then
+            call kexpm_mat_kernel_csp(C, A, B, tau, tol, info, transpose, X(:nvec), work%H, work%Ebuf)
+        else
+            call ensure_basis_csp(work, nvec, B(1))
+            call kexpm_mat_kernel_csp(C, A, B, tau, tol, info, transpose, work%X(:nvec), work%H, work%Ebuf)
+        endif
+    end subroutine kexpm_mat_dispatch_csp
+
+    subroutine kexpm_mat_kernel_csp(C, A, B, tau, tol, info, transpose, X, H, Ebuf)
+        !! Worker for `kexpm_mat`. The basis X, H and Ebuf are provided by the caller.
         implicit none(type, external)
         class(abstract_vector_csp), intent(out) :: C(:)
         class(abstract_linop_csp), intent(inout) :: A
@@ -1792,35 +2350,35 @@ contains
         integer, intent(out) :: info
         logical, intent(in) :: transpose
         class(abstract_vector_csp), intent(inout) :: X(:)
+        complex(sp), intent(inout) :: H(:, :)
+        complex(sp), intent(inout), target, contiguous :: Ebuf(:)
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_csp'
-        complex(sp), allocatable :: H(:, :), E(:, :), R(:, :), coef(:, :)
-        integer, allocatable :: perm(:)
+        complex(sp) :: R(size(B), size(B))
+        complex(sp), pointer, contiguous :: E(:, :)
+        integer :: perm(size(B))
         real(sp) :: err_est
-        integer :: p, nk, k, kpm, kp, kpp, iostat
+        integer :: p, nk, k, kpm, kp, kpp, i
         logical :: breakdown, partial_breakdown
         character(len=256) :: msg
 
         p  = size(B)
         nk = size(X)/p - 1
-
-        allocate(R(p, p), H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), &
-                 source=zero_csp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(perm(p), source=0, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
+        R = zero_csp ; perm = 0
 
         ! Orthonormalize the input block directly inside the Krylov basis: B = X(:p) @ R.
-        call zero_basis(X)
-        call copy(X(:p), B)
+        ! Only X(:p) is set: the other basis vectors are overwritten by the matvecs before use.
+        do i = 1, p
+            call X(i)%zero() ; call X(i)%axpby(one_csp, B(i), one_csp)
+        enddo
         call qr(X(:p), R, perm, info)
         call check_info(info, 'qr_pivot', this_module, this_procedure)
         call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_sp) then
-            ! Input matrix is zero.
-            call zero_basis(C)
+            ! Input matrix is zero (C is intent(out): rebuilt from B rather than zeroed in place).
+            call copy(C, B)
             info = p
             call log_information('Zero input block, zero output.', this_module, this_procedure)
             return
@@ -1849,13 +2407,15 @@ contains
             if (breakdown) then
                 ! Exact invariant subspace: do not consider the extended matrix.
                 kpp = kp
-                call small_expm_csp(E, H, kpp, kpp, tau)
+                call small_expm_csp(Ebuf, H, kpp, kpp, tau)
+                E(1:kpp, 1:kpp) => Ebuf(1:kpp*kpp)
                 err_est = 0.0_sp
                 exit expm_arnoldi
             endif
 
             ! Dense exponential of the extended block-Hessenberg matrix.
-            call small_expm_csp(E, H, kpp, kp, tau)
+            call small_expm_csp(Ebuf, H, kpp, kp, tau)
+            E(1:kpp, 1:kpp) => Ebuf(1:kpp*kpp)
 
             ! Cheap (conservative) error estimate.
             err_est = mnorm(matmul(E(kp+1:kpp, :p), R), "fro")
@@ -1864,8 +2424,7 @@ contains
         enddo expm_arnoldi
 
         ! Single projection back to the full space: C = X(:kpp) @ (E(:kpp, :p) @ R).
-        coef = matmul(E(:kpp, :p), R)
-        call project_block_csp(C, X(:kpp), coef)
+        call project_block_csp(C, X(:kpp), matmul(E(:kpp, :p), R))
 
         if (err_est <= tol) then
             info = kpp
@@ -1911,16 +2470,110 @@ contains
         character(len=*), parameter :: this_procedure = 'krylov_exptA_csp'
         real(sp) :: tol
 
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
         ! Tolerance relative to the norm of the input (identical to the former atol for unit vectors).
         tol = atol_sp * vec_in%norm()
 
-        call kexpm_substep_csp(vec_out, A, vec_in, tau, tol, info, trans=trans)
+        call kexpm_substep_vec_csp(vec_out, A, vec_in, tau, tol, info, trans=trans)
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         call check_info(info, 'kexpm', this_module, this_procedure)
     end subroutine krylov_exptA_csp
 
-    subroutine kexpm_substep_csp(c, A, b, tau, tol, info, trans, options, meta)
+    subroutine kexpm_substep_vec_csp(c, A, b, tau, tol, info, trans, options, meta, work)
         !! Sub-stepped Krylov approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) with optional
-        !! warm start (see the `kexpm_substep` interface).
+        !! warm start and reusable workspace (see the `kexpm_substep` interface).
+        implicit none(type, external)
+        class(abstract_vector_csp), intent(out) :: c
+        class(abstract_linop_csp), intent(inout) :: A
+        class(abstract_vector_csp), intent(in) :: b
+        real(sp), intent(in) :: tau, tol
+        integer, intent(out) :: info
+        logical, optional, intent(in) :: trans
+        class(abstract_opts), optional, intent(in) :: options
+        class(abstract_metadata), optional, intent(inout) :: meta
+        type(kexpm_workspace_csp), optional, intent(inout) :: work
+        !! Optional reusable workspace (basis, H, E): no allocation after the first call.
+        character(len=*), parameter :: this_procedure = 'kexpm_substep_vec_csp'
+        type(kexpm_workspace_csp) :: wloc
+
+        ! Sanity checks before the timer starts (invalid calls are not timed, nothing is computed).
+        call check_substep_inputs_sp(tol, options, info, this_procedure)
+        if (info /= 0) return
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+        if (present(work)) then
+            call kexpm_substep_vec_impl_csp(c, A, b, tau, tol, info, work, trans, options, meta)
+        else
+            call kexpm_substep_vec_impl_csp(c, A, b, tau, tol, info, wloc, trans, options, meta)
+        endif
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end subroutine kexpm_substep_vec_csp
+
+    subroutine kexpm_substep_mat_csp(C, A, B, tau, tol, info, trans, options, meta, work)
+        !! Sub-stepped Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \),
+        !! column by column with a shared workspace and metadata (see the `kexpm_substep` interface).
+        implicit none(type, external)
+        class(abstract_vector_csp), intent(out) :: C(:)
+        !! Output vectors.
+        class(abstract_linop_csp), intent(inout) :: A
+        !! Linear operator to be exponentiated.
+        class(abstract_vector_csp), intent(in) :: B(:)
+        !! Input vectors.
+        real(sp), intent(in) :: tau
+        !! Time horizon (may be negative).
+        real(sp), intent(in) :: tol
+        !! Absolute tolerance on the accumulated error estimate, for each column.
+        integer, intent(out) :: info
+        !! Total number of matvecs on success, error code of the first failing column otherwise.
+        logical, optional, intent(in) :: trans
+        !! Use adjoint?
+        class(abstract_opts), optional, intent(in) :: options
+        !! `kexpm_sp_opts`.
+        class(abstract_metadata), optional, intent(inout) :: meta
+        !! `kexpm_sp_metadata`, shared by all columns.
+        type(kexpm_workspace_csp), optional, intent(inout) :: work
+        !! Optional reusable workspace, shared by all columns.
+
+        ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'kexpm_substep_mat_csp'
+        type(kexpm_workspace_csp) :: wloc
+        integer :: j, info_j, nmatvec
+
+        ! Sanity checks before the timer starts (invalid calls are not timed, nothing is computed).
+        info = 0
+        if (size(B) < 1 .or. size(C) /= size(B)) then
+            info = -6
+            call log_kexpm_invalid_input(info, this_procedure)
+            return
+        endif
+        call check_substep_inputs_sp(tol, options, info, this_procedure)
+        if (info /= 0) return
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        nmatvec = 0
+        do j = 1, size(B)
+            if (present(work)) then
+                call kexpm_substep_vec_impl_csp(C(j), A, B(j), tau, tol, info_j, work, trans, options, meta)
+            else
+                ! One local workspace for all the columns.
+                call kexpm_substep_vec_impl_csp(C(j), A, B(j), tau, tol, info_j, wloc, trans, options, meta)
+            endif
+            if (info_j < 0) then
+                info = info_j
+                exit
+            endif
+            nmatvec = nmatvec + info_j
+        enddo
+        if (info == 0) info = nmatvec
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end subroutine kexpm_substep_mat_csp
+
+    subroutine kexpm_substep_vec_impl_csp(c, A, b, tau, tol, info, work, trans, options, meta)
+        !! Implementation of `kexpm_substep` (the workspace is always present here).
         implicit none(type, external)
         class(abstract_vector_csp), intent(out) :: c
         !! Output vector.
@@ -1934,6 +2587,8 @@ contains
         !! Absolute tolerance on the accumulated error estimate.
         integer, intent(out) :: info
         !! Total number of matvecs on success, -1 otherwise.
+        type(kexpm_workspace_csp), intent(inout) :: work
+        !! Workspace (basis, H, E).
         logical, optional, intent(in) :: trans
         !! Use adjoint?
         class(abstract_opts), optional, intent(in) :: options
@@ -1942,14 +2597,12 @@ contains
         !! `kexpm_sp_metadata` (counters and learned settings, kept between calls).
 
         ! ----- Internal variables -----
-        character(len=*), parameter :: this_procedure = 'kexpm_substep_csp'
+        character(len=*), parameter :: this_procedure = 'kexpm_substep_vec_csp'
         real(sp), parameter :: safety = 0.9_sp, fac_min = 0.2_sp, fac_max = 5.0_sp
         type(kexpm_sp_opts) :: opts
         type(kexpm_sp_metadata) :: lmeta
-        class(abstract_vector_csp), allocatable :: X(:)
-        complex(sp), allocatable :: H(:, :), E(:, :)
         real(sp) :: t_end, sgn, t, dt, beta, err, tol_loc, fac, floor_tol, tol_rel
-        integer :: m, ksteps, kp, nsub, nmatvec, nrej, nrej_tot, n_uniform, iostat
+        integer :: m, ksteps, kp, nsub, nmatvec, nrej, nrej_tot, n_uniform
         logical :: transpose, breakdown, last, uniform, used_uniform, fallback
         character(len=256) :: msg
 
@@ -1972,19 +2625,9 @@ contains
             end select
         endif
 
-        ! Sanity checks (no work is done and the metadata is left untouched for invalid inputs).
-        info = 0
-        if (opts%kdim < 1) then
-            info = -4
-        else if (tol < 0.0_sp) then
-            info = -5
-        else if (opts%max_rejections < 1 .or. opts%max_substeps < 1) then
-            info = -7
-        endif
-        if (info /= 0) then
-            call log_kexpm_invalid_input(info, this_procedure)
-            return
-        endif
+        ! Sanity checks (already done by the public drivers; kept so that the kernel is safe on its own).
+        call check_substep_inputs_sp(tol, options, info, this_procedure)
+        if (info /= 0) return
 
         transpose = optval(trans, .false.)
         m = opts%kdim
@@ -2006,16 +2649,14 @@ contains
         uniform = used_uniform ; fallback = .false.
 
         ! c holds the running solution w(t).
-        call c%zero() ; call c%add(b)
+        call copy(c, b)
         beta = c%norm()
         t = 0.0_sp ; nsub = 0 ; nmatvec = 0 ; nrej_tot = 0 ; info = 0
 
         if (beta /= 0.0_sp .and. t_end /= 0.0_sp) then
-            ! Workspace (allocated once, reused by every sub-step).
-            allocate(X(m+1), mold=b, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            allocate(H(m+1, m+1), E(m+1, m+1), source=zero_csp, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
+            ! Workspace: re-used by every sub-step, and across calls when `work` is passed.
+            call ensure_basis_csp(work, m+1, b)
+            call ensure_dense_csp(work, m+1)
 
             dt = merge(t_end/max(n_uniform, 1), t_end, uniform)
 
@@ -2035,18 +2676,18 @@ contains
                 floor_tol = 2*epsilon(1.0_sp)*beta
                 tol_loc = max(tol*dt/t_end, floor_tol)
 
-                ! Fresh Krylov basis started from the current solution.
-                call zero_basis(X) ; H = zero_csp
-                call X(1)%add(c) ; call X(1)%scal(one_csp / beta)
+                ! Fresh Krylov basis started from the current solution. Only X(1) is set, and H needs
+                ! no reset: Arnoldi rewrites every entry on or above the subdiagonal that is used.
+                call work%X(1)%zero() ; call work%X(1)%axpby(one_csp / beta, c, one_csp)
 
-                call arnoldi_expm_csp(A, X, H, E, beta, sgn*dt, tol_loc, transpose, &
+                call arnoldi_expm_csp(A, work%X(:m+1), work%H, work%Ebuf, beta, sgn*dt, tol_loc, transpose, &
                                                       & ksteps, kp, err, breakdown)
                 nmatvec = nmatvec + ksteps
 
                 if (breakdown) then
                     ! Invariant subspace: exact for any dt, finish the horizon in one go.
                     dt = t_end - t ; last = .true.
-                    call small_expm_csp(E, H, kp, kp, sgn*dt)
+                    call small_expm_csp(work%Ebuf, work%H, kp, kp, sgn*dt)
                     err = 0.0_sp
                 else if (err > tol_loc) then
                     ! Krylov basis exhausted. Safety net: a learned uniform step that is too large
@@ -2060,8 +2701,8 @@ contains
                         fac = min(safety, max(0.1_sp, safety*(tol_loc/err)**(1.0_sp/m)))
                         dt  = fac*dt
                         tol_loc = max(tol*dt/t_end, floor_tol)
-                        call small_expm_csp(E, H, kp, ksteps, sgn*dt)
-                        err = beta*abs(E(kp, 1))
+                        call small_expm_csp(work%Ebuf, work%H, kp, ksteps, sgn*dt)
+                        err = beta*abs(work%Ebuf(kp))
                         nrej_tot = nrej_tot + 1
                         if (err <= tol_loc) exit
                     enddo
@@ -2071,7 +2712,7 @@ contains
                 endif
 
                 ! Advance: w(t+dt) = beta * X(:kp) @ E(:kp, 1).
-                call project_csp(c, X(:kp), beta*E(:kp, 1))
+                call project_csp(c, work%X(:kp), work%Ebuf(:kp), beta)
                 if (last) then
                     t = t_end
                 else
@@ -2121,21 +2762,23 @@ contains
                 meta = lmeta
             end select
         endif
-    end subroutine kexpm_substep_csp
+    end subroutine kexpm_substep_vec_impl_csp
 
     !----------------------------------------
     !-----     Private helper kernels     -----
     !----------------------------------------
 
-    subroutine arnoldi_expm_csp(A, X, H, E, beta, tau, tol, transpose, ksteps, kp, err_est, breakdown)
+    subroutine arnoldi_expm_csp(A, X, H, Ebuf, beta, tau, tol, transpose, ksteps, kp, err_est, breakdown)
         !! Grows the Arnoldi basis `X` (with `X(1)` already normalized) one vector at a time and
         !! evaluates the exponential of the extended Hessenberg matrix after each step, until
         !! `beta*|E(kp,1)| <= tol`, breakdown, or `size(X)-1` steps.
-        !! On exit `E(:kp, :kp)` holds the dense exponential used for the projection.
+        !! On exit `Ebuf(1:kp*kp)` holds the kp x kp dense exponential (column-major), so that
+        !! its first column is `Ebuf(1:kp)`.
         implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: A
         class(abstract_vector_csp), intent(inout) :: X(:)
-        complex(sp), intent(inout) :: H(:, :), E(:, :)
+        complex(sp), intent(inout) :: H(:, :)
+        complex(sp), intent(inout), target, contiguous :: Ebuf(:)
         real(sp), intent(in) :: beta, tau, tol
         logical, intent(in) :: transpose
         integer, intent(out) :: ksteps, kp
@@ -2156,46 +2799,56 @@ contains
             if (breakdown) then
                 ! Invariant subspace: the approximation is exact, drop the extended row.
                 kp = k
-                call small_expm_csp(E, H, kp, kp, tau)
+                call small_expm_csp(Ebuf, H, kp, kp, tau)
                 err_est = 0.0_sp
                 return
             endif
 
             ! Exponential of the (k+1)x(k+1) extended Hessenberg matrix [H_k 0; h e_k^T 0].
             kp = k + 1
-            call small_expm_csp(E, H, kp, k, tau)
+            call small_expm_csp(Ebuf, H, kp, k, tau)
 
             ! Cheap error estimate (magnitude of the last included correction, conservative).
-            err_est = beta*abs(E(kp, 1))
+            err_est = beta*abs(Ebuf(kp))     ! = beta * |E(kp, 1)|
             if (err_est <= tol) return
         enddo
     end subroutine arnoldi_expm_csp
 
-    subroutine small_expm_csp(E, H, n, ncols, tau)
-        !! E(:n, :n) = exp(tau * Hbar) where Hbar holds the first `ncols` columns of H(:n, :)
-        !! and zeros elsewhere. Only the leading n x n block of E is touched (no full reset),
-        !! and stale columns of H (e.g. from a previous sub-step) are never used.
+    subroutine small_expm_csp(Ebuf, H, n, ncols, tau)
+        !! E = exp(tau * Hbar), stored column-major in the contiguous buffer Ebuf(1:n*n). Hbar holds
+        !! the first `ncols` columns of H(:n, :) and zeros elsewhere, so stale columns of H (e.g. from
+        !! a previous sub-step) are never used. Contiguous storage: stdlib's matrix_exp works in place
+        !! without any temporary copy (a section E(:n, :n) of a larger array would be packed at every
+        !! call).
         implicit none(type, external)
-        complex(sp), intent(inout) :: E(:, :)
+        complex(sp), intent(inout), target, contiguous :: Ebuf(:)
         complex(sp), intent(in) :: H(:, :)
         integer, intent(in) :: n, ncols
         real(sp), intent(in) :: tau
+        complex(sp), pointer, contiguous :: E(:, :)
 
-        E(:n, :ncols) = tau*H(:n, :ncols)
-        if (ncols < n) E(:n, ncols+1:n) = zero_csp
-        call matrix_exp(E(:n, :n))
+        E(1:n, 1:n) => Ebuf(1:n*n)
+        E(:, :ncols) = tau*H(:n, :ncols)
+        if (ncols < n) E(:, ncols+1:n) = zero_csp
+        call matrix_exp(E)
     end subroutine small_expm_csp
 
-    subroutine project_csp(c, X, v)
-        !! c = X @ v, written directly into the (non-allocatable) output vector.
+    subroutine project_csp(c, X, v, alpha)
+        !! c = alpha * X @ v, written directly into the output vector (no temporary array).
+        !! c is fully overwritten: it is first rebuilt from X(1) with `copy`, so that its previous
+        !! state is never read (it may be an intent(out) argument whose components were reset).
         implicit none(type, external)
         class(abstract_vector_csp), intent(inout) :: c
         class(abstract_vector_csp), intent(in) :: X(:)
         complex(sp), intent(in) :: v(:)
+        real(sp), optional, intent(in) :: alpha
+        real(sp) :: a
         integer :: i
-        call c%zero()
-        do i = 1, size(X)
-            call c%axpby(v(i), X(i), one_csp)
+        a = optval(alpha, 1.0_sp)
+        call copy(c, X(1))
+        call c%scal(a*v(1))
+        do i = 2, size(X)
+            call c%axpby(a*v(i), X(i), one_csp)
         enddo
     end subroutine project_csp
 
@@ -2211,11 +2864,71 @@ contains
         enddo
     end subroutine project_block_csp
 
+    !------------------------------------------
+    !-----     Workspace management     -----
+    !------------------------------------------
+
+    subroutine ensure_basis_csp(work, nvec, b)
+        !! Makes sure work%X holds at least `nvec` vectors of the same type and size as `b`.
+        !! Allocated with `source=b` so that vector types with allocatable components are fully
+        !! initialized (with `mold=` their components would be unallocated and their sizes undefined).
+        implicit none(type, external)
+        type(kexpm_workspace_csp), intent(inout) :: work
+        integer, intent(in) :: nvec
+        class(abstract_vector_csp), intent(in) :: b
+        character(len=*), parameter :: this_procedure = 'ensure_basis_csp'
+        logical :: ok
+        integer :: iostat
+        character(len=256) :: msg
+
+        ok = allocated(work%X)
+        if (ok) ok = size(work%X) >= nvec
+        if (ok) ok = same_type_as(work%X(1), b)
+        if (ok) ok = work%X(1)%get_size() == b%get_size()
+        if (.not. ok) then
+            if (allocated(work%X)) deallocate(work%X)
+            allocate(work%X(nvec), source=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+        endif
+    end subroutine ensure_basis_csp
+
+    subroutine ensure_dense_csp(work, nh)
+        !! Makes sure work%H is at least nh x nh and work%Ebuf holds nh*nh entries, then zeroes the
+        !! leading nh x nh block of H (entries below the subdiagonal must be zero, and a re-used H
+        !! may hold entries from a previous call with another block size).
+        implicit none(type, external)
+        type(kexpm_workspace_csp), intent(inout) :: work
+        integer, intent(in) :: nh
+        character(len=*), parameter :: this_procedure = 'ensure_dense_csp'
+        logical :: ok
+        integer :: iostat
+        character(len=256) :: msg
+
+        ok = allocated(work%H) .and. allocated(work%Ebuf)
+        if (ok) ok = size(work%H, 1) >= nh .and. size(work%H, 2) >= nh .and. size(work%Ebuf) >= nh*nh
+        if (.not. ok) then
+            if (allocated(work%H)) deallocate(work%H)
+            if (allocated(work%Ebuf)) deallocate(work%Ebuf)
+            allocate(work%H(nh, nh), work%Ebuf(nh*nh), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+        endif
+        work%H(:nh, :nh) = zero_csp
+    end subroutine ensure_dense_csp
+
+    subroutine free_kexpm_workspace_csp(self)
+        !! Releases the memory held by the workspace.
+        implicit none(type, external)
+        class(kexpm_workspace_csp), intent(inout) :: self
+        if (allocated(self%X)) deallocate(self%X)
+        if (allocated(self%H)) deallocate(self%H)
+        if (allocated(self%Ebuf)) deallocate(self%Ebuf)
+    end subroutine free_kexpm_workspace_csp
+
     !-------------------------------------------------------------------
     !-----     Public driver : single vector, fixed time horizon     -----
     !-------------------------------------------------------------------
 
-    subroutine kexpm_vec_cdp(c, A, b, tau, tol, info, trans, kdim, X)
+    subroutine kexpm_vec_cdp(c, A, b, tau, tol, info, trans, kdim, X, work)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_cdp), intent(out) :: c
@@ -2235,13 +2948,14 @@ contains
         integer, optional, intent(in) :: kdim
         !! Maximum number of Arnoldi steps.
         class(abstract_vector_cdp), optional, intent(inout) :: X(:)
-        !! Optional workspace for the Krylov basis (avoids allocating it at every call).
+        !! Optional user-supplied Krylov basis (takes precedence over the one in `work`).
+        type(kexpm_workspace_cdp), optional, intent(inout) :: work
+        !! Optional reusable workspace (basis, H, E): no allocation after the first call.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_cdp'
-        class(abstract_vector_cdp), allocatable :: Xloc(:)
-        integer :: nsteps, iostat
-        character(len=256) :: msg
+        type(kexpm_workspace_cdp) :: wloc
+        integer :: nsteps
 
         ! Sanity checks (no work is done for invalid inputs).
         info = 0
@@ -2257,21 +2971,48 @@ contains
             return
         endif
 
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
         if (present(X)) then
             nsteps = min(optval(kdim, size(X)-1), size(X)-1)
-            call kexpm_vec_kernel_cdp(c, A, b, tau, tol, info, optval(trans, .false.), X(:nsteps+1))
         else
             nsteps = optval(kdim, kmax)
-            ! `mold` : no copy of b into every basis vector (the kernel zeroes the basis anyway).
-            allocate(Xloc(nsteps+1), mold=b, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            call kexpm_vec_kernel_cdp(c, A, b, tau, tol, info, optval(trans, .false.), Xloc)
-            ! Xloc is allocatable: automatically deallocated on return (no leak).
         endif
+
+        if (present(work)) then
+            call kexpm_vec_dispatch_cdp(c, A, b, tau, tol, info, optval(trans, .false.), nsteps+1, work, X)
+        else
+            ! Local workspace: deallocated automatically on return.
+            call kexpm_vec_dispatch_cdp(c, A, b, tau, tol, info, optval(trans, .false.), nsteps+1, wloc, X)
+        endif
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine kexpm_vec_cdp
 
-    subroutine kexpm_vec_kernel_cdp(c, A, b, tau, tol, info, transpose, X)
-        !! Worker for `kexpm_vec`: the Krylov basis `X` is a plain (non-optional) dummy argument.
+    subroutine kexpm_vec_dispatch_cdp(c, A, b, tau, tol, info, transpose, nvec, work, X)
+        !! Selects the Krylov basis (user `X` or workspace) and sizes the workspace.
+        implicit none(type, external)
+        class(abstract_vector_cdp), intent(out) :: c
+        class(abstract_linop_cdp), intent(inout) :: A
+        class(abstract_vector_cdp), intent(in) :: b
+        real(dp), intent(in) :: tau, tol
+        integer, intent(out) :: info
+        logical, intent(in) :: transpose
+        integer, intent(in) :: nvec
+        type(kexpm_workspace_cdp), intent(inout) :: work
+        class(abstract_vector_cdp), optional, intent(inout) :: X(:)
+
+        call ensure_dense_cdp(work, nvec)
+        if (present(X)) then
+            call kexpm_vec_kernel_cdp(c, A, b, tau, tol, info, transpose, X(:nvec), work%H, work%Ebuf)
+        else
+            call ensure_basis_cdp(work, nvec, b)
+            call kexpm_vec_kernel_cdp(c, A, b, tau, tol, info, transpose, work%X(:nvec), work%H, work%Ebuf)
+        endif
+    end subroutine kexpm_vec_dispatch_cdp
+
+    subroutine kexpm_vec_kernel_cdp(c, A, b, tau, tol, info, transpose, X, H, Ebuf)
+        !! Worker for `kexpm_vec`. No allocation: X, H and Ebuf are provided by the caller.
         implicit none(type, external)
         class(abstract_vector_cdp), intent(out) :: c
         class(abstract_linop_cdp), intent(inout) :: A
@@ -2280,39 +3021,36 @@ contains
         integer, intent(out) :: info
         logical, intent(in) :: transpose
         class(abstract_vector_cdp), intent(inout) :: X(:)
+        complex(dp), intent(inout) :: H(:, :)
+        complex(dp), intent(inout), target, contiguous :: Ebuf(:)
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_cdp'
-        complex(dp), allocatable :: H(:, :), E(:, :)
         real(dp) :: beta, err_est
-        integer :: nk, kp, ksteps, iostat
+        integer :: kp, ksteps
         logical :: breakdown
         character(len=256) :: msg
 
-        nk = size(X) - 1
-
         beta = b%norm()
         if (beta == 0.0_dp) then
-            ! Input is zero => Output is zero.
-            call c%zero()
+            ! Input is zero => Output is zero. `copy` (not `zero`): c is intent(out), its components
+            ! are reset on entry and must not be relied upon (e.g. the size of a dense_vector).
+            call copy(c, b)
             info = 1
             call log_information('Zero input vector, zero output.', this_module, this_procedure)
             return
         endif
 
-        allocate(H(nk+1, nk+1), E(nk+1, nk+1), source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-
-        ! Initialize Krylov subspace with the normalized input vector.
-        call zero_basis(X)
-        call X(1)%add(b) ; call X(1)%scal(one_cdp / beta)
+        ! Initialize the Krylov subspace with the normalized input vector. Only X(1) is set:
+        ! every other basis vector is overwritten by the matrix-vector product before being used.
+        call X(1)%zero() ; call X(1)%axpby(one_cdp / beta, b, one_cdp)
 
         ! Grow the Krylov subspace until the error estimate is below tol.
-        call arnoldi_expm_cdp(A, X, H, E, beta, tau, tol, transpose, &
+        call arnoldi_expm_cdp(A, X, H, Ebuf, beta, tau, tol, transpose, &
                                               & ksteps, kp, err_est, breakdown)
 
         ! Single projection back onto the full space: c = beta * X(:kp) @ E(:kp, 1).
-        call project_cdp(c, X(:kp), beta*E(:kp, 1))
+        call project_cdp(c, X(:kp), Ebuf(:kp), beta)
 
         if (err_est <= tol) then
             info = kp
@@ -2330,7 +3068,7 @@ contains
     !-----     Public driver : block version, fixed horizon     -----
     !----------------------------------------------------------------
 
-    subroutine kexpm_mat_cdp(C, A, B, tau, tol, info, trans, kdim, X)
+    subroutine kexpm_mat_cdp(C, A, B, tau, tol, info, trans, kdim, X, work)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
         class(abstract_vector_cdp), intent(out) :: C(:)
@@ -2350,13 +3088,14 @@ contains
         integer, optional, intent(in) :: kdim
         !! Maximum number of block-Arnoldi steps.
         class(abstract_vector_cdp), optional, intent(inout) :: X(:)
-        !! Optional workspace for the block Krylov basis (size multiple of size(B)).
+        !! Optional user-supplied block Krylov basis (size multiple of size(B)).
+        type(kexpm_workspace_cdp), optional, intent(inout) :: work
+        !! Optional reusable workspace (basis, H, E): no allocation after the first call.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_cdp'
-        class(abstract_vector_cdp), allocatable :: Xloc(:)
-        integer :: p, nsteps, iostat
-        character(len=256) :: msg
+        type(kexpm_workspace_cdp) :: wloc
+        integer :: p, nsteps
 
         p = size(B)
 
@@ -2376,21 +3115,48 @@ contains
             return
         endif
 
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        ! NOTE: kdim counts block steps. The basis holds p*(kdim+1) vectors.
         if (present(X)) then
             nsteps = min(optval(kdim, size(X)/p - 1), size(X)/p - 1)
-            call kexpm_mat_kernel_cdp(C, A, B, tau, tol, info, optval(trans, .false.), X(:p*(nsteps+1)))
         else
-            ! NOTE: kdim counts block steps. The basis holds p*(kdim+1) vectors
-            !       (previously p*(p*kdim+1) because the block size was counted twice).
             nsteps = optval(kdim, kmax)
-            allocate(Xloc(p*(nsteps+1)), mold=B(1), stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            call kexpm_mat_kernel_cdp(C, A, B, tau, tol, info, optval(trans, .false.), Xloc)
         endif
+
+        if (present(work)) then
+            call kexpm_mat_dispatch_cdp(C, A, B, tau, tol, info, optval(trans, .false.), p*(nsteps+1), work, X)
+        else
+            call kexpm_mat_dispatch_cdp(C, A, B, tau, tol, info, optval(trans, .false.), p*(nsteps+1), wloc, X)
+        endif
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine kexpm_mat_cdp
 
-    subroutine kexpm_mat_kernel_cdp(C, A, B, tau, tol, info, transpose, X)
-        !! Worker for `kexpm_mat`.
+    subroutine kexpm_mat_dispatch_cdp(C, A, B, tau, tol, info, transpose, nvec, work, X)
+        !! Selects the block Krylov basis (user `X` or workspace) and sizes the workspace.
+        implicit none(type, external)
+        class(abstract_vector_cdp), intent(out) :: C(:)
+        class(abstract_linop_cdp), intent(inout) :: A
+        class(abstract_vector_cdp), intent(in) :: B(:)
+        real(dp), intent(in) :: tau, tol
+        integer, intent(out) :: info
+        logical, intent(in) :: transpose
+        integer, intent(in) :: nvec
+        type(kexpm_workspace_cdp), intent(inout) :: work
+        class(abstract_vector_cdp), optional, intent(inout) :: X(:)
+
+        call ensure_dense_cdp(work, nvec)
+        if (present(X)) then
+            call kexpm_mat_kernel_cdp(C, A, B, tau, tol, info, transpose, X(:nvec), work%H, work%Ebuf)
+        else
+            call ensure_basis_cdp(work, nvec, B(1))
+            call kexpm_mat_kernel_cdp(C, A, B, tau, tol, info, transpose, work%X(:nvec), work%H, work%Ebuf)
+        endif
+    end subroutine kexpm_mat_dispatch_cdp
+
+    subroutine kexpm_mat_kernel_cdp(C, A, B, tau, tol, info, transpose, X, H, Ebuf)
+        !! Worker for `kexpm_mat`. The basis X, H and Ebuf are provided by the caller.
         implicit none(type, external)
         class(abstract_vector_cdp), intent(out) :: C(:)
         class(abstract_linop_cdp), intent(inout) :: A
@@ -2399,35 +3165,35 @@ contains
         integer, intent(out) :: info
         logical, intent(in) :: transpose
         class(abstract_vector_cdp), intent(inout) :: X(:)
+        complex(dp), intent(inout) :: H(:, :)
+        complex(dp), intent(inout), target, contiguous :: Ebuf(:)
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_cdp'
-        complex(dp), allocatable :: H(:, :), E(:, :), R(:, :), coef(:, :)
-        integer, allocatable :: perm(:)
+        complex(dp) :: R(size(B), size(B))
+        complex(dp), pointer, contiguous :: E(:, :)
+        integer :: perm(size(B))
         real(dp) :: err_est
-        integer :: p, nk, k, kpm, kp, kpp, iostat
+        integer :: p, nk, k, kpm, kp, kpp, i
         logical :: breakdown, partial_breakdown
         character(len=256) :: msg
 
         p  = size(B)
         nk = size(X)/p - 1
-
-        allocate(R(p, p), H(p*(nk+1), p*(nk+1)), E(p*(nk+1), p*(nk+1)), &
-                 source=zero_cdp, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(perm(p), source=0, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
+        R = zero_cdp ; perm = 0
 
         ! Orthonormalize the input block directly inside the Krylov basis: B = X(:p) @ R.
-        call zero_basis(X)
-        call copy(X(:p), B)
+        ! Only X(:p) is set: the other basis vectors are overwritten by the matvecs before use.
+        do i = 1, p
+            call X(i)%zero() ; call X(i)%axpby(one_cdp, B(i), one_cdp)
+        enddo
         call qr(X(:p), R, perm, info)
         call check_info(info, 'qr_pivot', this_module, this_procedure)
         call permcols(R, invperm(perm))
 
         if (mnorm(R, "fro") == 0.0_dp) then
-            ! Input matrix is zero.
-            call zero_basis(C)
+            ! Input matrix is zero (C is intent(out): rebuilt from B rather than zeroed in place).
+            call copy(C, B)
             info = p
             call log_information('Zero input block, zero output.', this_module, this_procedure)
             return
@@ -2456,13 +3222,15 @@ contains
             if (breakdown) then
                 ! Exact invariant subspace: do not consider the extended matrix.
                 kpp = kp
-                call small_expm_cdp(E, H, kpp, kpp, tau)
+                call small_expm_cdp(Ebuf, H, kpp, kpp, tau)
+                E(1:kpp, 1:kpp) => Ebuf(1:kpp*kpp)
                 err_est = 0.0_dp
                 exit expm_arnoldi
             endif
 
             ! Dense exponential of the extended block-Hessenberg matrix.
-            call small_expm_cdp(E, H, kpp, kp, tau)
+            call small_expm_cdp(Ebuf, H, kpp, kp, tau)
+            E(1:kpp, 1:kpp) => Ebuf(1:kpp*kpp)
 
             ! Cheap (conservative) error estimate.
             err_est = mnorm(matmul(E(kp+1:kpp, :p), R), "fro")
@@ -2471,8 +3239,7 @@ contains
         enddo expm_arnoldi
 
         ! Single projection back to the full space: C = X(:kpp) @ (E(:kpp, :p) @ R).
-        coef = matmul(E(:kpp, :p), R)
-        call project_block_cdp(C, X(:kpp), coef)
+        call project_block_cdp(C, X(:kpp), matmul(E(:kpp, :p), R))
 
         if (err_est <= tol) then
             info = kpp
@@ -2518,16 +3285,110 @@ contains
         character(len=*), parameter :: this_procedure = 'krylov_exptA_cdp'
         real(dp) :: tol
 
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
         ! Tolerance relative to the norm of the input (identical to the former atol for unit vectors).
         tol = atol_dp * vec_in%norm()
 
-        call kexpm_substep_cdp(vec_out, A, vec_in, tau, tol, info, trans=trans)
+        call kexpm_substep_vec_cdp(vec_out, A, vec_in, tau, tol, info, trans=trans)
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
         call check_info(info, 'kexpm', this_module, this_procedure)
     end subroutine krylov_exptA_cdp
 
-    subroutine kexpm_substep_cdp(c, A, b, tau, tol, info, trans, options, meta)
+    subroutine kexpm_substep_vec_cdp(c, A, b, tau, tol, info, trans, options, meta, work)
         !! Sub-stepped Krylov approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) with optional
-        !! warm start (see the `kexpm_substep` interface).
+        !! warm start and reusable workspace (see the `kexpm_substep` interface).
+        implicit none(type, external)
+        class(abstract_vector_cdp), intent(out) :: c
+        class(abstract_linop_cdp), intent(inout) :: A
+        class(abstract_vector_cdp), intent(in) :: b
+        real(dp), intent(in) :: tau, tol
+        integer, intent(out) :: info
+        logical, optional, intent(in) :: trans
+        class(abstract_opts), optional, intent(in) :: options
+        class(abstract_metadata), optional, intent(inout) :: meta
+        type(kexpm_workspace_cdp), optional, intent(inout) :: work
+        !! Optional reusable workspace (basis, H, E): no allocation after the first call.
+        character(len=*), parameter :: this_procedure = 'kexpm_substep_vec_cdp'
+        type(kexpm_workspace_cdp) :: wloc
+
+        ! Sanity checks before the timer starts (invalid calls are not timed, nothing is computed).
+        call check_substep_inputs_dp(tol, options, info, this_procedure)
+        if (info /= 0) return
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+        if (present(work)) then
+            call kexpm_substep_vec_impl_cdp(c, A, b, tau, tol, info, work, trans, options, meta)
+        else
+            call kexpm_substep_vec_impl_cdp(c, A, b, tau, tol, info, wloc, trans, options, meta)
+        endif
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end subroutine kexpm_substep_vec_cdp
+
+    subroutine kexpm_substep_mat_cdp(C, A, B, tau, tol, info, trans, options, meta, work)
+        !! Sub-stepped Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \),
+        !! column by column with a shared workspace and metadata (see the `kexpm_substep` interface).
+        implicit none(type, external)
+        class(abstract_vector_cdp), intent(out) :: C(:)
+        !! Output vectors.
+        class(abstract_linop_cdp), intent(inout) :: A
+        !! Linear operator to be exponentiated.
+        class(abstract_vector_cdp), intent(in) :: B(:)
+        !! Input vectors.
+        real(dp), intent(in) :: tau
+        !! Time horizon (may be negative).
+        real(dp), intent(in) :: tol
+        !! Absolute tolerance on the accumulated error estimate, for each column.
+        integer, intent(out) :: info
+        !! Total number of matvecs on success, error code of the first failing column otherwise.
+        logical, optional, intent(in) :: trans
+        !! Use adjoint?
+        class(abstract_opts), optional, intent(in) :: options
+        !! `kexpm_dp_opts`.
+        class(abstract_metadata), optional, intent(inout) :: meta
+        !! `kexpm_dp_metadata`, shared by all columns.
+        type(kexpm_workspace_cdp), optional, intent(inout) :: work
+        !! Optional reusable workspace, shared by all columns.
+
+        ! ----- Internal variables -----
+        character(len=*), parameter :: this_procedure = 'kexpm_substep_mat_cdp'
+        type(kexpm_workspace_cdp) :: wloc
+        integer :: j, info_j, nmatvec
+
+        ! Sanity checks before the timer starts (invalid calls are not timed, nothing is computed).
+        info = 0
+        if (size(B) < 1 .or. size(C) /= size(B)) then
+            info = -6
+            call log_kexpm_invalid_input(info, this_procedure)
+            return
+        endif
+        call check_substep_inputs_dp(tol, options, info, this_procedure)
+        if (info /= 0) return
+
+        if (time_lightkrylov()) call timer%start(this_procedure)
+
+        nmatvec = 0
+        do j = 1, size(B)
+            if (present(work)) then
+                call kexpm_substep_vec_impl_cdp(C(j), A, B(j), tau, tol, info_j, work, trans, options, meta)
+            else
+                ! One local workspace for all the columns.
+                call kexpm_substep_vec_impl_cdp(C(j), A, B(j), tau, tol, info_j, wloc, trans, options, meta)
+            endif
+            if (info_j < 0) then
+                info = info_j
+                exit
+            endif
+            nmatvec = nmatvec + info_j
+        enddo
+        if (info == 0) info = nmatvec
+
+        if (time_lightkrylov()) call timer%stop(this_procedure)
+    end subroutine kexpm_substep_mat_cdp
+
+    subroutine kexpm_substep_vec_impl_cdp(c, A, b, tau, tol, info, work, trans, options, meta)
+        !! Implementation of `kexpm_substep` (the workspace is always present here).
         implicit none(type, external)
         class(abstract_vector_cdp), intent(out) :: c
         !! Output vector.
@@ -2541,6 +3402,8 @@ contains
         !! Absolute tolerance on the accumulated error estimate.
         integer, intent(out) :: info
         !! Total number of matvecs on success, -1 otherwise.
+        type(kexpm_workspace_cdp), intent(inout) :: work
+        !! Workspace (basis, H, E).
         logical, optional, intent(in) :: trans
         !! Use adjoint?
         class(abstract_opts), optional, intent(in) :: options
@@ -2549,14 +3412,12 @@ contains
         !! `kexpm_dp_metadata` (counters and learned settings, kept between calls).
 
         ! ----- Internal variables -----
-        character(len=*), parameter :: this_procedure = 'kexpm_substep_cdp'
+        character(len=*), parameter :: this_procedure = 'kexpm_substep_vec_cdp'
         real(dp), parameter :: safety = 0.9_dp, fac_min = 0.2_dp, fac_max = 5.0_dp
         type(kexpm_dp_opts) :: opts
         type(kexpm_dp_metadata) :: lmeta
-        class(abstract_vector_cdp), allocatable :: X(:)
-        complex(dp), allocatable :: H(:, :), E(:, :)
         real(dp) :: t_end, sgn, t, dt, beta, err, tol_loc, fac, floor_tol, tol_rel
-        integer :: m, ksteps, kp, nsub, nmatvec, nrej, nrej_tot, n_uniform, iostat
+        integer :: m, ksteps, kp, nsub, nmatvec, nrej, nrej_tot, n_uniform
         logical :: transpose, breakdown, last, uniform, used_uniform, fallback
         character(len=256) :: msg
 
@@ -2579,19 +3440,9 @@ contains
             end select
         endif
 
-        ! Sanity checks (no work is done and the metadata is left untouched for invalid inputs).
-        info = 0
-        if (opts%kdim < 1) then
-            info = -4
-        else if (tol < 0.0_dp) then
-            info = -5
-        else if (opts%max_rejections < 1 .or. opts%max_substeps < 1) then
-            info = -7
-        endif
-        if (info /= 0) then
-            call log_kexpm_invalid_input(info, this_procedure)
-            return
-        endif
+        ! Sanity checks (already done by the public drivers; kept so that the kernel is safe on its own).
+        call check_substep_inputs_dp(tol, options, info, this_procedure)
+        if (info /= 0) return
 
         transpose = optval(trans, .false.)
         m = opts%kdim
@@ -2613,16 +3464,14 @@ contains
         uniform = used_uniform ; fallback = .false.
 
         ! c holds the running solution w(t).
-        call c%zero() ; call c%add(b)
+        call copy(c, b)
         beta = c%norm()
         t = 0.0_dp ; nsub = 0 ; nmatvec = 0 ; nrej_tot = 0 ; info = 0
 
         if (beta /= 0.0_dp .and. t_end /= 0.0_dp) then
-            ! Workspace (allocated once, reused by every sub-step).
-            allocate(X(m+1), mold=b, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            allocate(H(m+1, m+1), E(m+1, m+1), source=zero_cdp, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
+            ! Workspace: re-used by every sub-step, and across calls when `work` is passed.
+            call ensure_basis_cdp(work, m+1, b)
+            call ensure_dense_cdp(work, m+1)
 
             dt = merge(t_end/max(n_uniform, 1), t_end, uniform)
 
@@ -2642,18 +3491,18 @@ contains
                 floor_tol = 2*epsilon(1.0_dp)*beta
                 tol_loc = max(tol*dt/t_end, floor_tol)
 
-                ! Fresh Krylov basis started from the current solution.
-                call zero_basis(X) ; H = zero_cdp
-                call X(1)%add(c) ; call X(1)%scal(one_cdp / beta)
+                ! Fresh Krylov basis started from the current solution. Only X(1) is set, and H needs
+                ! no reset: Arnoldi rewrites every entry on or above the subdiagonal that is used.
+                call work%X(1)%zero() ; call work%X(1)%axpby(one_cdp / beta, c, one_cdp)
 
-                call arnoldi_expm_cdp(A, X, H, E, beta, sgn*dt, tol_loc, transpose, &
+                call arnoldi_expm_cdp(A, work%X(:m+1), work%H, work%Ebuf, beta, sgn*dt, tol_loc, transpose, &
                                                       & ksteps, kp, err, breakdown)
                 nmatvec = nmatvec + ksteps
 
                 if (breakdown) then
                     ! Invariant subspace: exact for any dt, finish the horizon in one go.
                     dt = t_end - t ; last = .true.
-                    call small_expm_cdp(E, H, kp, kp, sgn*dt)
+                    call small_expm_cdp(work%Ebuf, work%H, kp, kp, sgn*dt)
                     err = 0.0_dp
                 else if (err > tol_loc) then
                     ! Krylov basis exhausted. Safety net: a learned uniform step that is too large
@@ -2667,8 +3516,8 @@ contains
                         fac = min(safety, max(0.1_dp, safety*(tol_loc/err)**(1.0_dp/m)))
                         dt  = fac*dt
                         tol_loc = max(tol*dt/t_end, floor_tol)
-                        call small_expm_cdp(E, H, kp, ksteps, sgn*dt)
-                        err = beta*abs(E(kp, 1))
+                        call small_expm_cdp(work%Ebuf, work%H, kp, ksteps, sgn*dt)
+                        err = beta*abs(work%Ebuf(kp))
                         nrej_tot = nrej_tot + 1
                         if (err <= tol_loc) exit
                     enddo
@@ -2678,7 +3527,7 @@ contains
                 endif
 
                 ! Advance: w(t+dt) = beta * X(:kp) @ E(:kp, 1).
-                call project_cdp(c, X(:kp), beta*E(:kp, 1))
+                call project_cdp(c, work%X(:kp), work%Ebuf(:kp), beta)
                 if (last) then
                     t = t_end
                 else
@@ -2728,21 +3577,23 @@ contains
                 meta = lmeta
             end select
         endif
-    end subroutine kexpm_substep_cdp
+    end subroutine kexpm_substep_vec_impl_cdp
 
     !----------------------------------------
     !-----     Private helper kernels     -----
     !----------------------------------------
 
-    subroutine arnoldi_expm_cdp(A, X, H, E, beta, tau, tol, transpose, ksteps, kp, err_est, breakdown)
+    subroutine arnoldi_expm_cdp(A, X, H, Ebuf, beta, tau, tol, transpose, ksteps, kp, err_est, breakdown)
         !! Grows the Arnoldi basis `X` (with `X(1)` already normalized) one vector at a time and
         !! evaluates the exponential of the extended Hessenberg matrix after each step, until
         !! `beta*|E(kp,1)| <= tol`, breakdown, or `size(X)-1` steps.
-        !! On exit `E(:kp, :kp)` holds the dense exponential used for the projection.
+        !! On exit `Ebuf(1:kp*kp)` holds the kp x kp dense exponential (column-major), so that
+        !! its first column is `Ebuf(1:kp)`.
         implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: A
         class(abstract_vector_cdp), intent(inout) :: X(:)
-        complex(dp), intent(inout) :: H(:, :), E(:, :)
+        complex(dp), intent(inout) :: H(:, :)
+        complex(dp), intent(inout), target, contiguous :: Ebuf(:)
         real(dp), intent(in) :: beta, tau, tol
         logical, intent(in) :: transpose
         integer, intent(out) :: ksteps, kp
@@ -2763,46 +3614,56 @@ contains
             if (breakdown) then
                 ! Invariant subspace: the approximation is exact, drop the extended row.
                 kp = k
-                call small_expm_cdp(E, H, kp, kp, tau)
+                call small_expm_cdp(Ebuf, H, kp, kp, tau)
                 err_est = 0.0_dp
                 return
             endif
 
             ! Exponential of the (k+1)x(k+1) extended Hessenberg matrix [H_k 0; h e_k^T 0].
             kp = k + 1
-            call small_expm_cdp(E, H, kp, k, tau)
+            call small_expm_cdp(Ebuf, H, kp, k, tau)
 
             ! Cheap error estimate (magnitude of the last included correction, conservative).
-            err_est = beta*abs(E(kp, 1))
+            err_est = beta*abs(Ebuf(kp))     ! = beta * |E(kp, 1)|
             if (err_est <= tol) return
         enddo
     end subroutine arnoldi_expm_cdp
 
-    subroutine small_expm_cdp(E, H, n, ncols, tau)
-        !! E(:n, :n) = exp(tau * Hbar) where Hbar holds the first `ncols` columns of H(:n, :)
-        !! and zeros elsewhere. Only the leading n x n block of E is touched (no full reset),
-        !! and stale columns of H (e.g. from a previous sub-step) are never used.
+    subroutine small_expm_cdp(Ebuf, H, n, ncols, tau)
+        !! E = exp(tau * Hbar), stored column-major in the contiguous buffer Ebuf(1:n*n). Hbar holds
+        !! the first `ncols` columns of H(:n, :) and zeros elsewhere, so stale columns of H (e.g. from
+        !! a previous sub-step) are never used. Contiguous storage: stdlib's matrix_exp works in place
+        !! without any temporary copy (a section E(:n, :n) of a larger array would be packed at every
+        !! call).
         implicit none(type, external)
-        complex(dp), intent(inout) :: E(:, :)
+        complex(dp), intent(inout), target, contiguous :: Ebuf(:)
         complex(dp), intent(in) :: H(:, :)
         integer, intent(in) :: n, ncols
         real(dp), intent(in) :: tau
+        complex(dp), pointer, contiguous :: E(:, :)
 
-        E(:n, :ncols) = tau*H(:n, :ncols)
-        if (ncols < n) E(:n, ncols+1:n) = zero_cdp
-        call matrix_exp(E(:n, :n))
+        E(1:n, 1:n) => Ebuf(1:n*n)
+        E(:, :ncols) = tau*H(:n, :ncols)
+        if (ncols < n) E(:, ncols+1:n) = zero_cdp
+        call matrix_exp(E)
     end subroutine small_expm_cdp
 
-    subroutine project_cdp(c, X, v)
-        !! c = X @ v, written directly into the (non-allocatable) output vector.
+    subroutine project_cdp(c, X, v, alpha)
+        !! c = alpha * X @ v, written directly into the output vector (no temporary array).
+        !! c is fully overwritten: it is first rebuilt from X(1) with `copy`, so that its previous
+        !! state is never read (it may be an intent(out) argument whose components were reset).
         implicit none(type, external)
         class(abstract_vector_cdp), intent(inout) :: c
         class(abstract_vector_cdp), intent(in) :: X(:)
         complex(dp), intent(in) :: v(:)
+        real(dp), optional, intent(in) :: alpha
+        real(dp) :: a
         integer :: i
-        call c%zero()
-        do i = 1, size(X)
-            call c%axpby(v(i), X(i), one_cdp)
+        a = optval(alpha, 1.0_dp)
+        call copy(c, X(1))
+        call c%scal(a*v(1))
+        do i = 2, size(X)
+            call c%axpby(a*v(i), X(i), one_cdp)
         enddo
     end subroutine project_cdp
 
@@ -2818,9 +3679,100 @@ contains
         enddo
     end subroutine project_block_cdp
 
+    !------------------------------------------
+    !-----     Workspace management     -----
+    !------------------------------------------
+
+    subroutine ensure_basis_cdp(work, nvec, b)
+        !! Makes sure work%X holds at least `nvec` vectors of the same type and size as `b`.
+        !! Allocated with `source=b` so that vector types with allocatable components are fully
+        !! initialized (with `mold=` their components would be unallocated and their sizes undefined).
+        implicit none(type, external)
+        type(kexpm_workspace_cdp), intent(inout) :: work
+        integer, intent(in) :: nvec
+        class(abstract_vector_cdp), intent(in) :: b
+        character(len=*), parameter :: this_procedure = 'ensure_basis_cdp'
+        logical :: ok
+        integer :: iostat
+        character(len=256) :: msg
+
+        ok = allocated(work%X)
+        if (ok) ok = size(work%X) >= nvec
+        if (ok) ok = same_type_as(work%X(1), b)
+        if (ok) ok = work%X(1)%get_size() == b%get_size()
+        if (.not. ok) then
+            if (allocated(work%X)) deallocate(work%X)
+            allocate(work%X(nvec), source=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+        endif
+    end subroutine ensure_basis_cdp
+
+    subroutine ensure_dense_cdp(work, nh)
+        !! Makes sure work%H is at least nh x nh and work%Ebuf holds nh*nh entries, then zeroes the
+        !! leading nh x nh block of H (entries below the subdiagonal must be zero, and a re-used H
+        !! may hold entries from a previous call with another block size).
+        implicit none(type, external)
+        type(kexpm_workspace_cdp), intent(inout) :: work
+        integer, intent(in) :: nh
+        character(len=*), parameter :: this_procedure = 'ensure_dense_cdp'
+        logical :: ok
+        integer :: iostat
+        character(len=256) :: msg
+
+        ok = allocated(work%H) .and. allocated(work%Ebuf)
+        if (ok) ok = size(work%H, 1) >= nh .and. size(work%H, 2) >= nh .and. size(work%Ebuf) >= nh*nh
+        if (.not. ok) then
+            if (allocated(work%H)) deallocate(work%H)
+            if (allocated(work%Ebuf)) deallocate(work%Ebuf)
+            allocate(work%H(nh, nh), work%Ebuf(nh*nh), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+        endif
+        work%H(:nh, :nh) = zero_cdp
+    end subroutine ensure_dense_cdp
+
+    subroutine free_kexpm_workspace_cdp(self)
+        !! Releases the memory held by the workspace.
+        implicit none(type, external)
+        class(kexpm_workspace_cdp), intent(inout) :: self
+        if (allocated(self%X)) deallocate(self%X)
+        if (allocated(self%H)) deallocate(self%H)
+        if (allocated(self%Ebuf)) deallocate(self%Ebuf)
+    end subroutine free_kexpm_workspace_cdp
+
     !------------------------------------------------------------------
     !-----     Metadata of kexpm_substep : learning and printing     -----
     !------------------------------------------------------------------
+
+    subroutine check_substep_inputs_sp(tol, options, info, procedure)
+        !! Input checks shared by the sub-stepping drivers: -4 (opts%kdim < 1), -5 (tol < 0),
+        !! -7 (opts%max_rejections < 1 or opts%max_substeps < 1); 0 if the inputs are valid.
+        implicit none(type, external)
+        real(sp), intent(in) :: tol
+        class(abstract_opts), optional, intent(in) :: options
+        integer, intent(out) :: info
+        character(len=*), intent(in) :: procedure
+        type(kexpm_sp_opts) :: opts
+
+        opts = kexpm_sp_opts()
+        if (present(options)) then
+            select type (options)
+            type is (kexpm_sp_opts)
+                opts = options
+            class default
+                call type_error('options', 'kexpm_sp_opts', 'IN', this_module, procedure)
+            end select
+        endif
+
+        info = 0
+        if (opts%kdim < 1) then
+            info = -4
+        else if (tol < 0.0_sp) then
+            info = -5
+        else if (opts%max_rejections < 1 .or. opts%max_substeps < 1) then
+            info = -7
+        endif
+        if (info /= 0) call log_kexpm_invalid_input(info, procedure)
+    end subroutine check_substep_inputs_sp
 
     subroutine learn_kexpm_sp(self, used_uniform, n_uniform, nsub, mv, fallback, tune, t_end, tol_rel, m)
         !! Updates the learned number of uniform sub-steps after a successful call.
@@ -2934,6 +3886,37 @@ contains
     !------------------------------------------------------------------
     !-----     Metadata of kexpm_substep : learning and printing     -----
     !------------------------------------------------------------------
+
+    subroutine check_substep_inputs_dp(tol, options, info, procedure)
+        !! Input checks shared by the sub-stepping drivers: -4 (opts%kdim < 1), -5 (tol < 0),
+        !! -7 (opts%max_rejections < 1 or opts%max_substeps < 1); 0 if the inputs are valid.
+        implicit none(type, external)
+        real(dp), intent(in) :: tol
+        class(abstract_opts), optional, intent(in) :: options
+        integer, intent(out) :: info
+        character(len=*), intent(in) :: procedure
+        type(kexpm_dp_opts) :: opts
+
+        opts = kexpm_dp_opts()
+        if (present(options)) then
+            select type (options)
+            type is (kexpm_dp_opts)
+                opts = options
+            class default
+                call type_error('options', 'kexpm_dp_opts', 'IN', this_module, procedure)
+            end select
+        endif
+
+        info = 0
+        if (opts%kdim < 1) then
+            info = -4
+        else if (tol < 0.0_dp) then
+            info = -5
+        else if (opts%max_rejections < 1 .or. opts%max_substeps < 1) then
+            info = -7
+        endif
+        if (info /= 0) call log_kexpm_invalid_input(info, procedure)
+    end subroutine check_substep_inputs_dp
 
     subroutine learn_kexpm_dp(self, used_uniform, n_uniform, nsub, mv, fallback, tune, t_end, tol_rel, m)
         !! Updates the learned number of uniform sub-steps after a successful call.

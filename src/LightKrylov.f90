@@ -1,5 +1,5 @@
 module LightKrylov
-    ! --> Definitions of various constants.a
+    ! --> Definitions of various constants.
     use LightKrylov_Constants
     ! --> Set of utility functions.
     use LightKrylov_Utils
@@ -168,6 +168,10 @@ module LightKrylov
     public :: krylov_exptA
     public :: kexpm_sp_opts, kexpm_sp_metadata
     public :: kexpm_dp_opts, kexpm_dp_metadata
+    public :: kexpm_workspace_rsp
+    public :: kexpm_workspace_rdp
+    public :: kexpm_workspace_csp
+    public :: kexpm_workspace_cdp
 
     ! Timer exports
     public :: lightkrylov_timer

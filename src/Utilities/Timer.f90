@@ -79,18 +79,42 @@ contains
       ! Timers for Utils
       ! rsp
       call self%add_timer('sqrtm_rsp', count=istart)
-      call self%add_timer('expm_rsp')
       ! rdp
       call self%add_timer('sqrtm_rdp')
-      call self%add_timer('expm_rdp')
       ! csp
       call self%add_timer('sqrtm_csp')
-      call self%add_timer('expm_csp')
       ! cdp
-      call self%add_timer('sqrtm_cdp')
-      call self%add_timer('expm_cdp', count=iend)
+      call self%add_timer('sqrtm_cdp', count=iend)
       ! Define Utils group
       call self%add_group('Utils', istart=istart, iend=iend)
+
+      ! Timers for ExpmLib
+      ! rsp
+      call self%add_timer('kexpm_vec_rsp', count=istart)
+      call self%add_timer('kexpm_mat_rsp')
+      call self%add_timer('kexpm_substep_vec_rsp')
+      call self%add_timer('kexpm_substep_mat_rsp')
+      call self%add_timer('krylov_exptA_rsp')
+      ! rdp
+      call self%add_timer('kexpm_vec_rdp')
+      call self%add_timer('kexpm_mat_rdp')
+      call self%add_timer('kexpm_substep_vec_rdp')
+      call self%add_timer('kexpm_substep_mat_rdp')
+      call self%add_timer('krylov_exptA_rdp')
+      ! csp
+      call self%add_timer('kexpm_vec_csp')
+      call self%add_timer('kexpm_mat_csp')
+      call self%add_timer('kexpm_substep_vec_csp')
+      call self%add_timer('kexpm_substep_mat_csp')
+      call self%add_timer('krylov_exptA_csp')
+      ! cdp
+      call self%add_timer('kexpm_vec_cdp')
+      call self%add_timer('kexpm_mat_cdp')
+      call self%add_timer('kexpm_substep_vec_cdp')
+      call self%add_timer('kexpm_substep_mat_cdp')
+      call self%add_timer('krylov_exptA_cdp', count=iend)
+      ! Define ExpmLib group
+      call self%add_group('ExpmLib', istart=istart, iend=iend)
 
       ! Timers for BaseKrylov
       ! rsp

@@ -10,6 +10,8 @@ module TestExpmlib
     use LightKrylov_Constants
     use LightKrylov_Logger
     use LightKrylov_Utils, only : eig, sqrtm
+    use LightKrylov_AbstractVectors, only : dense_vector
+    use LightKrylov_AbstractLinops, only : dense_linop
     ! Test Utilities
     use LightKrylov_TestUtils
     use TestUtils
@@ -48,6 +50,8 @@ contains
                         new_unittest("Krylov expm invariant subspace", test_kexptA_breakdown_${type[0]}$${kind}$), &
                         new_unittest("Krylov expm stiff (sub-stepping)", test_kexptA_stiff_${type[0]}$${kind}$), &
                         new_unittest("Krylov expm warm start", test_kexptA_warm_start_${type[0]}$${kind}$), &
+                        new_unittest("Krylov expm workspace", test_kexptA_workspace_${type[0]}$${kind}$), &
+                        new_unittest("Krylov expm sub-stepping basis", test_kexptA_substep_basis_${type[0]}$${kind}$), &
                         new_unittest("Block Krylov expm", test_block_kexptA_${type[0]}$${kind}$) &
                     ]
 
@@ -171,6 +175,32 @@ contains
             opts = kexpm_${kind}$_opts(max_substeps=0)
             call kexpm_substep(c, A, b, tau, rtol_${kind}$, info, options=opts, meta=meta)
             call check(error, info == -7 .and. meta%n_calls == 0 .and. .not. meta%learned)
+            if (allocated(error)) exit test_loop
+
+            !-----     Sub-stepped kexpm_substep, basis version     -----
+
+            ! --- Case 14: size(C) /= size(B) (info = -6) ---
+            icase = 14
+            deallocate(Cblk) ; allocate(Cblk(p+1)) ; call zero_basis(Cblk)
+            call kexpm_substep(Cblk, A, Bblk, tau, rtol_${kind}$, info)
+            call check(error, info == -6)
+            if (allocated(error)) exit test_loop
+
+            ! --- Case 15: empty basis (info = -6) ---
+            icase = 15
+            block
+                type(vector_${type[0]}$${kind}$), allocatable :: B0(:), C0(:)
+                allocate(B0(0), C0(0))
+                call kexpm_substep(C0, A, B0, tau, rtol_${kind}$, info)
+            end block
+            call check(error, info == -6)
+            if (allocated(error)) exit test_loop
+
+            ! --- Case 16: negative tolerance, caught on the first column (info = -5) ---
+            icase = 16
+            deallocate(Cblk) ; allocate(Cblk(p)) ; call zero_basis(Cblk)
+            call kexpm_substep(Cblk, A, Bblk, tau, -1.0_${kind}$, info, meta=meta)
+            call check(error, info == -5 .and. meta%n_calls == 0)
             exit test_loop
         end do test_loop
         write(msg, '(A,I0)') 'last case: ', icase
@@ -550,6 +580,174 @@ contains
 
         return
     end subroutine test_kexptA_warm_start_${type[0]}$${kind}$
+
+    subroutine test_kexptA_workspace_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator (dense_linop acting on dense_vector: vectors with allocatable components).
+        type(dense_linop_${type[0]}$${kind}$) :: A
+        ! Test vectors.
+        integer, parameter :: p = 3
+        type(dense_vector_${type[0]}$${kind}$) :: b, c, Bblk(p), Cblk(p)
+        ! Reusable workspace, sub-stepping metadata.
+        type(kexpm_workspace_${type[0]}$${kind}$) :: work
+        type(kexpm_${kind}$_metadata) :: meta
+        ! Information flag.
+        integer :: info
+        ! Miscellaneous.
+        real(${kind}$), parameter :: tau = 0.1_${kind}$
+        type(linop_${type[0]}$${kind}$), allocatable :: Atmp
+        type(vector_${type[0]}$${kind}$), allocatable :: tmp
+        ${type}$, allocatable :: E(:, :), Bdata(:, :), Cref(:, :)
+        ${type}$ :: zeros(test_size)
+        real(${kind}$) :: err
+        integer :: i, icall
+        character(len=256) :: msg
+
+        ! Initialize operator and vectors from random test data.
+        allocate(Atmp, tmp) ; call init_rand(Atmp) ; A = dense_linop(Atmp%data)
+        E = expm(tau*Atmp%data)
+        zeros = zero_${type[0]}$${kind}$
+        c = dense_vector(zeros)
+        allocate(Bdata(test_size, p))
+        do i = 1, p
+            call init_rand(tmp) ; Bblk(i) = dense_vector(tmp%data) ; Cblk(i) = dense_vector(zeros)
+            Bdata(:, i) = tmp%data
+        enddo
+
+        ! Vectors with allocatable components, no workspace (the basis is allocated with source=b).
+        call init_rand(tmp) ; b = dense_vector(tmp%data)
+        call kexpm(c, A, b, tau, rtol_${kind}$, info)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_workspace_${type[0]}$${kind}$')
+        err = norm2(abs(c%data - matmul(E, b%data))) / norm2(abs(matmul(E, b%data)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_kexptA_workspace_${type[0]}$${kind}$', &
+                              & info='Allocatable components', eq='c = expm(tau A) @ b', context=msg)
+
+        ! Same workspace re-used: vector calls, a block call (larger H with another block size),
+        ! a vector call again (stale H entries must not leak in), and a larger kdim (workspace grows).
+        err = 0.0_${kind}$
+        do icall = 1, 3
+            call init_rand(tmp) ; b = dense_vector(tmp%data)
+            call kexpm(c, A, b, tau, rtol_${kind}$, info, work=work)
+            call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_workspace_${type[0]}$${kind}$')
+            err = max(err, norm2(abs(c%data - matmul(E, b%data))) / norm2(abs(matmul(E, b%data))))
+        enddo
+        call kexpm(Cblk, A, Bblk, tau, rtol_${kind}$, info, kdim=15, work=work)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_workspace_${type[0]}$${kind}$')
+        Cref = matmul(E, Bdata)
+        do i = 1, p
+            err = max(err, norm2(abs(Cblk(i)%data - Cref(:, i))) / norm2(abs(Cref(:, i))))
+        enddo
+        call kexpm(c, A, b, tau, rtol_${kind}$, info, work=work)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_workspace_${type[0]}$${kind}$')
+        err = max(err, norm2(abs(c%data - matmul(E, b%data))) / norm2(abs(matmul(E, b%data))))
+        call kexpm(c, A, b, tau, rtol_${kind}$, info, kdim=120, work=work)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_workspace_${type[0]}$${kind}$')
+        err = max(err, norm2(abs(c%data - matmul(E, b%data))) / norm2(abs(matmul(E, b%data))))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_kexptA_workspace_${type[0]}$${kind}$', &
+                              & info='kexpm, re-used workspace', eq='c = expm(tau A) @ b', context=msg)
+
+        ! kexpm_substep with metadata and the same workspace, then after free().
+        err = 0.0_${kind}$
+        do icall = 1, 4
+            if (icall == 4) call work%free()
+            call init_rand(tmp) ; b = dense_vector(tmp%data)
+            call kexpm_substep(c, A, b, tau, atol_${kind}$*b%norm(), info, meta=meta, work=work)
+            call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_workspace_${type[0]}$${kind}$')
+            err = max(err, norm2(abs(c%data - matmul(E, b%data))) / norm2(abs(matmul(E, b%data))))
+        enddo
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_kexptA_workspace_${type[0]}$${kind}$', &
+                              & info='kexpm_substep, workspace', eq='c = expm(tau A) @ b', context=msg)
+
+        return
+    end subroutine test_kexptA_workspace_${type[0]}$${kind}$
+
+    subroutine test_kexptA_substep_basis_${type[0]}$${kind}$(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test linear operator.
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        ! Test vectors.
+        integer, parameter :: p = 3
+        type(vector_${type[0]}$${kind}$), allocatable :: B(:), C(:), c1
+        ! Reusable workspace, sub-stepping metadata.
+        type(kexpm_workspace_${type[0]}$${kind}$) :: work
+        type(kexpm_${kind}$_metadata) :: meta
+        ! Information flag.
+        integer :: info, info1
+        ! Miscellaneous.
+        integer, parameter :: ncalls = 4
+        real(${kind}$), parameter :: tau = 1.0_${kind}$, s = 30.0_${kind}$
+        ${type}$, allocatable :: Bdata(:, :), Cdata(:, :), Cref(:, :)
+        real(${kind}$) :: err, tol
+        integer :: i, icall, nmv
+        character(len=256) :: msg
+
+        ! Stiff stable random operator (|| tau A || ~ 60) and random input basis.
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+        A%data = s*A%data/sqrt(real(test_size, ${kind}$)) - s*eye(test_size, mold=1.0_${kind}$)
+        allocate(B(p), C(p), c1) ; call init_rand(B) ; call zero_basis(C) ; call c1%zero()
+        allocate(Bdata(test_size, p), Cdata(test_size, p)) ; call get_data(Bdata, B)
+        Cref = matmul(expm(tau*A%data), Bdata)
+        tol = atol_${kind}$*B(1)%norm()
+
+        ! Basis version without metadata nor workspace.
+        call kexpm_substep(C, A, B, tau, tol, info)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_substep_basis_${type[0]}$${kind}$')
+        call get_data(Cdata, C)
+        err = norm2(abs(Cdata - Cref)) / norm2(abs(Cref))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, info > 0 .and. err < rtol_${kind}$)
+        call check_test(error, 'test_kexptA_substep_basis_${type[0]}$${kind}$', &
+                              & info='Sub-stepping', eq='C = expm(tau A) @ B', context=msg)
+
+        ! Identical to the single-vector version applied column by column (same matvec count).
+        err = 0.0_${kind}$ ; nmv = 0
+        do i = 1, p
+            call kexpm_substep(c1, A, B(i), tau, tol, info1)
+            call check_info(info1, 'kexpm', module=this_module_long, procedure='test_kexptA_substep_basis_${type[0]}$${kind}$')
+            nmv = nmv + info1
+            call c1%sub(C(i)) ; err = max(err, c1%norm())
+        enddo
+        write(msg, '(A,E9.2,A,I0,A,I0)') 'max diff: ', err, ', matvecs basis: ', info, ', columns: ', nmv
+        call check(error, err == 0.0_${kind}$ .and. nmv == info)
+        call check_test(error, 'test_kexptA_substep_basis_${type[0]}$${kind}$', &
+                              & info='Column-wise', eq='C(:, j) = kexpm_substep(B(:, j))', context=msg)
+
+        ! Adjoint.
+        call kexpm_substep(C, A, B, tau, tol, info, trans=.true.)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_substep_basis_${type[0]}$${kind}$')
+        call get_data(Cdata, C)
+        err = norm2(abs(Cdata - matmul(expm(tau*hermitian(A%data)), Bdata))) &
+            & / norm2(abs(matmul(expm(tau*hermitian(A%data)), Bdata)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_${kind}$)
+        call check_test(error, 'test_kexptA_substep_basis_${type[0]}$${kind}$', &
+                              & info='Adjoint', eq='C = expm(tau A.H) @ B', context=msg)
+
+        ! Repeated calls with shared metadata and workspace: accurate, settings learned once for
+        ! all the columns, every column counted as one call.
+        err = 0.0_${kind}$
+        do icall = 1, ncalls
+            call init_rand(B) ; call get_data(Bdata, B) ; Cref = matmul(expm(tau*A%data), Bdata)
+            call kexpm_substep(C, A, B, tau, atol_${kind}$*B(1)%norm(), info, meta=meta, work=work)
+            call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexptA_substep_basis_${type[0]}$${kind}$')
+            call get_data(Cdata, C)
+            err = max(err, norm2(abs(Cdata - Cref)) / norm2(abs(Cref)))
+        enddo
+        write(msg, '(A,E9.2,A,I0,A,L1)') 'max err: ', err, ', calls: ', meta%n_calls, ', learned: ', meta%learned
+        call check(error, err < rtol_${kind}$ .and. meta%learned .and. meta%n_calls == ncalls*p)
+        call check_test(error, 'test_kexptA_substep_basis_${type[0]}$${kind}$', &
+                              & info='Warm start, workspace', eq='C = expm(tau A) @ B', context=msg)
+
+        return
+    end subroutine test_kexptA_substep_basis_${type[0]}$${kind}$
 
     subroutine test_block_kexptA_${type[0]}$${kind}$(error)
         ! Error type to be returned.
