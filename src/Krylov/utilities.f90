@@ -7,60 +7,156 @@ contains
     !----------------------------------------
 
     module procedure permcols_basis_rsp
-        class(abstract_vector_rsp), allocatable :: Qwrk(:)
-        integer :: i
-        allocate(Qwrk(size(Q)), mold=Q(1))
-        call init_like_basis(Qwrk, Q(1))
-        do i = 1, size(Q)
-            call copy(Qwrk(i), Q(perm(i)))
-        end do
-        call copy(Q, Qwrk)
-        call free_basis(Qwrk)
+        !! In-place column permutation `Q <- Q(perm)` by cycle decomposition: each cycle of
+        !! length L is applied with L-1 calls to the `swap` hook. No work basis is needed, and
+        !! no data is copied for types whose `swap` exchanges storage.
+        character(len=*), parameter :: this_procedure = 'permcols_basis_rsp'
+        logical :: done(size(Q))
+        integer :: n, s, i, j
+
+        ! Check that perm is a permutation of 1..size(Q).
+        n = size(Q)
+        if (size(perm) /= n) call stop_error("perm and Q have different sizes.", this_module, this_procedure)
+        done = .false.
+        do i = 1, n
+            if (perm(i) < 1 .or. perm(i) > n) then
+                call stop_error("perm has an out-of-range entry.", this_module, this_procedure)
+            else if (done(perm(i))) then
+                call stop_error("perm has a repeated entry.", this_module, this_procedure)
+            endif
+            done(perm(i)) = .true.
+        enddo
+
+        ! Follow each cycle s -> perm(s) -> perm(perm(s)) -> ... back to s.
+        done = .false.
+        do s = 1, n
+            if (done(s)) cycle
+            done(s) = .true.
+            i = s ; j = perm(i)
+            do while (j /= s)
+                ! Q(i) receives its final content (old Q(perm(i))).
+                call Q(i)%swap(Q(j))
+                done(j) = .true.
+                i = j ; j = perm(i)
+            enddo
+        enddo
     end procedure permcols_basis_rsp
 
     module procedure permcols_array_rsp
         Q = Q(:, perm)
     end procedure permcols_array_rsp
     module procedure permcols_basis_rdp
-        class(abstract_vector_rdp), allocatable :: Qwrk(:)
-        integer :: i
-        allocate(Qwrk(size(Q)), mold=Q(1))
-        call init_like_basis(Qwrk, Q(1))
-        do i = 1, size(Q)
-            call copy(Qwrk(i), Q(perm(i)))
-        end do
-        call copy(Q, Qwrk)
-        call free_basis(Qwrk)
+        !! In-place column permutation `Q <- Q(perm)` by cycle decomposition: each cycle of
+        !! length L is applied with L-1 calls to the `swap` hook. No work basis is needed, and
+        !! no data is copied for types whose `swap` exchanges storage.
+        character(len=*), parameter :: this_procedure = 'permcols_basis_rdp'
+        logical :: done(size(Q))
+        integer :: n, s, i, j
+
+        ! Check that perm is a permutation of 1..size(Q).
+        n = size(Q)
+        if (size(perm) /= n) call stop_error("perm and Q have different sizes.", this_module, this_procedure)
+        done = .false.
+        do i = 1, n
+            if (perm(i) < 1 .or. perm(i) > n) then
+                call stop_error("perm has an out-of-range entry.", this_module, this_procedure)
+            else if (done(perm(i))) then
+                call stop_error("perm has a repeated entry.", this_module, this_procedure)
+            endif
+            done(perm(i)) = .true.
+        enddo
+
+        ! Follow each cycle s -> perm(s) -> perm(perm(s)) -> ... back to s.
+        done = .false.
+        do s = 1, n
+            if (done(s)) cycle
+            done(s) = .true.
+            i = s ; j = perm(i)
+            do while (j /= s)
+                ! Q(i) receives its final content (old Q(perm(i))).
+                call Q(i)%swap(Q(j))
+                done(j) = .true.
+                i = j ; j = perm(i)
+            enddo
+        enddo
     end procedure permcols_basis_rdp
 
     module procedure permcols_array_rdp
         Q = Q(:, perm)
     end procedure permcols_array_rdp
     module procedure permcols_basis_csp
-        class(abstract_vector_csp), allocatable :: Qwrk(:)
-        integer :: i
-        allocate(Qwrk(size(Q)), mold=Q(1))
-        call init_like_basis(Qwrk, Q(1))
-        do i = 1, size(Q)
-            call copy(Qwrk(i), Q(perm(i)))
-        end do
-        call copy(Q, Qwrk)
-        call free_basis(Qwrk)
+        !! In-place column permutation `Q <- Q(perm)` by cycle decomposition: each cycle of
+        !! length L is applied with L-1 calls to the `swap` hook. No work basis is needed, and
+        !! no data is copied for types whose `swap` exchanges storage.
+        character(len=*), parameter :: this_procedure = 'permcols_basis_csp'
+        logical :: done(size(Q))
+        integer :: n, s, i, j
+
+        ! Check that perm is a permutation of 1..size(Q).
+        n = size(Q)
+        if (size(perm) /= n) call stop_error("perm and Q have different sizes.", this_module, this_procedure)
+        done = .false.
+        do i = 1, n
+            if (perm(i) < 1 .or. perm(i) > n) then
+                call stop_error("perm has an out-of-range entry.", this_module, this_procedure)
+            else if (done(perm(i))) then
+                call stop_error("perm has a repeated entry.", this_module, this_procedure)
+            endif
+            done(perm(i)) = .true.
+        enddo
+
+        ! Follow each cycle s -> perm(s) -> perm(perm(s)) -> ... back to s.
+        done = .false.
+        do s = 1, n
+            if (done(s)) cycle
+            done(s) = .true.
+            i = s ; j = perm(i)
+            do while (j /= s)
+                ! Q(i) receives its final content (old Q(perm(i))).
+                call Q(i)%swap(Q(j))
+                done(j) = .true.
+                i = j ; j = perm(i)
+            enddo
+        enddo
     end procedure permcols_basis_csp
 
     module procedure permcols_array_csp
         Q = Q(:, perm)
     end procedure permcols_array_csp
     module procedure permcols_basis_cdp
-        class(abstract_vector_cdp), allocatable :: Qwrk(:)
-        integer :: i
-        allocate(Qwrk(size(Q)), mold=Q(1))
-        call init_like_basis(Qwrk, Q(1))
-        do i = 1, size(Q)
-            call copy(Qwrk(i), Q(perm(i)))
-        end do
-        call copy(Q, Qwrk)
-        call free_basis(Qwrk)
+        !! In-place column permutation `Q <- Q(perm)` by cycle decomposition: each cycle of
+        !! length L is applied with L-1 calls to the `swap` hook. No work basis is needed, and
+        !! no data is copied for types whose `swap` exchanges storage.
+        character(len=*), parameter :: this_procedure = 'permcols_basis_cdp'
+        logical :: done(size(Q))
+        integer :: n, s, i, j
+
+        ! Check that perm is a permutation of 1..size(Q).
+        n = size(Q)
+        if (size(perm) /= n) call stop_error("perm and Q have different sizes.", this_module, this_procedure)
+        done = .false.
+        do i = 1, n
+            if (perm(i) < 1 .or. perm(i) > n) then
+                call stop_error("perm has an out-of-range entry.", this_module, this_procedure)
+            else if (done(perm(i))) then
+                call stop_error("perm has a repeated entry.", this_module, this_procedure)
+            endif
+            done(perm(i)) = .true.
+        enddo
+
+        ! Follow each cycle s -> perm(s) -> perm(perm(s)) -> ... back to s.
+        done = .false.
+        do s = 1, n
+            if (done(s)) cycle
+            done(s) = .true.
+            i = s ; j = perm(i)
+            do while (j /= s)
+                ! Q(i) receives its final content (old Q(perm(i))).
+                call Q(i)%swap(Q(j))
+                done(j) = .true.
+                i = j ; j = perm(i)
+            enddo
+        enddo
     end procedure permcols_basis_cdp
 
     module procedure permcols_array_cdp
@@ -316,12 +412,22 @@ contains
         ! apply symmetric transformation in-place
         block
             class(abstract_vector_rsp), allocatable :: Xwrk(:)
+            integer :: iostat
+            character(len=100) :: errmsg
+
+            ! One work basis, reused for both projections and released once.
+            allocate(Xwrk(nretain), mold=X(1), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, this_procedure)
+            call init_like_basis(Xwrk, X(1))
+
             call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
             call copy(X(:nretain), Xwrk)
             call zero_basis(X(nretain+1:))
             call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
             call copy(Y(:nretain), Xwrk)
             call zero_basis(Y(nretain+1:))
+
+            call free_basis(Xwrk)
         end block
 
         if (present(info)) info = nretain
@@ -364,12 +470,22 @@ contains
         ! apply symmetric transformation in-place
         block
             class(abstract_vector_rdp), allocatable :: Xwrk(:)
+            integer :: iostat
+            character(len=100) :: errmsg
+
+            ! One work basis, reused for both projections and released once.
+            allocate(Xwrk(nretain), mold=X(1), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, this_procedure)
+            call init_like_basis(Xwrk, X(1))
+
             call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
             call copy(X(:nretain), Xwrk)
             call zero_basis(X(nretain+1:))
             call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
             call copy(Y(:nretain), Xwrk)
             call zero_basis(Y(nretain+1:))
+
+            call free_basis(Xwrk)
         end block
 
         if (present(info)) info = nretain
@@ -412,12 +528,22 @@ contains
         ! apply symmetric transformation in-place
         block
             class(abstract_vector_csp), allocatable :: Xwrk(:)
+            integer :: iostat
+            character(len=100) :: errmsg
+
+            ! One work basis, reused for both projections and released once.
+            allocate(Xwrk(nretain), mold=X(1), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, this_procedure)
+            call init_like_basis(Xwrk, X(1))
+
             call linear_combination(Xwrk, X, matmul(hermitian(VT(:nretain, :)), diag(S(:nretain))))
             call copy(X(:nretain), Xwrk)
             call zero_basis(X(nretain+1:))
             call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
             call copy(Y(:nretain), Xwrk)
             call zero_basis(Y(nretain+1:))
+
+            call free_basis(Xwrk)
         end block
 
         if (present(info)) info = nretain
@@ -460,12 +586,22 @@ contains
         ! apply symmetric transformation in-place
         block
             class(abstract_vector_cdp), allocatable :: Xwrk(:)
+            integer :: iostat
+            character(len=100) :: errmsg
+
+            ! One work basis, reused for both projections and released once.
+            allocate(Xwrk(nretain), mold=X(1), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, this_procedure)
+            call init_like_basis(Xwrk, X(1))
+
             call linear_combination(Xwrk, X, matmul(hermitian(VT(:nretain, :)), diag(S(:nretain))))
             call copy(X(:nretain), Xwrk)
             call zero_basis(X(nretain+1:))
             call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
             call copy(Y(:nretain), Xwrk)
             call zero_basis(Y(nretain+1:))
+
+            call free_basis(Xwrk)
         end block
 
         if (present(info)) info = nretain
