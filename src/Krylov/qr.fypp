@@ -174,25 +174,22 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     module procedure swap_columns_${type[0]}$${kind}$
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Qwrk
         ${type}$, allocatable :: Rwrk(:)
         integer :: iwrk, m, n, iostat
         character(len=100) :: errmsg
+
+        ! Nothing to do (and `swap` forbids aliasing its two arguments).
+        if (i == j) return
 
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "swap_columns_${type[0]}$${kind}$")
-        call Qwrk%init_like(Q(1))
         allocate(Rwrk(max(1, n)), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_${type[0]}$${kind}$")
 
-        ! Swap columns.
-        call copy(Qwrk, Q(j))
-        call copy(Q(j), Q(i))
-        call copy(Q(i), Qwrk)
+        ! Swap columns through the `swap` hook (copy-free for types that override it).
+        call Q(i)%swap(Q(j))
 
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -200,9 +197,6 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
-
-        ! Cleanup.
-        call Qwrk%free()
     end procedure swap_columns_${type[0]}$${kind}$
 
     #:endfor

@@ -557,25 +557,22 @@ contains
     !-------------------------------------
 
     module procedure swap_columns_rsp
-        class(abstract_vector_rsp), allocatable :: Qwrk
         real(sp), allocatable :: Rwrk(:)
         integer :: iwrk, m, n, iostat
         character(len=100) :: errmsg
 
+        ! Nothing to do (and `swap` forbids aliasing its two arguments).
+        if (i == j) return
+
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "swap_columns_rsp")
-        call Qwrk%init_like(Q(1))
         allocate(Rwrk(max(1, n)), source=zero_rsp, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_rsp")
 
-        ! Swap columns.
-        call copy(Qwrk, Q(j))
-        call copy(Q(j), Q(i))
-        call copy(Q(i), Qwrk)
+        ! Swap columns through the `swap` hook (copy-free for types that override it).
+        call Q(i)%swap(Q(j))
 
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -583,31 +580,25 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
-
-        ! Cleanup.
-        call Qwrk%free()
     end procedure swap_columns_rsp
 
     module procedure swap_columns_rdp
-        class(abstract_vector_rdp), allocatable :: Qwrk
         real(dp), allocatable :: Rwrk(:)
         integer :: iwrk, m, n, iostat
         character(len=100) :: errmsg
 
+        ! Nothing to do (and `swap` forbids aliasing its two arguments).
+        if (i == j) return
+
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "swap_columns_rdp")
-        call Qwrk%init_like(Q(1))
         allocate(Rwrk(max(1, n)), source=zero_rdp, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_rdp")
 
-        ! Swap columns.
-        call copy(Qwrk, Q(j))
-        call copy(Q(j), Q(i))
-        call copy(Q(i), Qwrk)
+        ! Swap columns through the `swap` hook (copy-free for types that override it).
+        call Q(i)%swap(Q(j))
 
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -615,31 +606,25 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
-
-        ! Cleanup.
-        call Qwrk%free()
     end procedure swap_columns_rdp
 
     module procedure swap_columns_csp
-        class(abstract_vector_csp), allocatable :: Qwrk
         complex(sp), allocatable :: Rwrk(:)
         integer :: iwrk, m, n, iostat
         character(len=100) :: errmsg
 
+        ! Nothing to do (and `swap` forbids aliasing its two arguments).
+        if (i == j) return
+
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "swap_columns_csp")
-        call Qwrk%init_like(Q(1))
         allocate(Rwrk(max(1, n)), source=zero_csp, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_csp")
 
-        ! Swap columns.
-        call copy(Qwrk, Q(j))
-        call copy(Q(j), Q(i))
-        call copy(Q(i), Qwrk)
+        ! Swap columns through the `swap` hook (copy-free for types that override it).
+        call Q(i)%swap(Q(j))
 
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -647,31 +632,25 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
-
-        ! Cleanup.
-        call Qwrk%free()
     end procedure swap_columns_csp
 
     module procedure swap_columns_cdp
-        class(abstract_vector_cdp), allocatable :: Qwrk
         complex(dp), allocatable :: Rwrk(:)
         integer :: iwrk, m, n, iostat
         character(len=100) :: errmsg
 
+        ! Nothing to do (and `swap` forbids aliasing its two arguments).
+        if (i == j) return
+
         ! Sanity checks.
         m = size(Q) ; n = min(i, j) - 1
 
         ! Allocations.
-        allocate(Qwrk, mold=Q(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "swap_columns_cdp")
-        call Qwrk%init_like(Q(1))
         allocate(Rwrk(max(1, n)), source=zero_cdp, stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "swap_columns_cdp")
 
-        ! Swap columns.
-        call copy(Qwrk, Q(j))
-        call copy(Q(j), Q(i))
-        call copy(Q(i), Qwrk)
+        ! Swap columns through the `swap` hook (copy-free for types that override it).
+        call Q(i)%swap(Q(j))
 
         Rwrk(1) = Rii(j); Rii(j) = Rii(i); Rii(i) = Rwrk(1)
         iwrk = perm(j); perm(j) = perm(i) ; perm(i) = iwrk
@@ -679,9 +658,6 @@ contains
         if (n > 0) then
             Rwrk = R(:n, j) ; R(:n, j) = R(:n, i) ; R(:n, i) = Rwrk
         endif
-
-        ! Cleanup.
-        call Qwrk%free()
     end procedure swap_columns_cdp
 
 end submodule qr_solvers
