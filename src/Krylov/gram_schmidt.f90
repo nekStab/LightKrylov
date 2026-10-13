@@ -419,11 +419,12 @@ contains
 
         ! orthogonalize
         proj_coefficients = innerprod(X, y)
+        ! y <- y - X c, subtracted term by term: no temporary vector is needed.
         block
-            class(abstract_vector_rsp), allocatable :: proj
-            call linear_combination(proj, X, proj_coefficients)
-            call y%sub(proj)
-            call proj%free()
+            integer :: i
+            do i = 1, size(X)
+                call y%axpby(-proj_coefficients(i), X(i), one_rsp)
+            enddo
         end block
 
         if (present(beta)) then
@@ -466,11 +467,14 @@ contains
 
         ! orthogonalize
         proj_coefficients = innerprod(X, Y)
+        ! Y <- Y - X C, subtracted term by term: no temporary basis is needed.
         block
-            class(abstract_vector_rsp), allocatable :: proj(:)
-            call linear_combination(proj, X, proj_coefficients)
-            call axpby_basis(-one_rsp, proj, one_rsp, Y)
-            call free_basis(proj)
+            integer :: ii, jj
+            do jj = 1, size(Y)
+                do ii = 1, size(X)
+                    call Y(jj)%axpby(-proj_coefficients(ii, jj), X(ii), one_rsp)
+                enddo
+            enddo
         end block
 
         if (present(beta)) then
@@ -510,11 +514,12 @@ contains
 
         ! orthogonalize
         proj_coefficients = innerprod(X, y)
+        ! y <- y - X c, subtracted term by term: no temporary vector is needed.
         block
-            class(abstract_vector_rdp), allocatable :: proj
-            call linear_combination(proj, X, proj_coefficients)
-            call y%sub(proj)
-            call proj%free()
+            integer :: i
+            do i = 1, size(X)
+                call y%axpby(-proj_coefficients(i), X(i), one_rdp)
+            enddo
         end block
 
         if (present(beta)) then
@@ -557,11 +562,14 @@ contains
 
         ! orthogonalize
         proj_coefficients = innerprod(X, Y)
+        ! Y <- Y - X C, subtracted term by term: no temporary basis is needed.
         block
-            class(abstract_vector_rdp), allocatable :: proj(:)
-            call linear_combination(proj, X, proj_coefficients)
-            call axpby_basis(-one_rdp, proj, one_rdp, Y)
-            call free_basis(proj)
+            integer :: ii, jj
+            do jj = 1, size(Y)
+                do ii = 1, size(X)
+                    call Y(jj)%axpby(-proj_coefficients(ii, jj), X(ii), one_rdp)
+                enddo
+            enddo
         end block
 
         if (present(beta)) then
@@ -601,11 +609,12 @@ contains
 
         ! orthogonalize
         proj_coefficients = innerprod(X, y)
+        ! y <- y - X c, subtracted term by term: no temporary vector is needed.
         block
-            class(abstract_vector_csp), allocatable :: proj
-            call linear_combination(proj, X, proj_coefficients)
-            call y%sub(proj)
-            call proj%free()
+            integer :: i
+            do i = 1, size(X)
+                call y%axpby(-proj_coefficients(i), X(i), one_csp)
+            enddo
         end block
 
         if (present(beta)) then
@@ -648,11 +657,14 @@ contains
 
         ! orthogonalize
         proj_coefficients = innerprod(X, Y)
+        ! Y <- Y - X C, subtracted term by term: no temporary basis is needed.
         block
-            class(abstract_vector_csp), allocatable :: proj(:)
-            call linear_combination(proj, X, proj_coefficients)
-            call axpby_basis(-one_csp, proj, one_csp, Y)
-            call free_basis(proj)
+            integer :: ii, jj
+            do jj = 1, size(Y)
+                do ii = 1, size(X)
+                    call Y(jj)%axpby(-proj_coefficients(ii, jj), X(ii), one_csp)
+                enddo
+            enddo
         end block
 
         if (present(beta)) then
@@ -692,11 +704,12 @@ contains
 
         ! orthogonalize
         proj_coefficients = innerprod(X, y)
+        ! y <- y - X c, subtracted term by term: no temporary vector is needed.
         block
-            class(abstract_vector_cdp), allocatable :: proj
-            call linear_combination(proj, X, proj_coefficients)
-            call y%sub(proj)
-            call proj%free()
+            integer :: i
+            do i = 1, size(X)
+                call y%axpby(-proj_coefficients(i), X(i), one_cdp)
+            enddo
         end block
 
         if (present(beta)) then
@@ -739,11 +752,14 @@ contains
 
         ! orthogonalize
         proj_coefficients = innerprod(X, Y)
+        ! Y <- Y - X C, subtracted term by term: no temporary basis is needed.
         block
-            class(abstract_vector_cdp), allocatable :: proj(:)
-            call linear_combination(proj, X, proj_coefficients)
-            call axpby_basis(-one_cdp, proj, one_cdp, Y)
-            call free_basis(proj)
+            integer :: ii, jj
+            do jj = 1, size(Y)
+                do ii = 1, size(X)
+                    call Y(jj)%axpby(-proj_coefficients(ii, jj), X(ii), one_cdp)
+                enddo
+            enddo
         end block
 
         if (present(beta)) then
