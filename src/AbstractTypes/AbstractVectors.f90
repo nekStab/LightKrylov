@@ -26,13 +26,33 @@ module LightKrylov_AbstractVectors
     !! - vector subtraction :   `sub(self, vec) = axpby(-1, vec, 1, self)`
     !! - vector norm        :   `norm(self)     = sqrt(self%dot(self))`
     !!
+    !! ### Lifecycle hooks
+    !!
+    !! `LightKrylov` never owns the memory of a user-provided vector: it never allocates or
+    !! deallocates it, and only reaches its storage through the overridable hooks below, which
+    !! all act on objects that already exist. On user-provided outputs and bases, the library
+    !! calls `init_like` (a no-op when already conformant), `assign` and `swap`. It never calls
+    !! `free` on a vector it did not create itself.
+    !!
+    !! - `init_like(self, mold)`  :   (deferred) Shape `self` like `mold`.
+    !! - `assign(self, from)`     :   Copy assignment \( \mathbf{x} \leftarrow \mathbf{y} \). Storage of `self`
+    !!                                 is reused. Default: `init_like` followed by `axpby(1, from, 0)`.
+    !! - `swap(self, other)`      :   Exchange the full state of two vectors; both remain valid. Default:
+    !!                                 three `assign` through a temporary vector. Override it to exchange
+    !!                                 storage instead (e.g. `move_alloc`) for a copy-free swap.
+    !! - `free(self)`             :   Release unmanaged resources. Only ever called by the owner of the vector.
+    !!
+    !! `assign` and `swap` are declared on the root `abstract_vector` and take `class(abstract_vector)`
+    !! arguments, so that overrides in concrete types use `select type` on the second argument.
+    !!
     !! This module also provides the following utility subroutines:
     !!
     !! - `innerprod(X, Y)`                  : Function computing the product \(\mathbf{X}^H \mathbf{y} \) between a Krylov basis `X` and a Krylov vector  (resp. basis) `Y`.
-    !! - `linear_combination(Y, X, V)`      : Subroutine computing the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \).
+    !! - `linear_combination(Y, X, V)`      : Subroutine computing the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \)
+    !!                                        in-place into the caller-provided `Y`.
     !! - `axpby_basis(alpha, X, beta, Y)`   : In-place computation of \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where `X` and `Y` are arrays of `abstract_vector`.
     !! - `zero_basis(X)`                    : Zero-out a collection of `abstract_vectors`.
-    !! - `copy_basis(out, from)`            : Copy a collection of `abstract_vectors`. `out` must be pre-allocated.
+    !! - `copy(out, from)`                  : Copy a vector (or, elementally, a collection of vectors) through `assign`. `out` must be pre-allocated.
     !! - `init_like_basis(out, mold)`       : Initialize size and structure of a collection of `abstract_vectors` based on mold.
     !! - `free_basis()         `            : Free the memory of a collection of `abstract_vectors`.
     !! - `rand_basis(X, ifnorm)`            : Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
@@ -163,12 +183,17 @@ module LightKrylov_AbstractVectors
         !!
         !!  i.e. a set of vectors of the same type as \( \mathbf{X} \).
         !!
+        !!  The output is computed **in-place**: `y` (resp. `Y`) must be allocated by the caller,
+        !!  with `size(Y) == size(B, 2)`. It is shaped like `X(1)` through `init_like` (a no-op if
+        !!  already conformant) and its previous content is overwritten. `y` must not alias any
+        !!  element of `X`.
+        !!
         !!  ### Example
         !!
         !!  ```fortran
         !!      type(my_real_vector), dimension(10) :: X
-        !!      real(dp), dimension(m, n)           :: B
-        !!      type(my_real_vector)                :: Y
+        !!      real(dp), dimension(10, 3)          :: B
+        !!      type(my_real_vector), dimension(3)  :: Y
         !!
         !!      ! ... Whatever your code is doing ...
         !!
@@ -244,8 +269,10 @@ module LightKrylov_AbstractVectors
 
     interface copy
         !!  This interface provides methods to copy an array `X` of `abstract_vector` into
-        !!  another array `Y`. Note that `Y` needs to be pre-allocated. 
-        !!  Internally, copy will run Y(i)%init_like(X(1)) to ensure that Y is conformant with X.
+        !!  another array `Y`. Note that `Y` needs to be pre-allocated.
+        !!  It is an elemental wrapper around `Y(i)%assign(X(i))`, so that it uses the
+        !!  copy-assignment hook of the concrete type (whose default runs `init_like` to make
+        !!  `Y(i)` conformant with `X(i)`).
         !!
         !!  ### Example
         !!
@@ -359,7 +386,58 @@ module LightKrylov_AbstractVectors
         logical :: owns_data      = .true.
         !! `.false.` marks an alias/view so `free` won't release shared storage. For GPU/
         !! resource-managing extensions; inert and untested for the CPU types shipped here.
+    contains
+        procedure(abstract_assign), pass(self), deferred, public :: assign
+        !! Copy assignment \( \mathbf{x} \leftarrow \mathbf{y} \) into an existing vector.
+        !! Overridable; the kind-level abstract types provide a generic default.
+        procedure(abstract_swap), pass(self), deferred, public :: swap
+        !! Exchange the full state of two existing vectors; both remain valid.
+        !! Overridable; the kind-level abstract types provide a generic default.
+        procedure, pass(self), public :: free => free_abstract_vector
+        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
+        !! valid operation on `self` is another `free` (or `init_like`). Idempotent: safe to call
+        !! on an already-freed vector. The default only clears `is_initialized`, which is correct
+        !! for types whose storage is a managed Fortran allocatable. Types holding unmanaged
+        !! resources (e.g. device buffers) override this to release them, behind a guard so the
+        !! explicit end-of-use call and any `final` backstop never double-release.
     end type abstract_vector
+
+    abstract interface
+        subroutine abstract_assign(self, from)
+            !! Abstract interface for the copy assignment `self <- from`.
+            !!
+            !! Contract:
+            !!
+            !! - `self` exists (it may be unshaped) and is reshaped like `from` if needed.
+            !! - On exit, `self` holds a deep copy of the values of `from`; the two vectors share
+            !!   no storage, and later operations on one never affect the other.
+            !! - Storage already held by `self` is reused whenever it is conformant.
+            !! - `self` and `from` must not be the same object.
+            import abstract_vector
+            implicit none(type, external)
+            class(abstract_vector), intent(inout) :: self
+            !! Destination vector.
+            class(abstract_vector), intent(in) :: from
+            !! Source vector.
+        end subroutine abstract_assign
+
+        subroutine abstract_swap(self, other)
+            !! Abstract interface to exchange the content of two vectors.
+            !!
+            !! Contract:
+            !!
+            !! - Both vectors exist and are initialized on entry, and remain valid on exit.
+            !! - On exit, `self` holds what `other` held on entry and vice versa, including
+            !!   ownership (`owns_data`). Nothing is released.
+            !! - `self` and `other` must not be the same object.
+            import abstract_vector
+            implicit none(type, external)
+            class(abstract_vector), intent(inout) :: self
+            !! First vector.
+            class(abstract_vector), intent(inout) :: other
+            !! Second vector.
+        end subroutine abstract_swap
+    end interface
 
     !----------------------------------------------------------------------------
     !-----     Definition of an abstract real(sp) vector with kind=sp     -----
@@ -387,13 +465,11 @@ module LightKrylov_AbstractVectors
         !! releases and reallocates if the shape differs. Sole guaranteed allocator for
         !! type-agnostic code; for resource-managing (e.g. GPU) types, this is where device
         !! buffers are allocated/reshaped/released.
-        procedure, pass(self), public :: free => free_rsp
-        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
-        !! valid operation on `self` is another `free`. Idempotent: safe to call on an already-
-        !! freed vector. The default is a no-op, correct for types whose storage is a managed
-        !! Fortran allocatable (cleaned up automatically). Types holding unmanaged resources
-        !! (e.g. device buffers) override this to release them, behind a guard so the explicit
-        !! end-of-use call and any `final` backstop never double-release.
+        procedure, pass(self), public :: assign => assign_rsp
+        !! Default copy assignment: `init_like(from)` followed by `axpby(1, from, 0)`.
+        procedure, pass(self), public :: swap => swap_rsp
+        !! Default swap: three `assign` through a temporary vector (one allocation). Override it
+        !! with a storage exchange (e.g. `move_alloc`) to make it allocation- and copy-free.
         procedure, pass(self), public :: norm => norm_rsp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_rsp
@@ -513,13 +589,11 @@ module LightKrylov_AbstractVectors
         !! releases and reallocates if the shape differs. Sole guaranteed allocator for
         !! type-agnostic code; for resource-managing (e.g. GPU) types, this is where device
         !! buffers are allocated/reshaped/released.
-        procedure, pass(self), public :: free => free_rdp
-        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
-        !! valid operation on `self` is another `free`. Idempotent: safe to call on an already-
-        !! freed vector. The default is a no-op, correct for types whose storage is a managed
-        !! Fortran allocatable (cleaned up automatically). Types holding unmanaged resources
-        !! (e.g. device buffers) override this to release them, behind a guard so the explicit
-        !! end-of-use call and any `final` backstop never double-release.
+        procedure, pass(self), public :: assign => assign_rdp
+        !! Default copy assignment: `init_like(from)` followed by `axpby(1, from, 0)`.
+        procedure, pass(self), public :: swap => swap_rdp
+        !! Default swap: three `assign` through a temporary vector (one allocation). Override it
+        !! with a storage exchange (e.g. `move_alloc`) to make it allocation- and copy-free.
         procedure, pass(self), public :: norm => norm_rdp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_rdp
@@ -639,13 +713,11 @@ module LightKrylov_AbstractVectors
         !! releases and reallocates if the shape differs. Sole guaranteed allocator for
         !! type-agnostic code; for resource-managing (e.g. GPU) types, this is where device
         !! buffers are allocated/reshaped/released.
-        procedure, pass(self), public :: free => free_csp
-        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
-        !! valid operation on `self` is another `free`. Idempotent: safe to call on an already-
-        !! freed vector. The default is a no-op, correct for types whose storage is a managed
-        !! Fortran allocatable (cleaned up automatically). Types holding unmanaged resources
-        !! (e.g. device buffers) override this to release them, behind a guard so the explicit
-        !! end-of-use call and any `final` backstop never double-release.
+        procedure, pass(self), public :: assign => assign_csp
+        !! Default copy assignment: `init_like(from)` followed by `axpby(1, from, 0)`.
+        procedure, pass(self), public :: swap => swap_csp
+        !! Default swap: three `assign` through a temporary vector (one allocation). Override it
+        !! with a storage exchange (e.g. `move_alloc`) to make it allocation- and copy-free.
         procedure, pass(self), public :: norm => norm_csp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_csp
@@ -765,13 +837,11 @@ module LightKrylov_AbstractVectors
         !! releases and reallocates if the shape differs. Sole guaranteed allocator for
         !! type-agnostic code; for resource-managing (e.g. GPU) types, this is where device
         !! buffers are allocated/reshaped/released.
-        procedure, pass(self), public :: free => free_cdp
-        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
-        !! valid operation on `self` is another `free`. Idempotent: safe to call on an already-
-        !! freed vector. The default is a no-op, correct for types whose storage is a managed
-        !! Fortran allocatable (cleaned up automatically). Types holding unmanaged resources
-        !! (e.g. device buffers) override this to release them, behind a guard so the explicit
-        !! end-of-use call and any `final` backstop never double-release.
+        procedure, pass(self), public :: assign => assign_cdp
+        !! Default copy assignment: `init_like(from)` followed by `axpby(1, from, 0)`.
+        procedure, pass(self), public :: swap => swap_cdp
+        !! Default swap: three `assign` through a temporary vector (one allocation). Override it
+        !! with a storage exchange (e.g. `move_alloc`) to make it allocation- and copy-free.
         procedure, pass(self), public :: norm => norm_cdp
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_cdp
@@ -889,6 +959,10 @@ module LightKrylov_AbstractVectors
         !! Return size of specific abstract vector
         procedure, pass(self), public :: init_like => dense_init_like_rsp
         !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
+        procedure, pass(self), public :: assign => dense_assign_rsp
+        !! Copy assignment through a direct array copy.
+        procedure, pass(self), public :: swap => dense_swap_rsp
+        !! Copy-free swap exchanging the underlying allocations with `move_alloc`.
     end type dense_vector_rsp
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
@@ -913,6 +987,10 @@ module LightKrylov_AbstractVectors
         !! Return size of specific abstract vector
         procedure, pass(self), public :: init_like => dense_init_like_rdp
         !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
+        procedure, pass(self), public :: assign => dense_assign_rdp
+        !! Copy assignment through a direct array copy.
+        procedure, pass(self), public :: swap => dense_swap_rdp
+        !! Copy-free swap exchanging the underlying allocations with `move_alloc`.
     end type dense_vector_rdp
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
@@ -937,6 +1015,10 @@ module LightKrylov_AbstractVectors
         !! Return size of specific abstract vector
         procedure, pass(self), public :: init_like => dense_init_like_csp
         !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
+        procedure, pass(self), public :: assign => dense_assign_csp
+        !! Copy assignment through a direct array copy.
+        procedure, pass(self), public :: swap => dense_swap_csp
+        !! Copy-free swap exchanging the underlying allocations with `move_alloc`.
     end type dense_vector_csp
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
@@ -961,6 +1043,10 @@ module LightKrylov_AbstractVectors
         !! Return size of specific abstract vector
         procedure, pass(self), public :: init_like => dense_init_like_cdp
         !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
+        procedure, pass(self), public :: assign => dense_assign_cdp
+        !! Copy assignment through a direct array copy.
+        procedure, pass(self), public :: swap => dense_swap_cdp
+        !! Copy-free swap exchanging the underlying allocations with `move_alloc`.
     end type dense_vector_cdp
 
     interface dense_vector
@@ -972,6 +1058,20 @@ module LightKrylov_AbstractVectors
     public :: dense_vector
 
 contains
+
+    !-------------------------------------------------------------------
+    !-----     TYPE-BOUND PROCEDURES FOR THE ROOT ABSTRACT VECTOR     -----
+    !-------------------------------------------------------------------
+
+    subroutine free_abstract_vector(self)
+        implicit none(type, external)
+        !! Default `free`. Correct for types whose only storage is a managed Fortran
+        !! allocatable, which is released automatically on deallocation / scope exit. Types
+        !! holding unmanaged resources override this to release them, guarded for idempotency.
+        !! Clears the `is_initialized` flag so that the action is terminal.
+        class(abstract_vector), intent(inout) :: self
+        self%is_initialized = .false.
+    end subroutine free_abstract_vector
 
     !-----------------------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR THE ABSTRACT VECTOR TYPES     -----
@@ -1015,15 +1115,54 @@ contains
         call self%scal(-one_rsp)
     end subroutine chsgn_rsp
 
-    subroutine free_rsp(self)
+    subroutine assign_rsp(self, from)
         implicit none(type, external)
-        !! Default `free`: no-op. Correct for types whose only storage is a managed Fortran
-        !! allocatable, which is released automatically on deallocation / scope exit. Types
-        !! holding unmanaged resources override this to release them, guarded for idempotency.
-        !! Clears the `is_initialized` flag so that the action is terminal.
+        !! Default copy assignment `self <- from`, built on the user-provided hooks:
+        !! `init_like` (no-op if `self` is already conformant) followed by `axpby(1, from, 0)`.
+        !! Types for which `axpby` with `beta = 0` does not overwrite non-finite values in
+        !! `self`, or that have a cheaper native copy, should override `assign`.
         class(abstract_vector_rsp), intent(inout) :: self
-        self%is_initialized = .false.
-    end subroutine free_rsp
+        !! Destination vector.
+        class(abstract_vector), intent(in) :: from
+        !! Source vector.
+        select type (from)
+        class is (abstract_vector_rsp)
+            call self%init_like(from)
+            call self%axpby(one_rsp, from, zero_rsp)
+        class default
+            call type_error('from', 'abstract_vector_rsp', 'IN', this_module, &
+                          & 'assign_rsp')
+        end select
+    end subroutine assign_rsp
+
+    subroutine swap_rsp(self, other)
+        implicit none(type, external)
+        !! Default swap through a temporary vector: one allocation and three `assign`.
+        !! Types able to exchange their storage directly should override `swap`.
+        class(abstract_vector_rsp), intent(inout) :: self
+        !! First vector.
+        class(abstract_vector), intent(inout) :: other
+        !! Second vector.
+
+        ! Internal variables.
+        class(abstract_vector_rsp), allocatable :: tmp
+        integer :: iostat
+        character(len=100) :: errmsg
+
+        select type (other)
+        class is (abstract_vector_rsp)
+            allocate(tmp, mold=self, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "swap_rsp")
+            call tmp%init_like(self)
+            call tmp%assign(self)
+            call self%assign(other)
+            call other%assign(tmp)
+            call tmp%free()
+        class default
+            call type_error('other', 'abstract_vector_rsp', 'INOUT', this_module, &
+                          & 'swap_rsp')
+        end select
+    end subroutine swap_rsp
 
     function norm_rdp(self) result(alpha)
         implicit none(type, external)
@@ -1063,15 +1202,54 @@ contains
         call self%scal(-one_rdp)
     end subroutine chsgn_rdp
 
-    subroutine free_rdp(self)
+    subroutine assign_rdp(self, from)
         implicit none(type, external)
-        !! Default `free`: no-op. Correct for types whose only storage is a managed Fortran
-        !! allocatable, which is released automatically on deallocation / scope exit. Types
-        !! holding unmanaged resources override this to release them, guarded for idempotency.
-        !! Clears the `is_initialized` flag so that the action is terminal.
+        !! Default copy assignment `self <- from`, built on the user-provided hooks:
+        !! `init_like` (no-op if `self` is already conformant) followed by `axpby(1, from, 0)`.
+        !! Types for which `axpby` with `beta = 0` does not overwrite non-finite values in
+        !! `self`, or that have a cheaper native copy, should override `assign`.
         class(abstract_vector_rdp), intent(inout) :: self
-        self%is_initialized = .false.
-    end subroutine free_rdp
+        !! Destination vector.
+        class(abstract_vector), intent(in) :: from
+        !! Source vector.
+        select type (from)
+        class is (abstract_vector_rdp)
+            call self%init_like(from)
+            call self%axpby(one_rdp, from, zero_rdp)
+        class default
+            call type_error('from', 'abstract_vector_rdp', 'IN', this_module, &
+                          & 'assign_rdp')
+        end select
+    end subroutine assign_rdp
+
+    subroutine swap_rdp(self, other)
+        implicit none(type, external)
+        !! Default swap through a temporary vector: one allocation and three `assign`.
+        !! Types able to exchange their storage directly should override `swap`.
+        class(abstract_vector_rdp), intent(inout) :: self
+        !! First vector.
+        class(abstract_vector), intent(inout) :: other
+        !! Second vector.
+
+        ! Internal variables.
+        class(abstract_vector_rdp), allocatable :: tmp
+        integer :: iostat
+        character(len=100) :: errmsg
+
+        select type (other)
+        class is (abstract_vector_rdp)
+            allocate(tmp, mold=self, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "swap_rdp")
+            call tmp%init_like(self)
+            call tmp%assign(self)
+            call self%assign(other)
+            call other%assign(tmp)
+            call tmp%free()
+        class default
+            call type_error('other', 'abstract_vector_rdp', 'INOUT', this_module, &
+                          & 'swap_rdp')
+        end select
+    end subroutine swap_rdp
 
     function norm_csp(self) result(alpha)
         implicit none(type, external)
@@ -1111,15 +1289,54 @@ contains
         call self%scal(-one_csp)
     end subroutine chsgn_csp
 
-    subroutine free_csp(self)
+    subroutine assign_csp(self, from)
         implicit none(type, external)
-        !! Default `free`: no-op. Correct for types whose only storage is a managed Fortran
-        !! allocatable, which is released automatically on deallocation / scope exit. Types
-        !! holding unmanaged resources override this to release them, guarded for idempotency.
-        !! Clears the `is_initialized` flag so that the action is terminal.
+        !! Default copy assignment `self <- from`, built on the user-provided hooks:
+        !! `init_like` (no-op if `self` is already conformant) followed by `axpby(1, from, 0)`.
+        !! Types for which `axpby` with `beta = 0` does not overwrite non-finite values in
+        !! `self`, or that have a cheaper native copy, should override `assign`.
         class(abstract_vector_csp), intent(inout) :: self
-        self%is_initialized = .false.
-    end subroutine free_csp
+        !! Destination vector.
+        class(abstract_vector), intent(in) :: from
+        !! Source vector.
+        select type (from)
+        class is (abstract_vector_csp)
+            call self%init_like(from)
+            call self%axpby(one_csp, from, zero_csp)
+        class default
+            call type_error('from', 'abstract_vector_csp', 'IN', this_module, &
+                          & 'assign_csp')
+        end select
+    end subroutine assign_csp
+
+    subroutine swap_csp(self, other)
+        implicit none(type, external)
+        !! Default swap through a temporary vector: one allocation and three `assign`.
+        !! Types able to exchange their storage directly should override `swap`.
+        class(abstract_vector_csp), intent(inout) :: self
+        !! First vector.
+        class(abstract_vector), intent(inout) :: other
+        !! Second vector.
+
+        ! Internal variables.
+        class(abstract_vector_csp), allocatable :: tmp
+        integer :: iostat
+        character(len=100) :: errmsg
+
+        select type (other)
+        class is (abstract_vector_csp)
+            allocate(tmp, mold=self, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "swap_csp")
+            call tmp%init_like(self)
+            call tmp%assign(self)
+            call self%assign(other)
+            call other%assign(tmp)
+            call tmp%free()
+        class default
+            call type_error('other', 'abstract_vector_csp', 'INOUT', this_module, &
+                          & 'swap_csp')
+        end select
+    end subroutine swap_csp
 
     function norm_cdp(self) result(alpha)
         implicit none(type, external)
@@ -1159,15 +1376,54 @@ contains
         call self%scal(-one_cdp)
     end subroutine chsgn_cdp
 
-    subroutine free_cdp(self)
+    subroutine assign_cdp(self, from)
         implicit none(type, external)
-        !! Default `free`: no-op. Correct for types whose only storage is a managed Fortran
-        !! allocatable, which is released automatically on deallocation / scope exit. Types
-        !! holding unmanaged resources override this to release them, guarded for idempotency.
-        !! Clears the `is_initialized` flag so that the action is terminal.
+        !! Default copy assignment `self <- from`, built on the user-provided hooks:
+        !! `init_like` (no-op if `self` is already conformant) followed by `axpby(1, from, 0)`.
+        !! Types for which `axpby` with `beta = 0` does not overwrite non-finite values in
+        !! `self`, or that have a cheaper native copy, should override `assign`.
         class(abstract_vector_cdp), intent(inout) :: self
-        self%is_initialized = .false.
-    end subroutine free_cdp
+        !! Destination vector.
+        class(abstract_vector), intent(in) :: from
+        !! Source vector.
+        select type (from)
+        class is (abstract_vector_cdp)
+            call self%init_like(from)
+            call self%axpby(one_cdp, from, zero_cdp)
+        class default
+            call type_error('from', 'abstract_vector_cdp', 'IN', this_module, &
+                          & 'assign_cdp')
+        end select
+    end subroutine assign_cdp
+
+    subroutine swap_cdp(self, other)
+        implicit none(type, external)
+        !! Default swap through a temporary vector: one allocation and three `assign`.
+        !! Types able to exchange their storage directly should override `swap`.
+        class(abstract_vector_cdp), intent(inout) :: self
+        !! First vector.
+        class(abstract_vector), intent(inout) :: other
+        !! Second vector.
+
+        ! Internal variables.
+        class(abstract_vector_cdp), allocatable :: tmp
+        integer :: iostat
+        character(len=100) :: errmsg
+
+        select type (other)
+        class is (abstract_vector_cdp)
+            allocate(tmp, mold=self, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "swap_cdp")
+            call tmp%init_like(self)
+            call tmp%assign(self)
+            call self%assign(other)
+            call other%assign(tmp)
+            call tmp%free()
+        class default
+            call type_error('other', 'abstract_vector_cdp', 'INOUT', this_module, &
+                          & 'swap_cdp')
+        end select
+    end subroutine swap_cdp
 
 
     !--------------------------------------------------------------------------------
@@ -1293,6 +1549,44 @@ contains
         self%is_initialized = .true.
     end subroutine dense_init_like_rsp
 
+    subroutine dense_assign_rsp(self, from)
+        implicit none(type, external)
+        !! Copy assignment through a direct array copy (storage of `self` reused if conformant).
+        class(dense_vector_rsp), intent(inout) :: self
+        class(abstract_vector), intent(in) :: from
+        select type (from)
+        type is (dense_vector_rsp)
+            call self%init_like(from)
+            self%data(:) = from%data(:)
+        class default
+            call type_error('from', 'dense_vector_rsp', 'IN', this_module, &
+                          & 'dense_assign_rsp')
+        end select
+    end subroutine dense_assign_rsp
+
+    subroutine dense_swap_rsp(self, other)
+        implicit none(type, external)
+        !! Copy-free swap: the two allocations change hands through `move_alloc`, so that no
+        !! data is copied and nothing is allocated.
+        class(dense_vector_rsp), intent(inout) :: self
+        class(abstract_vector), intent(inout) :: other
+        real(sp), allocatable :: tmp(:)
+        integer :: n
+        logical :: flag
+        select type (other)
+        type is (dense_vector_rsp)
+            call move_alloc(self%data, tmp)
+            call move_alloc(other%data, self%data)
+            call move_alloc(tmp, other%data)
+            n = self%n ; self%n = other%n ; other%n = n
+            flag = self%is_initialized ; self%is_initialized = other%is_initialized ; other%is_initialized = flag
+            flag = self%owns_data ; self%owns_data = other%owns_data ; other%owns_data = flag
+        class default
+            call type_error('other', 'dense_vector_rsp', 'INOUT', this_module, &
+                          & 'dense_swap_rsp')
+        end select
+    end subroutine dense_swap_rsp
+
     function initialize_dense_vector_from_array_rdp(x) result(vec)
         implicit none(type, external)
         real(dp), intent(in) :: x(:)
@@ -1411,6 +1705,44 @@ contains
         self%n = m
         self%is_initialized = .true.
     end subroutine dense_init_like_rdp
+
+    subroutine dense_assign_rdp(self, from)
+        implicit none(type, external)
+        !! Copy assignment through a direct array copy (storage of `self` reused if conformant).
+        class(dense_vector_rdp), intent(inout) :: self
+        class(abstract_vector), intent(in) :: from
+        select type (from)
+        type is (dense_vector_rdp)
+            call self%init_like(from)
+            self%data(:) = from%data(:)
+        class default
+            call type_error('from', 'dense_vector_rdp', 'IN', this_module, &
+                          & 'dense_assign_rdp')
+        end select
+    end subroutine dense_assign_rdp
+
+    subroutine dense_swap_rdp(self, other)
+        implicit none(type, external)
+        !! Copy-free swap: the two allocations change hands through `move_alloc`, so that no
+        !! data is copied and nothing is allocated.
+        class(dense_vector_rdp), intent(inout) :: self
+        class(abstract_vector), intent(inout) :: other
+        real(dp), allocatable :: tmp(:)
+        integer :: n
+        logical :: flag
+        select type (other)
+        type is (dense_vector_rdp)
+            call move_alloc(self%data, tmp)
+            call move_alloc(other%data, self%data)
+            call move_alloc(tmp, other%data)
+            n = self%n ; self%n = other%n ; other%n = n
+            flag = self%is_initialized ; self%is_initialized = other%is_initialized ; other%is_initialized = flag
+            flag = self%owns_data ; self%owns_data = other%owns_data ; other%owns_data = flag
+        class default
+            call type_error('other', 'dense_vector_rdp', 'INOUT', this_module, &
+                          & 'dense_swap_rdp')
+        end select
+    end subroutine dense_swap_rdp
 
     function initialize_dense_vector_from_array_csp(x) result(vec)
         implicit none(type, external)
@@ -1535,6 +1867,44 @@ contains
         self%is_initialized = .true.
     end subroutine dense_init_like_csp
 
+    subroutine dense_assign_csp(self, from)
+        implicit none(type, external)
+        !! Copy assignment through a direct array copy (storage of `self` reused if conformant).
+        class(dense_vector_csp), intent(inout) :: self
+        class(abstract_vector), intent(in) :: from
+        select type (from)
+        type is (dense_vector_csp)
+            call self%init_like(from)
+            self%data(:) = from%data(:)
+        class default
+            call type_error('from', 'dense_vector_csp', 'IN', this_module, &
+                          & 'dense_assign_csp')
+        end select
+    end subroutine dense_assign_csp
+
+    subroutine dense_swap_csp(self, other)
+        implicit none(type, external)
+        !! Copy-free swap: the two allocations change hands through `move_alloc`, so that no
+        !! data is copied and nothing is allocated.
+        class(dense_vector_csp), intent(inout) :: self
+        class(abstract_vector), intent(inout) :: other
+        complex(sp), allocatable :: tmp(:)
+        integer :: n
+        logical :: flag
+        select type (other)
+        type is (dense_vector_csp)
+            call move_alloc(self%data, tmp)
+            call move_alloc(other%data, self%data)
+            call move_alloc(tmp, other%data)
+            n = self%n ; self%n = other%n ; other%n = n
+            flag = self%is_initialized ; self%is_initialized = other%is_initialized ; other%is_initialized = flag
+            flag = self%owns_data ; self%owns_data = other%owns_data ; other%owns_data = flag
+        class default
+            call type_error('other', 'dense_vector_csp', 'INOUT', this_module, &
+                          & 'dense_swap_csp')
+        end select
+    end subroutine dense_swap_csp
+
     function initialize_dense_vector_from_array_cdp(x) result(vec)
         implicit none(type, external)
         complex(dp), intent(in) :: x(:)
@@ -1658,36 +2028,76 @@ contains
         self%is_initialized = .true.
     end subroutine dense_init_like_cdp
 
+    subroutine dense_assign_cdp(self, from)
+        implicit none(type, external)
+        !! Copy assignment through a direct array copy (storage of `self` reused if conformant).
+        class(dense_vector_cdp), intent(inout) :: self
+        class(abstract_vector), intent(in) :: from
+        select type (from)
+        type is (dense_vector_cdp)
+            call self%init_like(from)
+            self%data(:) = from%data(:)
+        class default
+            call type_error('from', 'dense_vector_cdp', 'IN', this_module, &
+                          & 'dense_assign_cdp')
+        end select
+    end subroutine dense_assign_cdp
+
+    subroutine dense_swap_cdp(self, other)
+        implicit none(type, external)
+        !! Copy-free swap: the two allocations change hands through `move_alloc`, so that no
+        !! data is copied and nothing is allocated.
+        class(dense_vector_cdp), intent(inout) :: self
+        class(abstract_vector), intent(inout) :: other
+        complex(dp), allocatable :: tmp(:)
+        integer :: n
+        logical :: flag
+        select type (other)
+        type is (dense_vector_cdp)
+            call move_alloc(self%data, tmp)
+            call move_alloc(other%data, self%data)
+            call move_alloc(tmp, other%data)
+            n = self%n ; self%n = other%n ; other%n = n
+            flag = self%is_initialized ; self%is_initialized = other%is_initialized ; other%is_initialized = flag
+            flag = self%owns_data ; self%owns_data = other%owns_data ; other%owns_data = flag
+        class default
+            call type_error('other', 'dense_vector_cdp', 'INOUT', this_module, &
+                          & 'dense_swap_cdp')
+        end select
+    end subroutine dense_swap_cdp
+
 
     !--------------------------------------
     !-----      UTILITY FUNCTIONS     -----
     !--------------------------------------
 
     subroutine linear_combination_vector_rsp(y, X, v)
-        !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
+        !! Given `X` and `v`, this function computes in-place \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
         !! Fortran array containing the coefficients of the linear combination.
+        !! `y` is provided (allocated) by the caller and must not alias any element of `X`.
         implicit none(type, external)
-        class(abstract_vector_rsp), allocatable, intent(out) :: y
-        !! Ouput vector.
+        class(abstract_vector_rsp), intent(inout) :: y
+        !! Ouput vector. Shaped like `X(1)` (no-op if conformant); its content is overwritten.
         class(abstract_vector_rsp), intent(in) :: X(:)
         !! Krylov basis.
         real(sp), intent(in) :: v(:)
         !! Coordinates of `y` in the Krylov basis `X`.
 
         ! Internal variables
-        integer :: i, iostat
-        character(len=100) :: errmsg
+        integer :: i
 
         ! Check sizes.
         if (size(X) /= size(v)) then
             call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
                               & this_module, 'linear_combination_vector_rsp')
         endif
+        if (size(X) == 0) then
+            call stop_error("Krylov basis X is empty.", &
+                              & this_module, 'linear_combination_vector_rsp')
+        endif
 
-        ! Initialize output vector.
-        allocate(y, mold=X(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_rsp")
+        ! Shape output vector.
         call y%init_like(X(1))
         call y%zero()
         ! Compute linear combination.
@@ -1697,29 +2107,36 @@ contains
     end subroutine linear_combination_vector_rsp
 
     subroutine linear_combination_matrix_rsp(Y, X, B)
-        !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
+        !! Given `X` and `B`, this function computes in-place \(\mathbf{Y} = \mathbf{XB} \) where
         !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        !! `Y` is provided (allocated) by the caller with `size(Y) == size(B, 2)` and must not
+        !! alias any element of `X`.
         implicit none(type, external)
-        class(abstract_vector_rsp), allocatable, intent(out) :: Y(:)
-        !! Output matrix.
+        class(abstract_vector_rsp), intent(inout) :: Y(:)
+        !! Output matrix. Shaped like `X(1)` (no-op if conformant); its content is overwritten.
         class(abstract_vector_rsp), intent(in) :: X(:)
         !! Krylov basis.
         real(sp), intent(in) :: B(:, :)
         !! Coefficients of the linear combinations.
 
         ! Internal variables.
-        integer :: i, j, iostat
-        character(len=100) :: errmsg
+        integer :: i, j
 
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
                             this_module, 'linear_combination_matrix_rsp')
         endif
+        if (size(Y) /= size(B, 2)) then
+            call stop_error("Output basis Y and combination matrix B have incompatible sizes.", &
+                            this_module, 'linear_combination_matrix_rsp')
+        endif
+        if (size(X) == 0) then
+            call stop_error("Krylov basis X is empty.", &
+                            this_module, 'linear_combination_matrix_rsp')
+        endif
 
-        ! Initialize output basis.
-        allocate(Y(size(B, 2)), mold=X(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_rsp")
+        ! Shape output basis.
         call init_like_basis(Y, X(1))
 
         call zero_basis(Y)
@@ -1806,10 +2223,8 @@ contains
         implicit none(type, external)
         class(abstract_vector_rsp), intent(in) :: from
         class(abstract_vector_rsp), intent(inout) :: out
-        ! Reset output based on input.
-        call out%init_like(from)
-        ! Copy array.
-        call out%axpby(one_rsp, from, zero_rsp)
+        ! Dispatch to the copy-assignment hook of the concrete type.
+        call out%assign(from)
     end subroutine copy_vector_rsp
 
     impure elemental subroutine init_like_basis_rsp(X, mold)
@@ -2088,6 +2503,70 @@ contains
                 end if
             end block scaling_distributivity_bis
 
+            !-----------------------------------------
+            !-----     LIFECYCLE HOOKS           -----
+            !-----------------------------------------
+
+            assign_correctness: block
+                !! `v%assign(u)` must yield v = u, and v must not share storage with u.
+                class(abstract_vector_rsp), allocatable :: u, v
+                real(sp) :: vnorm
+
+                !> Generate random source and a differently-filled destination.
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+
+                !> Copy assignment.
+                call v%assign(u)
+                vnorm = v%norm()
+
+                !> Independence: scaling u must leave v untouched.
+                call u%scal(2*one_rsp)
+                success = abs(v%norm() - vnorm) <= tol
+
+                !> Correctness: u - 2v = 0 (scaling by 2 is exact).
+                call u%axpby(-2*one_rsp, v, one_rsp)
+                success = success .and. (u%norm() <= tol)
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'assign_correctness'
+                    exit verification
+                end if
+            end block assign_correctness
+
+            swap_correctness: block
+                !! After `u%swap(v)`, u must hold v's content and v must hold u's, both valid.
+                class(abstract_vector_rsp), allocatable :: u, v, u0, v0
+
+                !> Generate random vectors and keep reference copies.
+                allocate(u, v, u0, v0, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call u0%init_like(x) ; call u0%assign(u)
+                call v0%init_like(x) ; call v0%assign(v)
+
+                !> Swap.
+                call u%swap(v)
+
+                !> Check correctness.
+                call u%sub(v0) ; call v%sub(u0)
+                success = (u%norm() <= tol) .and. (v%norm() <= tol)
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call u0%free() ; call v0%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'swap_correctness'
+                    exit verification
+                end if
+            end block swap_correctness
+
             mold_independence: block
                 !! guard for resource-sharing overrides (GPU), void for CPU applications.
                 class(abstract_vector_rsp), allocatable :: u
@@ -2124,30 +2603,32 @@ contains
     end function verify_vector_axioms_rsp
 
     subroutine linear_combination_vector_rdp(y, X, v)
-        !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
+        !! Given `X` and `v`, this function computes in-place \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
         !! Fortran array containing the coefficients of the linear combination.
+        !! `y` is provided (allocated) by the caller and must not alias any element of `X`.
         implicit none(type, external)
-        class(abstract_vector_rdp), allocatable, intent(out) :: y
-        !! Ouput vector.
+        class(abstract_vector_rdp), intent(inout) :: y
+        !! Ouput vector. Shaped like `X(1)` (no-op if conformant); its content is overwritten.
         class(abstract_vector_rdp), intent(in) :: X(:)
         !! Krylov basis.
         real(dp), intent(in) :: v(:)
         !! Coordinates of `y` in the Krylov basis `X`.
 
         ! Internal variables
-        integer :: i, iostat
-        character(len=100) :: errmsg
+        integer :: i
 
         ! Check sizes.
         if (size(X) /= size(v)) then
             call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
                               & this_module, 'linear_combination_vector_rdp')
         endif
+        if (size(X) == 0) then
+            call stop_error("Krylov basis X is empty.", &
+                              & this_module, 'linear_combination_vector_rdp')
+        endif
 
-        ! Initialize output vector.
-        allocate(y, mold=X(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_rdp")
+        ! Shape output vector.
         call y%init_like(X(1))
         call y%zero()
         ! Compute linear combination.
@@ -2157,29 +2638,36 @@ contains
     end subroutine linear_combination_vector_rdp
 
     subroutine linear_combination_matrix_rdp(Y, X, B)
-        !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
+        !! Given `X` and `B`, this function computes in-place \(\mathbf{Y} = \mathbf{XB} \) where
         !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        !! `Y` is provided (allocated) by the caller with `size(Y) == size(B, 2)` and must not
+        !! alias any element of `X`.
         implicit none(type, external)
-        class(abstract_vector_rdp), allocatable, intent(out) :: Y(:)
-        !! Output matrix.
+        class(abstract_vector_rdp), intent(inout) :: Y(:)
+        !! Output matrix. Shaped like `X(1)` (no-op if conformant); its content is overwritten.
         class(abstract_vector_rdp), intent(in) :: X(:)
         !! Krylov basis.
         real(dp), intent(in) :: B(:, :)
         !! Coefficients of the linear combinations.
 
         ! Internal variables.
-        integer :: i, j, iostat
-        character(len=100) :: errmsg
+        integer :: i, j
 
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
                             this_module, 'linear_combination_matrix_rdp')
         endif
+        if (size(Y) /= size(B, 2)) then
+            call stop_error("Output basis Y and combination matrix B have incompatible sizes.", &
+                            this_module, 'linear_combination_matrix_rdp')
+        endif
+        if (size(X) == 0) then
+            call stop_error("Krylov basis X is empty.", &
+                            this_module, 'linear_combination_matrix_rdp')
+        endif
 
-        ! Initialize output basis.
-        allocate(Y(size(B, 2)), mold=X(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_rdp")
+        ! Shape output basis.
         call init_like_basis(Y, X(1))
 
         call zero_basis(Y)
@@ -2266,10 +2754,8 @@ contains
         implicit none(type, external)
         class(abstract_vector_rdp), intent(in) :: from
         class(abstract_vector_rdp), intent(inout) :: out
-        ! Reset output based on input.
-        call out%init_like(from)
-        ! Copy array.
-        call out%axpby(one_rdp, from, zero_rdp)
+        ! Dispatch to the copy-assignment hook of the concrete type.
+        call out%assign(from)
     end subroutine copy_vector_rdp
 
     impure elemental subroutine init_like_basis_rdp(X, mold)
@@ -2548,6 +3034,70 @@ contains
                 end if
             end block scaling_distributivity_bis
 
+            !-----------------------------------------
+            !-----     LIFECYCLE HOOKS           -----
+            !-----------------------------------------
+
+            assign_correctness: block
+                !! `v%assign(u)` must yield v = u, and v must not share storage with u.
+                class(abstract_vector_rdp), allocatable :: u, v
+                real(dp) :: vnorm
+
+                !> Generate random source and a differently-filled destination.
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+
+                !> Copy assignment.
+                call v%assign(u)
+                vnorm = v%norm()
+
+                !> Independence: scaling u must leave v untouched.
+                call u%scal(2*one_rdp)
+                success = abs(v%norm() - vnorm) <= tol
+
+                !> Correctness: u - 2v = 0 (scaling by 2 is exact).
+                call u%axpby(-2*one_rdp, v, one_rdp)
+                success = success .and. (u%norm() <= tol)
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'assign_correctness'
+                    exit verification
+                end if
+            end block assign_correctness
+
+            swap_correctness: block
+                !! After `u%swap(v)`, u must hold v's content and v must hold u's, both valid.
+                class(abstract_vector_rdp), allocatable :: u, v, u0, v0
+
+                !> Generate random vectors and keep reference copies.
+                allocate(u, v, u0, v0, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call u0%init_like(x) ; call u0%assign(u)
+                call v0%init_like(x) ; call v0%assign(v)
+
+                !> Swap.
+                call u%swap(v)
+
+                !> Check correctness.
+                call u%sub(v0) ; call v%sub(u0)
+                success = (u%norm() <= tol) .and. (v%norm() <= tol)
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call u0%free() ; call v0%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'swap_correctness'
+                    exit verification
+                end if
+            end block swap_correctness
+
             mold_independence: block
                 !! guard for resource-sharing overrides (GPU), void for CPU applications.
                 class(abstract_vector_rdp), allocatable :: u
@@ -2584,30 +3134,32 @@ contains
     end function verify_vector_axioms_rdp
 
     subroutine linear_combination_vector_csp(y, X, v)
-        !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
+        !! Given `X` and `v`, this function computes in-place \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
         !! Fortran array containing the coefficients of the linear combination.
+        !! `y` is provided (allocated) by the caller and must not alias any element of `X`.
         implicit none(type, external)
-        class(abstract_vector_csp), allocatable, intent(out) :: y
-        !! Ouput vector.
+        class(abstract_vector_csp), intent(inout) :: y
+        !! Ouput vector. Shaped like `X(1)` (no-op if conformant); its content is overwritten.
         class(abstract_vector_csp), intent(in) :: X(:)
         !! Krylov basis.
         complex(sp), intent(in) :: v(:)
         !! Coordinates of `y` in the Krylov basis `X`.
 
         ! Internal variables
-        integer :: i, iostat
-        character(len=100) :: errmsg
+        integer :: i
 
         ! Check sizes.
         if (size(X) /= size(v)) then
             call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
                               & this_module, 'linear_combination_vector_csp')
         endif
+        if (size(X) == 0) then
+            call stop_error("Krylov basis X is empty.", &
+                              & this_module, 'linear_combination_vector_csp')
+        endif
 
-        ! Initialize output vector.
-        allocate(y, mold=X(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_csp")
+        ! Shape output vector.
         call y%init_like(X(1))
         call y%zero()
         ! Compute linear combination.
@@ -2617,29 +3169,36 @@ contains
     end subroutine linear_combination_vector_csp
 
     subroutine linear_combination_matrix_csp(Y, X, B)
-        !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
+        !! Given `X` and `B`, this function computes in-place \(\mathbf{Y} = \mathbf{XB} \) where
         !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        !! `Y` is provided (allocated) by the caller with `size(Y) == size(B, 2)` and must not
+        !! alias any element of `X`.
         implicit none(type, external)
-        class(abstract_vector_csp), allocatable, intent(out) :: Y(:)
-        !! Output matrix.
+        class(abstract_vector_csp), intent(inout) :: Y(:)
+        !! Output matrix. Shaped like `X(1)` (no-op if conformant); its content is overwritten.
         class(abstract_vector_csp), intent(in) :: X(:)
         !! Krylov basis.
         complex(sp), intent(in) :: B(:, :)
         !! Coefficients of the linear combinations.
 
         ! Internal variables.
-        integer :: i, j, iostat
-        character(len=100) :: errmsg
+        integer :: i, j
 
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
                             this_module, 'linear_combination_matrix_csp')
         endif
+        if (size(Y) /= size(B, 2)) then
+            call stop_error("Output basis Y and combination matrix B have incompatible sizes.", &
+                            this_module, 'linear_combination_matrix_csp')
+        endif
+        if (size(X) == 0) then
+            call stop_error("Krylov basis X is empty.", &
+                            this_module, 'linear_combination_matrix_csp')
+        endif
 
-        ! Initialize output basis.
-        allocate(Y(size(B, 2)), mold=X(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_csp")
+        ! Shape output basis.
         call init_like_basis(Y, X(1))
 
         call zero_basis(Y)
@@ -2726,10 +3285,8 @@ contains
         implicit none(type, external)
         class(abstract_vector_csp), intent(in) :: from
         class(abstract_vector_csp), intent(inout) :: out
-        ! Reset output based on input.
-        call out%init_like(from)
-        ! Copy array.
-        call out%axpby(one_csp, from, zero_csp)
+        ! Dispatch to the copy-assignment hook of the concrete type.
+        call out%assign(from)
     end subroutine copy_vector_csp
 
     impure elemental subroutine init_like_basis_csp(X, mold)
@@ -3016,6 +3573,70 @@ contains
                 end if
             end block scaling_distributivity_bis
 
+            !-----------------------------------------
+            !-----     LIFECYCLE HOOKS           -----
+            !-----------------------------------------
+
+            assign_correctness: block
+                !! `v%assign(u)` must yield v = u, and v must not share storage with u.
+                class(abstract_vector_csp), allocatable :: u, v
+                real(sp) :: vnorm
+
+                !> Generate random source and a differently-filled destination.
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+
+                !> Copy assignment.
+                call v%assign(u)
+                vnorm = v%norm()
+
+                !> Independence: scaling u must leave v untouched.
+                call u%scal(2*one_csp)
+                success = abs(v%norm() - vnorm) <= tol
+
+                !> Correctness: u - 2v = 0 (scaling by 2 is exact).
+                call u%axpby(-2*one_csp, v, one_csp)
+                success = success .and. (u%norm() <= tol)
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'assign_correctness'
+                    exit verification
+                end if
+            end block assign_correctness
+
+            swap_correctness: block
+                !! After `u%swap(v)`, u must hold v's content and v must hold u's, both valid.
+                class(abstract_vector_csp), allocatable :: u, v, u0, v0
+
+                !> Generate random vectors and keep reference copies.
+                allocate(u, v, u0, v0, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call u0%init_like(x) ; call u0%assign(u)
+                call v0%init_like(x) ; call v0%assign(v)
+
+                !> Swap.
+                call u%swap(v)
+
+                !> Check correctness.
+                call u%sub(v0) ; call v%sub(u0)
+                success = (u%norm() <= tol) .and. (v%norm() <= tol)
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call u0%free() ; call v0%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'swap_correctness'
+                    exit verification
+                end if
+            end block swap_correctness
+
             mold_independence: block
                 !! guard for resource-sharing overrides (GPU), void for CPU applications.
                 class(abstract_vector_csp), allocatable :: u
@@ -3052,30 +3673,32 @@ contains
     end function verify_vector_axioms_csp
 
     subroutine linear_combination_vector_cdp(y, X, v)
-        !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
+        !! Given `X` and `v`, this function computes in-place \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
         !! Fortran array containing the coefficients of the linear combination.
+        !! `y` is provided (allocated) by the caller and must not alias any element of `X`.
         implicit none(type, external)
-        class(abstract_vector_cdp), allocatable, intent(out) :: y
-        !! Ouput vector.
+        class(abstract_vector_cdp), intent(inout) :: y
+        !! Ouput vector. Shaped like `X(1)` (no-op if conformant); its content is overwritten.
         class(abstract_vector_cdp), intent(in) :: X(:)
         !! Krylov basis.
         complex(dp), intent(in) :: v(:)
         !! Coordinates of `y` in the Krylov basis `X`.
 
         ! Internal variables
-        integer :: i, iostat
-        character(len=100) :: errmsg
+        integer :: i
 
         ! Check sizes.
         if (size(X) /= size(v)) then
             call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
                               & this_module, 'linear_combination_vector_cdp')
         endif
+        if (size(X) == 0) then
+            call stop_error("Krylov basis X is empty.", &
+                              & this_module, 'linear_combination_vector_cdp')
+        endif
 
-        ! Initialize output vector.
-        allocate(y, mold=X(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_cdp")
+        ! Shape output vector.
         call y%init_like(X(1))
         call y%zero()
         ! Compute linear combination.
@@ -3085,29 +3708,36 @@ contains
     end subroutine linear_combination_vector_cdp
 
     subroutine linear_combination_matrix_cdp(Y, X, B)
-        !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
+        !! Given `X` and `B`, this function computes in-place \(\mathbf{Y} = \mathbf{XB} \) where
         !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        !! `Y` is provided (allocated) by the caller with `size(Y) == size(B, 2)` and must not
+        !! alias any element of `X`.
         implicit none(type, external)
-        class(abstract_vector_cdp), allocatable, intent(out) :: Y(:)
-        !! Output matrix.
+        class(abstract_vector_cdp), intent(inout) :: Y(:)
+        !! Output matrix. Shaped like `X(1)` (no-op if conformant); its content is overwritten.
         class(abstract_vector_cdp), intent(in) :: X(:)
         !! Krylov basis.
         complex(dp), intent(in) :: B(:, :)
         !! Coefficients of the linear combinations.
 
         ! Internal variables.
-        integer :: i, j, iostat
-        character(len=100) :: errmsg
+        integer :: i, j
 
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
                             this_module, 'linear_combination_matrix_cdp')
         endif
+        if (size(Y) /= size(B, 2)) then
+            call stop_error("Output basis Y and combination matrix B have incompatible sizes.", &
+                            this_module, 'linear_combination_matrix_cdp')
+        endif
+        if (size(X) == 0) then
+            call stop_error("Krylov basis X is empty.", &
+                            this_module, 'linear_combination_matrix_cdp')
+        endif
 
-        ! Initialize output basis.
-        allocate(Y(size(B, 2)), mold=X(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_cdp")
+        ! Shape output basis.
         call init_like_basis(Y, X(1))
 
         call zero_basis(Y)
@@ -3194,10 +3824,8 @@ contains
         implicit none(type, external)
         class(abstract_vector_cdp), intent(in) :: from
         class(abstract_vector_cdp), intent(inout) :: out
-        ! Reset output based on input.
-        call out%init_like(from)
-        ! Copy array.
-        call out%axpby(one_cdp, from, zero_cdp)
+        ! Dispatch to the copy-assignment hook of the concrete type.
+        call out%assign(from)
     end subroutine copy_vector_cdp
 
     impure elemental subroutine init_like_basis_cdp(X, mold)
@@ -3483,6 +4111,70 @@ contains
                     exit verification
                 end if
             end block scaling_distributivity_bis
+
+            !-----------------------------------------
+            !-----     LIFECYCLE HOOKS           -----
+            !-----------------------------------------
+
+            assign_correctness: block
+                !! `v%assign(u)` must yield v = u, and v must not share storage with u.
+                class(abstract_vector_cdp), allocatable :: u, v
+                real(dp) :: vnorm
+
+                !> Generate random source and a differently-filled destination.
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+
+                !> Copy assignment.
+                call v%assign(u)
+                vnorm = v%norm()
+
+                !> Independence: scaling u must leave v untouched.
+                call u%scal(2*one_cdp)
+                success = abs(v%norm() - vnorm) <= tol
+
+                !> Correctness: u - 2v = 0 (scaling by 2 is exact).
+                call u%axpby(-2*one_cdp, v, one_cdp)
+                success = success .and. (u%norm() <= tol)
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'assign_correctness'
+                    exit verification
+                end if
+            end block assign_correctness
+
+            swap_correctness: block
+                !! After `u%swap(v)`, u must hold v's content and v must hold u's, both valid.
+                class(abstract_vector_cdp), allocatable :: u, v, u0, v0
+
+                !> Generate random vectors and keep reference copies.
+                allocate(u, v, u0, v0, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call u0%init_like(x) ; call u0%assign(u)
+                call v0%init_like(x) ; call v0%assign(v)
+
+                !> Swap.
+                call u%swap(v)
+
+                !> Check correctness.
+                call u%sub(v0) ; call v%sub(u0)
+                success = (u%norm() <= tol) .and. (v%norm() <= tol)
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call u0%free() ; call v0%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'swap_correctness'
+                    exit verification
+                end if
+            end block swap_correctness
 
             mold_independence: block
                 !! guard for resource-sharing overrides (GPU), void for CPU applications.
