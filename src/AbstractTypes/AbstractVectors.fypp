@@ -28,13 +28,32 @@ module LightKrylov_AbstractVectors
     !! - vector subtraction :   `sub(self, vec) = axpby(-1, vec, 1, self)`
     !! - vector norm        :   `norm(self)     = sqrt(self%dot(self))`
     !!
+    !! ### Lifecycle hooks
+    !!
+    !! `LightKrylov` never owns the memory of a user-provided vector: it never allocates or
+    !! deallocates it, and only reaches its storage through the overridable hooks below, which
+    !! all act on objects that already exist. On user-provided outputs and bases, the library
+    !! calls `init_like` (a no-op when already conformant), `assign` and `swap`. It never calls
+    !! `free` on a vector it did not create itself.
+    !!
+    !! - `init_like(self, mold)`  :   (deferred) Shape `self` like `mold`.
+    !! - `assign(self, from)`     :   Copy assignment \( \mathbf{x} \leftarrow \mathbf{y} \). Storage of `self`
+    !!                                 is reused. Default: `init_like` followed by `axpby(1, from, 0)`.
+    !! - `swap(self, other)`      :   Exchange the full state of two vectors; both remain valid. Default:
+    !!                                 three `assign` through a temporary vector. Override it to exchange
+    !!                                 storage instead (e.g. `move_alloc`) for a copy-free swap.
+    !! - `free(self)`             :   Release unmanaged resources. Only ever called by the owner of the vector.
+    !!
+    !! `assign` and `swap` are declared on the root `abstract_vector` and take `class(abstract_vector)`
+    !! arguments, so that overrides in concrete types use `select type` on the second argument.
+    !!
     !! This module also provides the following utility subroutines:
     !!
     !! - `innerprod(X, Y)`                  : Function computing the product \(\mathbf{X}^H \mathbf{y} \) between a Krylov basis `X` and a Krylov vector  (resp. basis) `Y`.
     !! - `linear_combination(Y, X, V)`      : Subroutine computing the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \).
     !! - `axpby_basis(alpha, X, beta, Y)`   : In-place computation of \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where `X` and `Y` are arrays of `abstract_vector`.
     !! - `zero_basis(X)`                    : Zero-out a collection of `abstract_vectors`.
-    !! - `copy_basis(out, from)`            : Copy a collection of `abstract_vectors`. `out` must be pre-allocated.
+    !! - `copy(out, from)`                  : Copy a vector (or, elementally, a collection of vectors) through `assign`. `out` must be pre-allocated.
     !! - `init_like_basis(out, mold)`       : Initialize size and structure of a collection of `abstract_vectors` based on mold.
     !! - `free_basis()         `            : Free the memory of a collection of `abstract_vectors`.
     !! - `rand_basis(X, ifnorm)`            : Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
@@ -235,8 +254,10 @@ module LightKrylov_AbstractVectors
 
     interface copy
         !!  This interface provides methods to copy an array `X` of `abstract_vector` into
-        !!  another array `Y`. Note that `Y` needs to be pre-allocated. 
-        !!  Internally, copy will run Y(i)%init_like(X(1)) to ensure that Y is conformant with X.
+        !!  another array `Y`. Note that `Y` needs to be pre-allocated.
+        !!  It is an elemental wrapper around `Y(i)%assign(X(i))`, so that it uses the
+        !!  copy-assignment hook of the concrete type (whose default runs `init_like` to make
+        !!  `Y(i)` conformant with `X(i)`).
         !!
         !!  ### Example
         !!
@@ -342,7 +363,58 @@ module LightKrylov_AbstractVectors
         logical :: owns_data      = .true.
         !! `.false.` marks an alias/view so `free` won't release shared storage. For GPU/
         !! resource-managing extensions; inert and untested for the CPU types shipped here.
+    contains
+        procedure(abstract_assign), pass(self), deferred, public :: assign
+        !! Copy assignment \( \mathbf{x} \leftarrow \mathbf{y} \) into an existing vector.
+        !! Overridable; the kind-level abstract types provide a generic default.
+        procedure(abstract_swap), pass(self), deferred, public :: swap
+        !! Exchange the full state of two existing vectors; both remain valid.
+        !! Overridable; the kind-level abstract types provide a generic default.
+        procedure, pass(self), public :: free => free_abstract_vector
+        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
+        !! valid operation on `self` is another `free` (or `init_like`). Idempotent: safe to call
+        !! on an already-freed vector. The default only clears `is_initialized`, which is correct
+        !! for types whose storage is a managed Fortran allocatable. Types holding unmanaged
+        !! resources (e.g. device buffers) override this to release them, behind a guard so the
+        !! explicit end-of-use call and any `final` backstop never double-release.
     end type abstract_vector
+
+    abstract interface
+        subroutine abstract_assign(self, from)
+            !! Abstract interface for the copy assignment `self <- from`.
+            !!
+            !! Contract:
+            !!
+            !! - `self` exists (it may be unshaped) and is reshaped like `from` if needed.
+            !! - On exit, `self` holds a deep copy of the values of `from`; the two vectors share
+            !!   no storage, and later operations on one never affect the other.
+            !! - Storage already held by `self` is reused whenever it is conformant.
+            !! - `self` and `from` must not be the same object.
+            import abstract_vector
+            implicit none(type, external)
+            class(abstract_vector), intent(inout) :: self
+            !! Destination vector.
+            class(abstract_vector), intent(in) :: from
+            !! Source vector.
+        end subroutine abstract_assign
+
+        subroutine abstract_swap(self, other)
+            !! Abstract interface to exchange the content of two vectors.
+            !!
+            !! Contract:
+            !!
+            !! - Both vectors exist and are initialized on entry, and remain valid on exit.
+            !! - On exit, `self` holds what `other` held on entry and vice versa, including
+            !!   ownership (`owns_data`). Nothing is released.
+            !! - `self` and `other` must not be the same object.
+            import abstract_vector
+            implicit none(type, external)
+            class(abstract_vector), intent(inout) :: self
+            !! First vector.
+            class(abstract_vector), intent(inout) :: other
+            !! Second vector.
+        end subroutine abstract_swap
+    end interface
 
     #:for kind, type in RC_KINDS_TYPES
     !----------------------------------------------------------------------------
@@ -371,13 +443,11 @@ module LightKrylov_AbstractVectors
         !! releases and reallocates if the shape differs. Sole guaranteed allocator for
         !! type-agnostic code; for resource-managing (e.g. GPU) types, this is where device
         !! buffers are allocated/reshaped/released.
-        procedure, pass(self), public :: free => free_${type[0]}$${kind}$
-        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
-        !! valid operation on `self` is another `free`. Idempotent: safe to call on an already-
-        !! freed vector. The default is a no-op, correct for types whose storage is a managed
-        !! Fortran allocatable (cleaned up automatically). Types holding unmanaged resources
-        !! (e.g. device buffers) override this to release them, behind a guard so the explicit
-        !! end-of-use call and any `final` backstop never double-release.
+        procedure, pass(self), public :: assign => assign_${type[0]}$${kind}$
+        !! Default copy assignment: `init_like(from)` followed by `axpby(1, from, 0)`.
+        procedure, pass(self), public :: swap => swap_${type[0]}$${kind}$
+        !! Default swap: three `assign` through a temporary vector (one allocation). Override it
+        !! with a storage exchange (e.g. `move_alloc`) to make it allocation- and copy-free.
         procedure, pass(self), public :: norm => norm_${type[0]}$${kind}$
         !! Computes the norm of the `abstract_vector`.
         procedure, pass(self), public :: add => add_${type[0]}$${kind}$
@@ -497,6 +567,10 @@ module LightKrylov_AbstractVectors
         !! Return size of specific abstract vector
         procedure, pass(self), public :: init_like => dense_init_like_${type[0]}$${kind}$
         !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
+        procedure, pass(self), public :: assign => dense_assign_${type[0]}$${kind}$
+        !! Copy assignment through a direct array copy.
+        procedure, pass(self), public :: swap => dense_swap_${type[0]}$${kind}$
+        !! Copy-free swap exchanging the underlying allocations with `move_alloc`.
     end type dense_vector_${type[0]}$${kind}$
     #:endfor
 
@@ -508,6 +582,20 @@ module LightKrylov_AbstractVectors
     public :: dense_vector
 
 contains
+
+    !-------------------------------------------------------------------
+    !-----     TYPE-BOUND PROCEDURES FOR THE ROOT ABSTRACT VECTOR     -----
+    !-------------------------------------------------------------------
+
+    subroutine free_abstract_vector(self)
+        implicit none(type, external)
+        !! Default `free`. Correct for types whose only storage is a managed Fortran
+        !! allocatable, which is released automatically on deallocation / scope exit. Types
+        !! holding unmanaged resources override this to release them, guarded for idempotency.
+        !! Clears the `is_initialized` flag so that the action is terminal.
+        class(abstract_vector), intent(inout) :: self
+        self%is_initialized = .false.
+    end subroutine free_abstract_vector
 
     !-----------------------------------------------------------------------
     !-----     TYPE-BOUND PROCEDURES FOR THE ABSTRACT VECTOR TYPES     -----
@@ -552,15 +640,54 @@ contains
         call self%scal(-one_${type[0]}$${kind}$)
     end subroutine chsgn_${type[0]}$${kind}$
 
-    subroutine free_${type[0]}$${kind}$(self)
+    subroutine assign_${type[0]}$${kind}$(self, from)
         implicit none(type, external)
-        !! Default `free`: no-op. Correct for types whose only storage is a managed Fortran
-        !! allocatable, which is released automatically on deallocation / scope exit. Types
-        !! holding unmanaged resources override this to release them, guarded for idempotency.
-        !! Clears the `is_initialized` flag so that the action is terminal.
+        !! Default copy assignment `self <- from`, built on the user-provided hooks:
+        !! `init_like` (no-op if `self` is already conformant) followed by `axpby(1, from, 0)`.
+        !! Types for which `axpby` with `beta = 0` does not overwrite non-finite values in
+        !! `self`, or that have a cheaper native copy, should override `assign`.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
-        self%is_initialized = .false.
-    end subroutine free_${type[0]}$${kind}$
+        !! Destination vector.
+        class(abstract_vector), intent(in) :: from
+        !! Source vector.
+        select type (from)
+        class is (abstract_vector_${type[0]}$${kind}$)
+            call self%init_like(from)
+            call self%axpby(one_${type[0]}$${kind}$, from, zero_${type[0]}$${kind}$)
+        class default
+            call type_error('from', 'abstract_vector_${type[0]}$${kind}$', 'IN', this_module, &
+                          & 'assign_${type[0]}$${kind}$')
+        end select
+    end subroutine assign_${type[0]}$${kind}$
+
+    subroutine swap_${type[0]}$${kind}$(self, other)
+        implicit none(type, external)
+        !! Default swap through a temporary vector: one allocation and three `assign`.
+        !! Types able to exchange their storage directly should override `swap`.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: self
+        !! First vector.
+        class(abstract_vector), intent(inout) :: other
+        !! Second vector.
+
+        ! Internal variables.
+        class(abstract_vector_${type[0]}$${kind}$), allocatable :: tmp
+        integer :: iostat
+        character(len=100) :: errmsg
+
+        select type (other)
+        class is (abstract_vector_${type[0]}$${kind}$)
+            allocate(tmp, mold=self, stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "swap_${type[0]}$${kind}$")
+            call tmp%init_like(self)
+            call tmp%assign(self)
+            call self%assign(other)
+            call other%assign(tmp)
+            call tmp%free()
+        class default
+            call type_error('other', 'abstract_vector_${type[0]}$${kind}$', 'INOUT', this_module, &
+                          & 'swap_${type[0]}$${kind}$')
+        end select
+    end subroutine swap_${type[0]}$${kind}$
 
     #:endfor
 
@@ -699,6 +826,44 @@ contains
         self%n = m
         self%is_initialized = .true.
     end subroutine dense_init_like_${type[0]}$${kind}$
+
+    subroutine dense_assign_${type[0]}$${kind}$(self, from)
+        implicit none(type, external)
+        !! Copy assignment through a direct array copy (storage of `self` reused if conformant).
+        class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
+        class(abstract_vector), intent(in) :: from
+        select type (from)
+        type is (dense_vector_${type[0]}$${kind}$)
+            call self%init_like(from)
+            self%data(:) = from%data(:)
+        class default
+            call type_error('from', 'dense_vector_${type[0]}$${kind}$', 'IN', this_module, &
+                          & 'dense_assign_${type[0]}$${kind}$')
+        end select
+    end subroutine dense_assign_${type[0]}$${kind}$
+
+    subroutine dense_swap_${type[0]}$${kind}$(self, other)
+        implicit none(type, external)
+        !! Copy-free swap: the two allocations change hands through `move_alloc`, so that no
+        !! data is copied and nothing is allocated.
+        class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
+        class(abstract_vector), intent(inout) :: other
+        ${type}$, allocatable :: tmp(:)
+        integer :: n
+        logical :: flag
+        select type (other)
+        type is (dense_vector_${type[0]}$${kind}$)
+            call move_alloc(self%data, tmp)
+            call move_alloc(other%data, self%data)
+            call move_alloc(tmp, other%data)
+            n = self%n ; self%n = other%n ; other%n = n
+            flag = self%is_initialized ; self%is_initialized = other%is_initialized ; other%is_initialized = flag
+            flag = self%owns_data ; self%owns_data = other%owns_data ; other%owns_data = flag
+        class default
+            call type_error('other', 'dense_vector_${type[0]}$${kind}$', 'INOUT', this_module, &
+                          & 'dense_swap_${type[0]}$${kind}$')
+        end select
+    end subroutine dense_swap_${type[0]}$${kind}$
 
     #:endfor
 
@@ -1153,6 +1318,70 @@ contains
                     exit verification
                 end if
             end block scaling_distributivity_bis
+
+            !-----------------------------------------
+            !-----     LIFECYCLE HOOKS           -----
+            !-----------------------------------------
+
+            assign_correctness: block
+                !! `v%assign(u)` must yield v = u, and v must not share storage with u.
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v
+                real(${kind}$) :: vnorm
+
+                !> Generate random source and a differently-filled destination.
+                allocate(u, v, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+
+                !> Copy assignment.
+                call v%assign(u)
+                vnorm = v%norm()
+
+                !> Independence: scaling u must leave v untouched.
+                call u%scal(2*one_${type[0]}$${kind}$)
+                success = abs(v%norm() - vnorm) <= tol
+
+                !> Correctness: u - 2v = 0 (scaling by 2 is exact).
+                call u%axpby(-2*one_${type[0]}$${kind}$, v, one_${type[0]}$${kind}$)
+                success = success .and. (u%norm() <= tol)
+
+                !> Cleanup.
+                call u%free() ; call v%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'assign_correctness'
+                    exit verification
+                end if
+            end block assign_correctness
+
+            swap_correctness: block
+                !! After `u%swap(v)`, u must hold v's content and v must hold u's, both valid.
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, u0, v0
+
+                !> Generate random vectors and keep reference copies.
+                allocate(u, v, u0, v0, mold=x)
+                call u%init_like(x) ; call u%rand()
+                call v%init_like(x) ; call v%rand()
+                call u0%init_like(x) ; call u0%assign(u)
+                call v0%init_like(x) ; call v0%assign(v)
+
+                !> Swap.
+                call u%swap(v)
+
+                !> Check correctness.
+                call u%sub(v0) ; call v%sub(u0)
+                success = (u%norm() <= tol) .and. (v%norm() <= tol)
+
+                !> Cleanup.
+                call u%free() ; call v%free() ; call u0%free() ; call v0%free()
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'swap_correctness'
+                    exit verification
+                end if
+            end block swap_correctness
 
             mold_independence: block
                 !! guard for resource-sharing overrides (GPU), void for CPU applications.
