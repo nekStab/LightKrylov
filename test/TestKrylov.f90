@@ -2192,10 +2192,45 @@ contains
         testsuite = [ &
             new_unittest("Orthonormalize basis", test_orthonormalize_basis_rsp), &
             new_unittest("Biorthonormalize bases", test_biorthonormalize_bases_rsp), &
-            new_unittest("Biorthonormalize bases rank deficient", test_biorthonormalize_bases_rank_deficient_rsp) &
+            new_unittest("Biorthonormalize bases rank deficient", test_biorthonormalize_bases_rank_deficient_rsp), &
+            new_unittest("Permute basis columns", test_permcols_basis_rsp) &
         ]
         return
     end subroutine collect_krylov_utilities_rsp_testsuite
+
+    !-------------------------------------------
+    !-----     TEST PERMCOLS (BASIS)        -----
+    !-------------------------------------------
+
+    subroutine test_permcols_basis_rsp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test basis.
+        integer, parameter :: kdim = 10
+        type(vector_rsp), allocatable :: X(:)
+        ! Permutation with two non-trivial cycles (1 3 7 2), (4 9) and four fixed points.
+        integer, parameter :: perm(kdim) = [3, 1, 7, 9, 5, 6, 2, 8, 4, 10]
+        ! Miscellaneous.
+        real(sp), allocatable :: Xdata(:, :), Pdata(:, :)
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! Initialize basis and keep a reference copy of its data.
+        allocate(X(kdim)) ; call init_rand(X)
+        allocate(Xdata(test_size, kdim), Pdata(test_size, kdim))
+        call get_data(Xdata, X)
+
+        ! In-place permutation through the `swap` hook.
+        call permcols(X, perm)
+        call get_data(Pdata, X)
+
+        ! Check correctness (pure data movement, hence exact up to rounding of assign).
+        err = maxval(abs(Pdata - Xdata(:, perm)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_permcols_basis_rsp', &
+                              & info='Column permutation', eq='X <- X(:, perm)', context=msg)
+    end subroutine test_permcols_basis_rsp
 
     !-------------------------------------------------
     !-----     TEST ORTHONORMALIZE_BASIS          -----
@@ -2317,10 +2352,45 @@ contains
         testsuite = [ &
             new_unittest("Orthonormalize basis", test_orthonormalize_basis_rdp), &
             new_unittest("Biorthonormalize bases", test_biorthonormalize_bases_rdp), &
-            new_unittest("Biorthonormalize bases rank deficient", test_biorthonormalize_bases_rank_deficient_rdp) &
+            new_unittest("Biorthonormalize bases rank deficient", test_biorthonormalize_bases_rank_deficient_rdp), &
+            new_unittest("Permute basis columns", test_permcols_basis_rdp) &
         ]
         return
     end subroutine collect_krylov_utilities_rdp_testsuite
+
+    !-------------------------------------------
+    !-----     TEST PERMCOLS (BASIS)        -----
+    !-------------------------------------------
+
+    subroutine test_permcols_basis_rdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test basis.
+        integer, parameter :: kdim = 10
+        type(vector_rdp), allocatable :: X(:)
+        ! Permutation with two non-trivial cycles (1 3 7 2), (4 9) and four fixed points.
+        integer, parameter :: perm(kdim) = [3, 1, 7, 9, 5, 6, 2, 8, 4, 10]
+        ! Miscellaneous.
+        real(dp), allocatable :: Xdata(:, :), Pdata(:, :)
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! Initialize basis and keep a reference copy of its data.
+        allocate(X(kdim)) ; call init_rand(X)
+        allocate(Xdata(test_size, kdim), Pdata(test_size, kdim))
+        call get_data(Xdata, X)
+
+        ! In-place permutation through the `swap` hook.
+        call permcols(X, perm)
+        call get_data(Pdata, X)
+
+        ! Check correctness (pure data movement, hence exact up to rounding of assign).
+        err = maxval(abs(Pdata - Xdata(:, perm)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_permcols_basis_rdp', &
+                              & info='Column permutation', eq='X <- X(:, perm)', context=msg)
+    end subroutine test_permcols_basis_rdp
 
     !-------------------------------------------------
     !-----     TEST ORTHONORMALIZE_BASIS          -----
@@ -2442,10 +2512,45 @@ contains
         testsuite = [ &
             new_unittest("Orthonormalize basis", test_orthonormalize_basis_csp), &
             new_unittest("Biorthonormalize bases", test_biorthonormalize_bases_csp), &
-            new_unittest("Biorthonormalize bases rank deficient", test_biorthonormalize_bases_rank_deficient_csp) &
+            new_unittest("Biorthonormalize bases rank deficient", test_biorthonormalize_bases_rank_deficient_csp), &
+            new_unittest("Permute basis columns", test_permcols_basis_csp) &
         ]
         return
     end subroutine collect_krylov_utilities_csp_testsuite
+
+    !-------------------------------------------
+    !-----     TEST PERMCOLS (BASIS)        -----
+    !-------------------------------------------
+
+    subroutine test_permcols_basis_csp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test basis.
+        integer, parameter :: kdim = 10
+        type(vector_csp), allocatable :: X(:)
+        ! Permutation with two non-trivial cycles (1 3 7 2), (4 9) and four fixed points.
+        integer, parameter :: perm(kdim) = [3, 1, 7, 9, 5, 6, 2, 8, 4, 10]
+        ! Miscellaneous.
+        complex(sp), allocatable :: Xdata(:, :), Pdata(:, :)
+        real(sp) :: err
+        character(len=256) :: msg
+
+        ! Initialize basis and keep a reference copy of its data.
+        allocate(X(kdim)) ; call init_rand(X)
+        allocate(Xdata(test_size, kdim), Pdata(test_size, kdim))
+        call get_data(Xdata, X)
+
+        ! In-place permutation through the `swap` hook.
+        call permcols(X, perm)
+        call get_data(Pdata, X)
+
+        ! Check correctness (pure data movement, hence exact up to rounding of assign).
+        err = maxval(abs(Pdata - Xdata(:, perm)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_sp)
+        call check_test(error, 'test_permcols_basis_csp', &
+                              & info='Column permutation', eq='X <- X(:, perm)', context=msg)
+    end subroutine test_permcols_basis_csp
 
     !-------------------------------------------------
     !-----     TEST ORTHONORMALIZE_BASIS          -----
@@ -2567,10 +2672,45 @@ contains
         testsuite = [ &
             new_unittest("Orthonormalize basis", test_orthonormalize_basis_cdp), &
             new_unittest("Biorthonormalize bases", test_biorthonormalize_bases_cdp), &
-            new_unittest("Biorthonormalize bases rank deficient", test_biorthonormalize_bases_rank_deficient_cdp) &
+            new_unittest("Biorthonormalize bases rank deficient", test_biorthonormalize_bases_rank_deficient_cdp), &
+            new_unittest("Permute basis columns", test_permcols_basis_cdp) &
         ]
         return
     end subroutine collect_krylov_utilities_cdp_testsuite
+
+    !-------------------------------------------
+    !-----     TEST PERMCOLS (BASIS)        -----
+    !-------------------------------------------
+
+    subroutine test_permcols_basis_cdp(error)
+        ! Error type to be returned.
+        type(error_type), allocatable, intent(out) :: error
+        ! Test basis.
+        integer, parameter :: kdim = 10
+        type(vector_cdp), allocatable :: X(:)
+        ! Permutation with two non-trivial cycles (1 3 7 2), (4 9) and four fixed points.
+        integer, parameter :: perm(kdim) = [3, 1, 7, 9, 5, 6, 2, 8, 4, 10]
+        ! Miscellaneous.
+        complex(dp), allocatable :: Xdata(:, :), Pdata(:, :)
+        real(dp) :: err
+        character(len=256) :: msg
+
+        ! Initialize basis and keep a reference copy of its data.
+        allocate(X(kdim)) ; call init_rand(X)
+        allocate(Xdata(test_size, kdim), Pdata(test_size, kdim))
+        call get_data(Xdata, X)
+
+        ! In-place permutation through the `swap` hook.
+        call permcols(X, perm)
+        call get_data(Pdata, X)
+
+        ! Check correctness (pure data movement, hence exact up to rounding of assign).
+        err = maxval(abs(Pdata - Xdata(:, perm)))
+        call get_err_str(msg, "max err: ", err)
+        call check(error, err < rtol_dp)
+        call check_test(error, 'test_permcols_basis_cdp', &
+                              & info='Column permutation', eq='X <- X(:, perm)', context=msg)
+    end subroutine test_permcols_basis_cdp
 
     !-------------------------------------------------
     !-----     TEST ORTHONORMALIZE_BASIS          -----
