@@ -81,6 +81,7 @@ module LightKrylov_AbstractVectors
     public :: rand_basis
     public :: init_like_basis
     public :: free_basis
+    public :: prepare_workspace
     public :: verify_vector_axioms
 
     interface innerprod
@@ -346,6 +347,32 @@ module LightKrylov_AbstractVectors
         !!  ```
         #:for kind, type in RC_KINDS_TYPES
         module procedure free_basis_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
+    interface prepare_workspace
+        !!  Check and shape a caller-provided workspace.
+        !!
+        !!  ### Description
+        !!
+        !!  Routines with an optional `work(:)` argument call this on entry. It stops with an
+        !!  error if `size(work) < nwork`, then shapes `work(:nwork)` like `mold` through
+        !!  `init_like` (a no-op for vectors that are already conformant). The library never
+        !!  frees, deallocates or keeps a reference to a caller-provided workspace: its content
+        !!  is undefined on exit, and it can be reused across calls.
+        !!
+        !!  ### Example
+        !!
+        !!  ```fortran
+        !!      type(my_vector), allocatable :: work(:)
+        !!      allocate(work(gmres_work_size(kdim)))
+        !!      call init_like_basis(work, b)          ! optional: done by the solver anyway
+        !!      call gmres(A, b, x, info, options=opts, work=work)
+        !!      ! ... reuse `work` for later solves, then:
+        !!      call free_basis(work)
+        !!  ```
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure prepare_workspace_${type[0]}$${kind}$
         #:endfor
     end interface
 
@@ -1047,6 +1074,27 @@ contains
         call X%free()
     end subroutine free_basis_${type[0]}$${kind}$
     
+    subroutine prepare_workspace_${type[0]}$${kind}$(work, nwork, mold, module, procedure)
+        implicit none(type, external)
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: work(:)
+        !! Caller-provided workspace.
+        integer, intent(in) :: nwork
+        !! Number of vectors required by the calling routine.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: mold
+        !! Vector whose shape the workspace must match.
+        character(len=*), intent(in) :: module
+        !! Module of the calling routine (for error reporting).
+        character(len=*), intent(in) :: procedure
+        !! Calling routine (for error reporting).
+        character(len=256) :: msg
+        if (size(work) < nwork) then
+            write(msg, '(A,I0,A,I0,A)') 'Workspace too small: size(work) = ', size(work), &
+                                      & ', at least ', nwork, ' vectors are required.'
+            call stop_error(msg, module, procedure)
+        endif
+        if (nwork > 0) call init_like_basis(work(:nwork), mold)
+    end subroutine prepare_workspace_${type[0]}$${kind}$
+
     impure elemental subroutine rand_basis_${type[0]}$${kind}$(X, ifnorm)
         implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X

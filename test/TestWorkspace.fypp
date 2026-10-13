@@ -1,0 +1,393 @@
+#:include "../include/common.fypp"
+#:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
+module TestWorkspace
+    !! Tests for the caller-provided workspace (`work` arguments) of the solvers.
+    !!
+    !! Each test first runs a routine letting it allocate its own workspace (reference), then
+    !! runs it twice more on identical inputs with the same caller-provided `work` array:
+    !!
+    !! - trial 1/2, fresh workspace: `work` is freshly allocated and unshaped, so the routine
+    !!   must shape it itself (`prepare_workspace` -> `init_like`) and slice it correctly.
+    !! - trial 2/2, reused workspace: `work` is already shaped and still holds stale data from
+    !!   trial 1. This checks that `init_like` takes its no-op path, that the routine does not
+    !!   depend on the previous content of the workspace, and that the first call left it usable
+    !!   (in particular, did not `free` it).
+    !!
+    !! Both trials must reproduce the reference result. The log line of each check names the
+    !! trial (`info` column) and the quantity compared (`eq` column).
+    !!
+    !! These tests do not detect hidden internal allocations (the test vector types manage
+    !! their own memory); that is checked separately with a resource-counting vector type.
+    ! Testdrive
+    use testdrive, only: new_unittest, unittest_type, error_type, check
+    ! LightKrylov
+    use LightKrylov
+    use LightKrylov_Constants
+    use LightKrylov_Logger
+    use LightKrylov_AbstractVectors
+    ! Test Utilities
+    use LightKrylov_TestUtils
+    use TestUtils
+
+    implicit none (type, external)
+
+    private
+
+    character(len=*), parameter, private :: this_module      = 'LK_TWork'
+    character(len=*), parameter, private :: this_module_long = 'LightKrylov_TestWorkspace'
+
+    #:for kind, type in RC_KINDS_TYPES
+    public :: collect_workspace_${type[0]}$${kind}$_testsuite
+    #:endfor
+
+contains
+
+    pure function trial_info(trial) result(info)
+        !! Label of a workspace trial in the test log (at most 30 characters).
+        integer, intent(in) :: trial
+        character(len=30) :: info
+        if (trial == 1) then
+            info = 'fresh (unshaped) work'
+        else
+            info = 'reused (stale) work  '
+        endif
+    end function trial_info
+
+    pure function newton_trial_info(trial) result(info)
+        !! Label of a Newton workspace trial in the test log (at most 30 characters).
+        integer, intent(in) :: trial
+        character(len=30) :: info
+        if (trial == 1) then
+            info = 'fresh work, no bisection'
+        else
+            info = 'reused work + bisection'
+        endif
+    end function newton_trial_info
+
+    #:for kind, type in RC_KINDS_TYPES
+    subroutine collect_workspace_${type[0]}$${kind}$_testsuite(testsuite)
+        type(unittest_type), allocatable, intent(out) :: testsuite(:)
+        testsuite = [ &
+            new_unittest("GMRES with workspace", test_gmres_work_${type[0]}$${kind}$), &
+            new_unittest("FGMRES with workspace", test_fgmres_work_${type[0]}$${kind}$), &
+            new_unittest("CG with workspace", test_cg_work_${type[0]}$${kind}$), &
+            #:if type[0] == "r"
+            new_unittest("KS eigs with workspace", test_eigs_work_${type[0]}$${kind}$), &
+            #:endif
+            new_unittest("Sym. eighs with workspace", test_eighs_work_${type[0]}$${kind}$), &
+            new_unittest("SVDS with workspace", test_svds_work_${type[0]}$${kind}$), &
+            new_unittest("Krylov expm with workspace", test_kexpm_work_${type[0]}$${kind}$), &
+            new_unittest("Newton-Krylov with workspace", test_newton_work_${type[0]}$${kind}$) &
+        ]
+    end subroutine collect_workspace_${type[0]}$${kind}$_testsuite
+
+    !-----------------------------------------------------
+    !-----     LINEAR SOLVERS WITH A WORKSPACE         -----
+    !-----------------------------------------------------
+
+    subroutine test_gmres_work_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        type(vector_${type[0]}$${kind}$), allocatable :: b, xref, x
+        type(vector_${type[0]}$${kind}$), allocatable :: work(:)
+        type(gmres_${kind}$_opts) :: opts
+        integer :: info, trial
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+        b = vector_${type[0]}$${kind}$() ; call init_rand(b)
+        xref = vector_${type[0]}$${kind}$() ; call xref%zero()
+        opts = gmres_${kind}$_opts(kdim=test_size)
+
+        ! Reference: workspace allocated by the solver.
+        call gmres(A, b, xref, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts)
+        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_work_${type[0]}$${kind}$')
+
+        ! Caller-provided workspace, used for two consecutive solves.
+        allocate(work(gmres_work_size(test_size)))
+        do trial = 1, 2
+            x = vector_${type[0]}$${kind}$() ; call x%zero()
+            call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, work=work)
+            call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_work_${type[0]}$${kind}$')
+            call x%sub(xref) ; err = x%norm() / xref%norm()
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_${kind}$)
+            call check_test(error, 'test_gmres_work_${type[0]}$${kind}$', &
+                          & info=trial_info(trial), eq='x(work) == x(internal)', context=msg)
+        enddo
+    end subroutine test_gmres_work_${type[0]}$${kind}$
+
+    subroutine test_fgmres_work_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        type(vector_${type[0]}$${kind}$), allocatable :: b, xref, x
+        type(vector_${type[0]}$${kind}$), allocatable :: work(:)
+        type(fgmres_${kind}$_opts) :: opts
+        integer :: info, trial
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+        b = vector_${type[0]}$${kind}$() ; call init_rand(b)
+        xref = vector_${type[0]}$${kind}$() ; call xref%zero()
+        opts = fgmres_${kind}$_opts(kdim=test_size)
+
+        call fgmres(A, b, xref, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts)
+        call check_info(info, 'fgmres', module=this_module_long, procedure='test_fgmres_work_${type[0]}$${kind}$')
+
+        allocate(work(fgmres_work_size(test_size)))
+        do trial = 1, 2
+            x = vector_${type[0]}$${kind}$() ; call x%zero()
+            call fgmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, work=work)
+            call check_info(info, 'fgmres', module=this_module_long, procedure='test_fgmres_work_${type[0]}$${kind}$')
+            call x%sub(xref) ; err = x%norm() / xref%norm()
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_${kind}$)
+            call check_test(error, 'test_fgmres_work_${type[0]}$${kind}$', &
+                          & info=trial_info(trial), eq='x(work) == x(internal)', context=msg)
+        enddo
+    end subroutine test_fgmres_work_${type[0]}$${kind}$
+
+    subroutine test_cg_work_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        #:if type[0] == "r"
+        type(spd_linop_${type[0]}$${kind}$), allocatable :: A
+        #:else
+        type(hermitian_linop_${type[0]}$${kind}$), allocatable :: A
+        #:endif
+        type(vector_${type[0]}$${kind}$), allocatable :: b, xref, x
+        type(vector_${type[0]}$${kind}$), allocatable :: work(:)
+        type(cg_${kind}$_opts) :: opts
+        integer :: info, trial
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        #:if type[0] == "r"
+        A = spd_linop_${type[0]}$${kind}$() ; call init_rand(A)
+        #:else
+        A = hermitian_linop_${type[0]}$${kind}$() ; call init_rand(A)
+        #:endif
+        b = vector_${type[0]}$${kind}$() ; call init_rand(b)
+        xref = vector_${type[0]}$${kind}$() ; call xref%zero()
+        opts = cg_${kind}$_opts(maxiter=2*test_size)
+
+        call cg(A, b, xref, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts)
+        call check_info(info, 'cg', module=this_module_long, procedure='test_cg_work_${type[0]}$${kind}$')
+
+        allocate(work(cg_work_size()))
+        do trial = 1, 2
+            x = vector_${type[0]}$${kind}$() ; call x%zero()
+            call cg(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, work=work)
+            call check_info(info, 'cg', module=this_module_long, procedure='test_cg_work_${type[0]}$${kind}$')
+            call x%sub(xref) ; err = x%norm() / xref%norm()
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_${kind}$)
+            call check_test(error, 'test_cg_work_${type[0]}$${kind}$', &
+                          & info=trial_info(trial), eq='x(work) == x(internal)', context=msg)
+        enddo
+    end subroutine test_cg_work_${type[0]}$${kind}$
+
+    !--------------------------------------------------------
+    !-----     EIGENVALUE / SVD SOLVERS WITH A WORKSPACE     -----
+    !--------------------------------------------------------
+
+    #:if type[0] == "r"
+    subroutine test_eigs_work_${type[0]}$${kind}$(error)
+        !! Same Toeplitz problem as the Krylov-Schur eigs test (nev < n, so restarts happen
+        !! and the Krylov-Schur part of the workspace is used).
+        type(error_type), allocatable, intent(out) :: error
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:), x0
+        type(vector_${type[0]}$${kind}$), allocatable :: work(:)
+        complex(${kind}$), allocatable :: eigvals_ref(:), eigvals(:)
+        real(${kind}$), allocatable :: residuals(:)
+        integer, parameter :: nev = 8
+        integer :: i, n, info, trial
+        ${type}$ :: a_, b_
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        A = linop_${type[0]}$${kind}$() ; A%data = 0.0_${kind}$ ; n = size(A%data, 1)
+        call random_number(a_) ; call random_number(b_) ; b_ = abs(b_)
+        do i = 1, n
+            A%data(i, i) = a_
+            if (i < n) then
+                A%data(i, i+1) = b_
+                A%data(i+1, i) = -b_
+            endif
+        enddo
+        x0 = vector_${type[0]}$${kind}$() ; call init_rand(x0)
+
+        allocate(X(nev)) ; call zero_basis(X)
+        call eigs(A, X, eigvals_ref, residuals, info, x0=x0, tolerance=atol_${kind}$)
+        call check_info(info, 'eigs', module=this_module_long, procedure='test_eigs_work_${type[0]}$${kind}$')
+
+        allocate(work(eigs_work_size(nev)))
+        do trial = 1, 2
+            call zero_basis(X)
+            call eigs(A, X, eigvals, residuals, info, x0=x0, tolerance=atol_${kind}$, work=work)
+            call check_info(info, 'eigs', module=this_module_long, procedure='test_eigs_work_${type[0]}$${kind}$')
+            err = maxval(abs(eigvals - eigvals_ref))
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_${kind}$)
+            call check_test(error, 'test_eigs_work_${type[0]}$${kind}$', &
+                          & info=trial_info(trial), eq='evals(work) == evals(internal)', context=msg)
+        enddo
+    end subroutine test_eigs_work_${type[0]}$${kind}$
+    #:endif
+
+    subroutine test_eighs_work_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        #:if type[0] == "r"
+        type(spd_linop_${type[0]}$${kind}$), allocatable :: A
+        #:else
+        type(hermitian_linop_${type[0]}$${kind}$), allocatable :: A
+        #:endif
+        type(vector_${type[0]}$${kind}$), allocatable :: X(:), x0
+        type(vector_${type[0]}$${kind}$), allocatable :: work(:)
+        real(${kind}$), allocatable :: eigvals_ref(:), eigvals(:), residuals(:)
+        integer :: i, info, trial
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! Strang matrix (symmetric positive definite, real-valued).
+        #:if type[0] == "r"
+        A = spd_linop_${type[0]}$${kind}$()
+        #:else
+        A = hermitian_linop_${type[0]}$${kind}$()
+        #:endif
+        A%data = zero_${type[0]}$${kind}$
+        do i = 1, test_size
+            A%data(i, i) = 2*one_${type[0]}$${kind}$
+            if (i < test_size) then
+                A%data(i, i+1) = -one_${type[0]}$${kind}$
+                A%data(i+1, i) = -one_${type[0]}$${kind}$
+            endif
+        enddo
+        x0 = vector_${type[0]}$${kind}$() ; call init_rand(x0)
+
+        allocate(X(test_size)) ; call zero_basis(X)
+        call eighs(A, X, eigvals_ref, residuals, info, x0=x0, tolerance=atol_${kind}$)
+        call check_info(info, 'eighs', module=this_module_long, procedure='test_eighs_work_${type[0]}$${kind}$')
+
+        allocate(work(eighs_work_size(test_size)))
+        do trial = 1, 2
+            call zero_basis(X)
+            call eighs(A, X, eigvals, residuals, info, x0=x0, tolerance=atol_${kind}$, work=work)
+            call check_info(info, 'eighs', module=this_module_long, procedure='test_eighs_work_${type[0]}$${kind}$')
+            err = maxval(abs(eigvals - eigvals_ref))
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_${kind}$)
+            call check_test(error, 'test_eighs_work_${type[0]}$${kind}$', &
+                          & info=trial_info(trial), eq='evals(work) == evals(internal)', context=msg)
+        enddo
+    end subroutine test_eighs_work_${type[0]}$${kind}$
+
+    subroutine test_svds_work_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        type(vector_${type[0]}$${kind}$), allocatable :: U(:), V(:), u0
+        type(vector_${type[0]}$${kind}$), allocatable :: uwork(:), vwork(:)
+        real(${kind}$), allocatable :: S_ref(:), S(:), residuals(:)
+        integer :: i, info, trial
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        ! Strang matrix.
+        A = linop_${type[0]}$${kind}$() ; A%data = zero_${type[0]}$${kind}$
+        do i = 1, test_size
+            A%data(i, i) = 2*one_${type[0]}$${kind}$
+            if (i < test_size) then
+                A%data(i, i+1) = -one_${type[0]}$${kind}$
+                A%data(i+1, i) = -one_${type[0]}$${kind}$
+            endif
+        enddo
+        u0 = vector_${type[0]}$${kind}$() ; call init_rand(u0)
+
+        allocate(U(test_size), V(test_size)) ; call zero_basis(U) ; call zero_basis(V)
+        call svds(A, U, S_ref, V, residuals, info, u0=u0, tolerance=atol_${kind}$)
+        call check_info(info, 'svds', module=this_module_long, procedure='test_svds_work_${type[0]}$${kind}$')
+
+        allocate(uwork(svds_work_size(test_size)), vwork(svds_work_size(test_size)))
+        do trial = 1, 2
+            call zero_basis(U) ; call zero_basis(V)
+            call svds(A, U, S, V, residuals, info, u0=u0, tolerance=atol_${kind}$, uwork=uwork, vwork=vwork)
+            call check_info(info, 'svds', module=this_module_long, procedure='test_svds_work_${type[0]}$${kind}$')
+            err = maxval(abs(S - S_ref))
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_${kind}$)
+            call check_test(error, 'test_svds_work_${type[0]}$${kind}$', &
+                          & info=trial_info(trial), eq='S(work) == S(internal)', context=msg)
+        enddo
+    end subroutine test_svds_work_${type[0]}$${kind}$
+
+    !-------------------------------------------------------------
+    !-----     MATRIX EXPONENTIAL AND NEWTON WITH A WORKSPACE     -----
+    !-------------------------------------------------------------
+
+    subroutine test_kexpm_work_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(linop_${type[0]}$${kind}$), allocatable :: A
+        type(vector_${type[0]}$${kind}$), allocatable :: Q, Xref, X
+        type(vector_${type[0]}$${kind}$), allocatable :: work(:)
+        real(${kind}$), parameter :: tau = 0.1_${kind}$
+        integer, parameter :: nkmax = 64
+        integer :: info, trial
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        A = linop_${type[0]}$${kind}$() ; call init_rand(A)
+        allocate(Q) ; call init_rand(Q)
+        allocate(Xref) ; call Xref%zero()
+
+        call kexpm(Xref, A, Q, tau, rtol_${kind}$, info, kdim=nkmax)
+        call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexpm_work_${type[0]}$${kind}$')
+
+        allocate(work(kexpm_work_size(nkmax)))
+        do trial = 1, 2
+            X = vector_${type[0]}$${kind}$() ; call X%zero()
+            call kexpm(X, A, Q, tau, rtol_${kind}$, info, kdim=nkmax, work=work)
+            call check_info(info, 'kexpm', module=this_module_long, procedure='test_kexpm_work_${type[0]}$${kind}$')
+            call X%sub(Xref) ; err = X%norm() / Xref%norm()
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_${kind}$)
+            call check_test(error, 'test_kexpm_work_${type[0]}$${kind}$', &
+                          & info=trial_info(trial), eq='expm(work) == expm(internal)', context=msg)
+        enddo
+    end subroutine test_kexpm_work_${type[0]}$${kind}$
+
+    subroutine test_newton_work_${type[0]}$${kind}$(error)
+        !! Newton-Krylov on the Roessler system, the workspace holding both the Newton work
+        !! vectors and the GMRES workspace forwarded to the linear solver.
+        type(error_type), allocatable, intent(out) :: error
+        type(roessler_${type[0]}$${kind}$), allocatable :: sys
+        type(state_vector_${type[0]}$${kind}$), allocatable :: X, fp1, fp2
+        type(state_vector_${type[0]}$${kind}$), allocatable :: work(:)
+        type(newton_${kind}$_opts) :: opts
+        integer :: info, trial
+        real(${kind}$) :: err
+        character(len=256) :: msg
+
+        allocate(X, fp1, fp2)
+        sys = roessler_${type[0]}$${kind}$()
+        sys%jacobian = jacobian_${type[0]}$${kind}$()
+        call roessler_analytical_fp_${type[0]}$${kind}$(fp1, fp2)
+
+        allocate(work(newton_work_size(gmres_work_size())))
+        do trial = 1, 2
+            ! Second trial also exercises the step bisection work vectors.
+            opts = newton_${kind}$_opts(maxiter=60, ifbisect=(trial == 2))
+            X%x = zero_${type[0]}$${kind}$ ; X%y = zero_${type[0]}$${kind}$ ; X%z = zero_${type[0]}$${kind}$
+            call newton(sys, X, gmres_${type[0]}$${kind}$, info, rtol=10*atol_${kind}$, atol=10*atol_${kind}$, &
+                      & options=opts, work=work)
+            call X%sub(fp1) ; err = X%norm()
+            call get_err_str(msg, "max err: ", err)
+            call check(error, err < rtol_${kind}$)
+            call check_test(error, 'test_newton_work_${type[0]}$${kind}$', &
+                          & info=newton_trial_info(trial), eq='X == analytical fixed point', context=msg)
+        enddo
+    end subroutine test_newton_work_${type[0]}$${kind}$
+
+    #:endfor
+end module TestWorkspace
