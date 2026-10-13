@@ -1570,11 +1570,17 @@ contains
         block
             real(sp) :: b(size(H, 2))
             class(abstract_vector_rsp), allocatable :: Xwrk(:)
+            integer :: iostat
+            character(len=100) :: errmsg
 
-            ! Update the Krylov basis.
+            ! Update the Krylov basis: X(:n) <- X(:kdim) Z(:, :n).
+            allocate(Xwrk(n), mold=X(1), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, this_procedure)
+            call init_like_basis(Xwrk, X(1))
             call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-            call copy(X(:n), Xwrk(:n))
-            call copy(X(n+1), X(kdim+1))
+            call copy(X(:n), Xwrk)
+            ! Residual vector moves to position n+1 (nothing to do if it is already there).
+            if (n < kdim) call copy(X(n+1), X(kdim+1))
             call zero_basis(X(n+2:))
 
             ! Update the Hessenberg matrix.
@@ -1627,11 +1633,17 @@ contains
         block
             real(dp) :: b(size(H, 2))
             class(abstract_vector_rdp), allocatable :: Xwrk(:)
+            integer :: iostat
+            character(len=100) :: errmsg
 
-            ! Update the Krylov basis.
+            ! Update the Krylov basis: X(:n) <- X(:kdim) Z(:, :n).
+            allocate(Xwrk(n), mold=X(1), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, this_procedure)
+            call init_like_basis(Xwrk, X(1))
             call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-            call copy(X(:n), Xwrk(:n))
-            call copy(X(n+1), X(kdim+1))
+            call copy(X(:n), Xwrk)
+            ! Residual vector moves to position n+1 (nothing to do if it is already there).
+            if (n < kdim) call copy(X(n+1), X(kdim+1))
             call zero_basis(X(n+2:))
 
             ! Update the Hessenberg matrix.
@@ -1684,11 +1696,17 @@ contains
         block
             complex(sp) :: b(size(H, 2))
             class(abstract_vector_csp), allocatable :: Xwrk(:)
+            integer :: iostat
+            character(len=100) :: errmsg
 
-            ! Update the Krylov basis.
+            ! Update the Krylov basis: X(:n) <- X(:kdim) Z(:, :n).
+            allocate(Xwrk(n), mold=X(1), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, this_procedure)
+            call init_like_basis(Xwrk, X(1))
             call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-            call copy(X(:n), Xwrk(:n))
-            call copy(X(n+1), X(kdim+1))
+            call copy(X(:n), Xwrk)
+            ! Residual vector moves to position n+1 (nothing to do if it is already there).
+            if (n < kdim) call copy(X(n+1), X(kdim+1))
             call zero_basis(X(n+2:))
 
             ! Update the Hessenberg matrix.
@@ -1741,11 +1759,17 @@ contains
         block
             complex(dp) :: b(size(H, 2))
             class(abstract_vector_cdp), allocatable :: Xwrk(:)
+            integer :: iostat
+            character(len=100) :: errmsg
 
-            ! Update the Krylov basis.
+            ! Update the Krylov basis: X(:n) <- X(:kdim) Z(:, :n).
+            allocate(Xwrk(n), mold=X(1), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, this_procedure)
+            call init_like_basis(Xwrk, X(1))
             call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
-            call copy(X(:n), Xwrk(:n))
-            call copy(X(n+1), X(kdim+1))
+            call copy(X(:n), Xwrk)
+            ! Residual vector moves to position n+1 (nothing to do if it is already there).
+            if (n < kdim) call copy(X(n+1), X(kdim+1))
             call zero_basis(X(n+2:))
 
             ! Update the Hessenberg matrix.
