@@ -50,7 +50,8 @@ module LightKrylov_AbstractVectors
     !! This module also provides the following utility subroutines:
     !!
     !! - `innerprod(X, Y)`                  : Function computing the product \(\mathbf{X}^H \mathbf{y} \) between a Krylov basis `X` and a Krylov vector  (resp. basis) `Y`.
-    !! - `linear_combination(Y, X, V)`      : Subroutine computing the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \).
+    !! - `linear_combination(Y, X, V)`      : Subroutine computing the linear combination \( \mathbf{y}_j = \sum_{i=1}^n \mathbf{x}_i v_{ij} \)
+    !!                                        in-place into the caller-provided `Y`.
     !! - `axpby_basis(alpha, X, beta, Y)`   : In-place computation of \( \mathbf{Y} \leftarrow \alpha \mathbf{X} + \beta \mathbf{Y} \) where `X` and `Y` are arrays of `abstract_vector`.
     !! - `zero_basis(X)`                    : Zero-out a collection of `abstract_vectors`.
     !! - `copy(out, from)`                  : Copy a vector (or, elementally, a collection of vectors) through `assign`. `out` must be pre-allocated.
@@ -179,12 +180,17 @@ module LightKrylov_AbstractVectors
         !!
         !!  i.e. a set of vectors of the same type as \( \mathbf{X} \).
         !!
+        !!  The output is computed **in-place**: `y` (resp. `Y`) must be allocated by the caller,
+        !!  with `size(Y) == size(B, 2)`. It is shaped like `X(1)` through `init_like` (a no-op if
+        !!  already conformant) and its previous content is overwritten. `y` must not alias any
+        !!  element of `X`.
+        !!
         !!  ### Example
         !!
         !!  ```fortran
         !!      type(my_real_vector), dimension(10) :: X
-        !!      real(dp), dimension(m, n)           :: B
-        !!      type(my_real_vector)                :: Y
+        !!      real(dp), dimension(10, 3)          :: B
+        !!      type(my_real_vector), dimension(3)  :: Y
         !!
         !!      ! ... Whatever your code is doing ...
         !!
@@ -873,30 +879,32 @@ contains
 
     #:for kind, type in RC_KINDS_TYPES
     subroutine linear_combination_vector_${type[0]}$${kind}$(y, X, v)
-        !! Given `X` and `v`, this function return \( \mathbf{y} = \mathbf{Xv} \) where
+        !! Given `X` and `v`, this function computes in-place \( \mathbf{y} = \mathbf{Xv} \) where
         !! `y` is an `abstract_vector`, `X` an array of `abstract_vector` and `v` a
         !! Fortran array containing the coefficients of the linear combination.
+        !! `y` is provided (allocated) by the caller and must not alias any element of `X`.
         implicit none(type, external)
-        class(abstract_vector_${type[0]}$${kind}$), allocatable, intent(out) :: y
-        !! Ouput vector.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: y
+        !! Ouput vector. Shaped like `X(1)` (no-op if conformant); its content is overwritten.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:)
         !! Krylov basis.
         ${type}$, intent(in) :: v(:)
         !! Coordinates of `y` in the Krylov basis `X`.
 
         ! Internal variables
-        integer :: i, iostat
-        character(len=100) :: errmsg
+        integer :: i
 
         ! Check sizes.
         if (size(X) /= size(v)) then
             call stop_error("Krylov basis X and low-dimensional vector v have different sizes.", &
                               & this_module, 'linear_combination_vector_${type[0]}$${kind}$')
         endif
+        if (size(X) == 0) then
+            call stop_error("Krylov basis X is empty.", &
+                              & this_module, 'linear_combination_vector_${type[0]}$${kind}$')
+        endif
 
-        ! Initialize output vector.
-        allocate(y, mold=X(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "linear_combination_vector_${type[0]}$${kind}$")
+        ! Shape output vector.
         call y%init_like(X(1))
         call y%zero()
         ! Compute linear combination.
@@ -906,29 +914,36 @@ contains
     end subroutine linear_combination_vector_${type[0]}$${kind}$
 
     subroutine linear_combination_matrix_${type[0]}$${kind}$(Y, X, B)
-        !! Given `X` and `B`, this function computes \(\mathbf{Y} = \mathbf{XB} \) where
+        !! Given `X` and `B`, this function computes in-place \(\mathbf{Y} = \mathbf{XB} \) where
         !! `X` and `Y` are arrays of `abstract_vector`, and `B` is a 2D Fortran array.
+        !! `Y` is provided (allocated) by the caller with `size(Y) == size(B, 2)` and must not
+        !! alias any element of `X`.
         implicit none(type, external)
-        class(abstract_vector_${type[0]}$${kind}$), allocatable, intent(out) :: Y(:)
-        !! Output matrix.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Y(:)
+        !! Output matrix. Shaped like `X(1)` (no-op if conformant); its content is overwritten.
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: X(:)
         !! Krylov basis.
         ${type}$, intent(in) :: B(:, :)
         !! Coefficients of the linear combinations.
 
         ! Internal variables.
-        integer :: i, j, iostat
-        character(len=100) :: errmsg
+        integer :: i, j
 
         ! Check sizes.
         if (size(X) /= size(B, 1)) then
             call stop_error("Krylov basis X and combination matrix B have incompatible sizes.", &
                             this_module, 'linear_combination_matrix_${type[0]}$${kind}$')
         endif
+        if (size(Y) /= size(B, 2)) then
+            call stop_error("Output basis Y and combination matrix B have incompatible sizes.", &
+                            this_module, 'linear_combination_matrix_${type[0]}$${kind}$')
+        endif
+        if (size(X) == 0) then
+            call stop_error("Krylov basis X is empty.", &
+                            this_module, 'linear_combination_matrix_${type[0]}$${kind}$')
+        endif
 
-        ! Initialize output basis.
-        allocate(Y(size(B, 2)), mold=X(1), stat=iostat, errmsg=errmsg)
-        call check_allocation(iostat, errmsg, this_module, "linear_combination_matrix_${type[0]}$${kind}$")
+        ! Shape output basis.
         call init_like_basis(Y, X(1))
 
         call zero_basis(Y)
@@ -1015,10 +1030,8 @@ contains
         implicit none(type, external)
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: from
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: out
-        ! Reset output based on input.
-        call out%init_like(from)
-        ! Copy array.
-        call out%axpby(one_${type[0]}$${kind}$, from, zero_${type[0]}$${kind}$)
+        ! Dispatch to the copy-assignment hook of the concrete type.
+        call out%assign(from)
     end subroutine copy_vector_${type[0]}$${kind}$
 
     impure elemental subroutine init_like_basis_${type[0]}$${kind}$(X, mold)
