@@ -97,9 +97,16 @@ contains
       real(dp), intent(in)    :: alpha, beta
       select type (vec)
       type is (pos_vector)
-         self%x = beta*self%x + alpha*vec%x
-         self%y = beta*self%y + alpha*vec%y
-         self%z = beta*self%z + alpha*vec%z
+         if (beta == 0.0_dp) then
+            ! Never read self when beta = 0 (it may hold uninitialised values).
+            self%x = alpha*vec%x
+            self%y = alpha*vec%y
+            self%z = alpha*vec%z
+         else
+            self%x = beta*self%x + alpha*vec%x
+            self%y = beta*self%y + alpha*vec%y
+            self%z = beta*self%z + alpha*vec%z
+         end if
       class default
          call type_error('vec','pos_vector','IN',this_module,'axpby_p')
       end select
@@ -107,7 +114,7 @@ contains
 
    integer function get_size_p(self) result(N)
       class(pos_vector), intent(in) :: self
-      N = npts + 1
+      N = npts   ! position only (x, y, z)
    end function get_size_p
 
    subroutine rand_p(self, ifnorm)
@@ -204,7 +211,7 @@ contains
       ! Integration time for this step.
       real(dp), intent(in)     :: Tstep
       ! Output vector.
-      class(abstract_vector_rdp), intent(out)    :: vec_out(r)
+      class(abstract_vector_rdp), intent(inout)  :: vec_out(r)
       ! Fundamental solution matrix
       real(dp), intent(out)    :: FTLE_out(r)
 
@@ -243,7 +250,7 @@ contains
       ! Integration time.
       real(dp), intent(in)    :: Tend
       ! Output vector.
-      class(abstract_vector_rdp), intent(out)   :: vec_out(r)
+      class(abstract_vector_rdp), intent(inout) :: vec_out(r)
       ! Integration time for FLTEs
       real(dp), intent(in)    :: t_FTLE
       ! restart trajectory at t_FLTE?
@@ -251,6 +258,7 @@ contains
 
       ! internals
       type(rks54_class)         :: OTD_roessler
+      logical                   :: rst
       integer                   :: idx(1)
       real(dp)                  :: time, t_complete, t1, t2, tvec(2)
       ! logical                   :: if_GS
@@ -262,6 +270,9 @@ contains
 
       ! Initialize integrator.
       call OTD_roessler%initialize(n=ndof, f=OTD_rhs, report=OTD_report_file, report_rate=20)
+
+      ! Optional argument (default: do not reset the orbit).
+      rst = optval(if_rst, .false.)
 
       ! Save IC
       call get_pos(bf, bf_bkp)
@@ -285,7 +296,7 @@ contains
                p_cnt = p_cnt + 1
                call report_LE(FTLE_out, time, t_FTLE, p_cnt)
                FTLE_in = 0.0_dp                                   ! reset FTLE computation
-               if (if_rst) call set_pos(bf_bkp, bf)               ! reset orbit to avoid orbit drift
+               if (rst) call set_pos(bf_bkp, bf)                  ! reset orbit to avoid orbit drift
             end if
             call copy(vec_in, vec_out)
          end do
@@ -298,7 +309,7 @@ contains
             p_cnt = p_cnt + 1
             call report_LE(FTLE_out, time, t_FTLE, p_cnt)
             FTLE_in = 0.0_dp                                      ! reset FTLE computation
-            if (if_rst) call set_pos(bf_bkp, bf)                  ! reset orbit to avoid orbit drift
+            if (rst) call set_pos(bf_bkp, bf)                     ! reset orbit to avoid orbit drift
          end if
          call copy(vec_in, vec_out)
       end do
@@ -326,14 +337,14 @@ contains
 
    subroutine set_pos(pos, vec_out)
       real(dp), dimension(npts), intent(in)  :: pos
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
       select type (vec_out)
       type is (pos_vector)
          vec_out%x = pos(1)
          vec_out%y = pos(2)
          vec_out%z = pos(3)
       class default
-         call type_error('vec_out','pos_vector','OUT',this_module,'set_pos')
+         call type_error('vec_out','pos_vector','INOUT',this_module,'set_pos')
       end select
    end subroutine set_pos
 

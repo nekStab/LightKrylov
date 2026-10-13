@@ -3,6 +3,7 @@ module Ginzburg_Landau
    use rklib_module
    ! LightKrylov for linear algebra.
    use LightKrylov
+   use LightKrylov_Constants, only: zero_cdp
    use LightKrylov_Logger
    ! Standard Library.
    use stdlib_math, only: linspace
@@ -115,7 +116,7 @@ contains
       ! Internal variables.
       integer :: i
       complex(dp), dimension(nx) :: u, du
-      complex(dp)                :: d2u, cu, cv
+      complex(dp)                :: d2u, cu
 
       ! Set the internal variables.
       du = 0.0_dp; u = cmplx(x(:nx), x(nx + 1:), kind=dp)
@@ -159,7 +160,7 @@ contains
       ! Internal variables.
       integer :: i
       complex(dp), dimension(nx) :: u, du
-      complex(dp)                :: d2u, cu, cv
+      complex(dp)                :: d2u, cu
 
       ! Set the internal variables.
       du = 0.0_dp; u = cmplx(x(:nx), x(nx + 1:), kind=dp)
@@ -226,7 +227,12 @@ contains
       complex(kind=dp), intent(in)    :: alpha, beta
       select type (vec)
       type is (state_vector)
-         self%state = beta*self%state + alpha*vec%state
+         if (beta == zero_cdp) then
+            ! Never read self when beta = 0 (it may hold uninitialised values).
+            self%state = alpha*vec%state
+         else
+            self%state = beta*self%state + alpha*vec%state
+         end if
       class default
          call type_error('vec', 'state_vector', 'IN', this_module, 'axpby')
       end select
@@ -244,7 +250,8 @@ contains
       ! internals
       logical :: normalize
       real(kind=dp) :: alpha
-      normalize = optval(ifnorm, .true.)
+      ! LightKrylov convention: normalise only when explicitly requested.
+      normalize = optval(ifnorm, .false.)
       call random_number(tmp)
       self%state%re = tmp(:, 1); self%state%im = tmp(:, 2)
       if (normalize) then
@@ -299,7 +306,7 @@ contains
             vec_out%state%re = state_fc(:nx)
             vec_out%state%im = state_fc(nx + 1:)
          class default
-            call type_error('vec_out', 'state_vector', 'OUT', this_module, 'direct_solver')
+            call type_error('vec_out', 'state_vector', 'INOUT', this_module, 'direct_solver')
          end select
       class default
          call type_error('vec_in', 'state_vector', 'IN', this_module, 'direct_solver')
@@ -335,7 +342,7 @@ contains
             vec_out%state%re = state_fc(:nx)
             vec_out%state%im = state_fc(nx + 1:)
          class default
-            call type_error('vec_out', 'state_vector', 'OUT', this_module, 'adjoint_solver')
+            call type_error('vec_out', 'state_vector', 'INOUT', this_module, 'adjoint_solver')
          end select
       class default
          call type_error('vec_in', 'state_vector', 'IN', this_module, 'adjoint_solver')

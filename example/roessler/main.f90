@@ -11,8 +11,6 @@ program demo
    use LightKrylov_Constants
    use LightKrylov_Logger
    use LightKrylov_Timing, only: timer => global_lightkrylov_timer
-   use LightKrylov_Utils
-   use lightkrylov_IterativeSolvers, only: gmres_rdp
    ! Roessler system
    use Roessler
    use Roessler_OTD
@@ -24,6 +22,8 @@ program demo
    type(roessler_upo) :: sys_jac, sys_floquet
    ! State vectors
    type(state_vector) :: bf, dx, residual
+   ! Workspace for Newton-Krylov (Newton vectors + GMRES workspace), owned by the caller
+   type(state_vector), allocatable :: work(:)
    ! Position vectors
    type(pos_vector)   :: bfp
    ! OTD basis
@@ -57,6 +57,9 @@ program demo
 
    ! Initialize baseflow and perturbation state vectors
    call bf%zero(); call dx%zero(); call residual%zero()
+
+   ! Newton tolerance
+   tol = 1e-12_dp
 
    print *, '########################################################################################'
    print *, '#                         Roessler system chaotic attractor                            #'
@@ -92,15 +95,20 @@ program demo
 
    ! Initialize system and Jacobian
    sys_jac = roessler_upo()
-   ! Set Jacobian and baseflow
    sys_jac%jacobian = jacobian()
+   ! Base state of the Jacobian: allocated and shaped by the caller (never by intrinsic
+   ! assignment of a vector). Newton updates it with the current iterate at each step.
+   allocate (sys_jac%jacobian%X, mold=bf)
+   call sys_jac%jacobian%X%init_like(bf)
    sys_jac%jacobian%X = bf
 
-   ! Set tolerance
-   tol = 1e-12_dp
+   ! Workspace: 3 Newton vectors + the workspace of GMRES (default options), reused below.
+   allocate (work(newton_work_size(gmres_work_size())))
+   call init_like_basis(work, bf)
 
    opts = newton_dp_opts(maxiter=30, ifbisect=.false.)
-   call newton(sys_jac, bf, gmres_rdp, info, rtol=tol, atol=tol, options=opts, scheduler=constant_tol_dp)
+   call newton(sys_jac, bf, gmres_rdp, info, rtol=tol, atol=tol, options=opts, scheduler=constant_tol_dp, &
+               work=work)
 
    call sys_jac%eval(bf, residual, tol)
    print *, ''
@@ -129,7 +137,9 @@ program demo
    print *, ''
    sys_jac%jacobian%X = bf
 
-   call newton(sys_jac, bf, gmres_rdp, info, rtol=tol, atol=tol, options=opts, scheduler=dynamic_tol_dp)
+   ! Same workspace as for the first Newton iteration.
+   call newton(sys_jac, bf, gmres_rdp, info, rtol=tol, atol=tol, options=opts, scheduler=dynamic_tol_dp, &
+               work=work)
 
    call sys_jac%eval(bf, residual, tol)
    print *, ''
@@ -150,10 +160,14 @@ program demo
    print *, '########################################################################################'
    print *, ''
 
+   ! Release the Newton workspace.
+   call free_basis(work); deallocate (work)
+
    ! Initialize system and Jacobian
    sys_floquet = roessler_upo()
    ! Compute the stability of the orbit
    sys_floquet%jacobian = floquet_operator()
+   allocate (sys_floquet%jacobian%X, mold=bf)
    sys_floquet%jacobian%X = bf  ! <- periodic orbit
 
    M = 0.0_dp

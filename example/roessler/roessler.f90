@@ -118,10 +118,18 @@ contains
       real(dp), intent(in)    :: alpha, beta
       select type (vec)
       type is (state_vector)
-         self%x = beta*self%x + alpha*vec%x
-         self%y = beta*self%y + alpha*vec%y
-         self%z = beta*self%z + alpha*vec%z
-         self%T = beta*self%T + alpha*vec%T
+         if (beta == 0.0_dp) then
+            ! Never read self when beta = 0 (it may hold uninitialised values).
+            self%x = alpha*vec%x
+            self%y = alpha*vec%y
+            self%z = alpha*vec%z
+            self%T = alpha*vec%T
+         else
+            self%x = beta*self%x + alpha*vec%x
+            self%y = beta*self%y + alpha*vec%y
+            self%z = beta*self%z + alpha*vec%z
+            self%T = beta*self%T + alpha*vec%T
+         end if
       class default
          call type_error('vec','state_vector','IN',this_module,'axpby')
       end select
@@ -286,7 +294,7 @@ contains
             ! Add period residual
             vec_out%T = 0.0_dp
          class default
-            call type_error('vec_out','state_vector','OUT',this_module,'nonlinear_map')
+            call type_error('vec_out','state_vector','INOUT',this_module,'nonlinear_map')
          end select
       class default
          call type_error('vec_in','state_vector','IN',this_module,'nonlinear_map')
@@ -336,7 +344,7 @@ contains
             call compute_fdot(pos_in(:npts), vec)
             vec_out%T = vec_in%dot(vec)
          class default
-            call type_error('vec_out','state_vector','OUT',this_module,'linear_map')
+            call type_error('vec_out','state_vector','INOUT',this_module,'linear_map')
          end select
       class default
          call type_error('vec_in','state_vector','IN',this_module,'linear_map')
@@ -371,10 +379,11 @@ contains
             ! 1. F(X)
             ! 2. exp(tau*J) @ dx
             call combined_roessler%integrate(0.0_dp, pos_in, dt, period, pos_out)
-            ! Pass-back the state.
+            ! Pass-back the state (the monodromy map acts on positions only).
             call set_position(pos_out(npts + 1:), vec_out)
+            vec_out%T = 0.0_dp
          class default
-            call type_error('vec_out','state_vector','OUT',this_module,'monodromy_map')
+            call type_error('vec_out','state_vector','INOUT',this_module,'monodromy_map')
          end select
       class default
          call type_error('vec_in','state_vector','IN',this_module,'monodromy_map')
@@ -411,21 +420,22 @@ contains
    end subroutine get_period
 
    subroutine set_position(pos, vec_out)
+      !! Set the position components of `vec_out`; its period component is left untouched.
       real(dp), dimension(npts), intent(in)  :: pos
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
       select type (vec_out)
       type is (state_vector)
          vec_out%x = pos(1)
          vec_out%y = pos(2)
          vec_out%z = pos(3)
       class default
-         call type_error('vec_out','state_vector','OUT',this_module,'set_position')
+         call type_error('vec_out','state_vector','INOUT',this_module,'set_position')
       end select
    end subroutine set_position
 
    subroutine compute_fdot(pos, vec_out)
       real(dp), dimension(npts), intent(in)  :: pos
-      class(abstract_vector_rdp), intent(out) :: vec_out
+      class(abstract_vector_rdp), intent(inout) :: vec_out
       ! internal
       real(dp), dimension(npts) :: wrk
       call vec_out%zero() ! ensure that the period shift vec_out%T is zero
