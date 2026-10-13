@@ -25,7 +25,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -34,11 +34,14 @@ contains
 
         ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
-        call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', this_module, this_procedure//', pass 1')
+        call orthogonalize_against_basis(y, X, info, &
+                                         if_chk_orthonormal=.false., beta=proj_coefficients)
+        call check_info(info, 'orthogonalize_against_basis_p1', &
+                        this_module, this_procedure//', pass 1')
         ! second pass
         call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', this_module, this_procedure//', pass 2')
+        call check_info(info, 'orthogonalize_against_basis_p2', &
+                        this_module, this_procedure//', pass 2')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
@@ -69,7 +72,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -78,11 +81,15 @@ contains
 
         ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
-        call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', this_module, this_procedure//', first pass')
+        call orthogonalize_against_basis(Y, X, info, &
+                                         if_chk_orthonormal=.false., beta=proj_coefficients)
+        call check_info(info, 'orthogonalize_against_basis_p1', &
+                        this_module, this_procedure//', first pass')
         ! second pass
-        call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', this_module, this_procedure//', second pass')
+        call orthogonalize_against_basis(Y, X, info, &
+                                         if_chk_orthonormal=.false., beta=wrk)
+        call check_info(info, 'orthogonalize_against_basis_p2', &
+                        this_module, this_procedure//', second pass')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
@@ -113,7 +120,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -122,11 +129,14 @@ contains
 
         ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
-        call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', this_module, this_procedure//', pass 1')
+        call orthogonalize_against_basis(y, X, info, &
+                                         if_chk_orthonormal=.false., beta=proj_coefficients)
+        call check_info(info, 'orthogonalize_against_basis_p1', &
+                        this_module, this_procedure//', pass 1')
         ! second pass
         call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', this_module, this_procedure//', pass 2')
+        call check_info(info, 'orthogonalize_against_basis_p2', &
+                        this_module, this_procedure//', pass 2')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
@@ -157,7 +167,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -166,11 +176,15 @@ contains
 
         ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
-        call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', this_module, this_procedure//', first pass')
+        call orthogonalize_against_basis(Y, X, info, &
+                                         if_chk_orthonormal=.false., beta=proj_coefficients)
+        call check_info(info, 'orthogonalize_against_basis_p1', &
+                        this_module, this_procedure//', first pass')
         ! second pass
-        call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', this_module, this_procedure//', second pass')
+        call orthogonalize_against_basis(Y, X, info, &
+                                         if_chk_orthonormal=.false., beta=wrk)
+        call check_info(info, 'orthogonalize_against_basis_p2', &
+                        this_module, this_procedure//', second pass')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
@@ -201,7 +215,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -210,11 +224,14 @@ contains
 
         ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
-        call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', this_module, this_procedure//', pass 1')
+        call orthogonalize_against_basis(y, X, info, &
+                                         if_chk_orthonormal=.false., beta=proj_coefficients)
+        call check_info(info, 'orthogonalize_against_basis_p1', &
+                        this_module, this_procedure//', pass 1')
         ! second pass
         call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', this_module, this_procedure//', pass 2')
+        call check_info(info, 'orthogonalize_against_basis_p2', &
+                        this_module, this_procedure//', pass 2')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
@@ -245,7 +262,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -254,11 +271,15 @@ contains
 
         ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
-        call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', this_module, this_procedure//', first pass')
+        call orthogonalize_against_basis(Y, X, info, &
+                                         if_chk_orthonormal=.false., beta=proj_coefficients)
+        call check_info(info, 'orthogonalize_against_basis_p1', &
+                        this_module, this_procedure//', first pass')
         ! second pass
-        call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', this_module, this_procedure//', second pass')
+        call orthogonalize_against_basis(Y, X, info, &
+                                         if_chk_orthonormal=.false., beta=wrk)
+        call check_info(info, 'orthogonalize_against_basis_p2', &
+                        this_module, this_procedure//', second pass')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
@@ -289,7 +310,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -298,11 +319,14 @@ contains
 
         ! Orthogonalize vector y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
-        call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', this_module, this_procedure//', pass 1')
+        call orthogonalize_against_basis(y, X, info, &
+                                         if_chk_orthonormal=.false., beta=proj_coefficients)
+        call check_info(info, 'orthogonalize_against_basis_p1', &
+                        this_module, this_procedure//', pass 1')
         ! second pass
         call orthogonalize_against_basis(y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', this_module, this_procedure//', pass 2')
+        call check_info(info, 'orthogonalize_against_basis_p2', &
+                        this_module, this_procedure//', pass 2')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
@@ -333,7 +357,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -342,11 +366,15 @@ contains
 
         ! Orthogonalize Krylov basis Y w.r.t. to Krylov basis X in two passes of GS.
         ! first pass
-        call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=proj_coefficients)
-        call check_info(info, 'orthogonalize_against_basis_p1', this_module, this_procedure//', first pass')
+        call orthogonalize_against_basis(Y, X, info, &
+                                         if_chk_orthonormal=.false., beta=proj_coefficients)
+        call check_info(info, 'orthogonalize_against_basis_p1', &
+                        this_module, this_procedure//', first pass')
         ! second pass
-        call orthogonalize_against_basis(Y, X, info, if_chk_orthonormal=.false., beta=wrk)
-        call check_info(info, 'orthogonalize_against_basis_p2', this_module, this_procedure//', second pass')
+        call orthogonalize_against_basis(Y, X, info, &
+                                         if_chk_orthonormal=.false., beta=wrk)
+        call check_info(info, 'orthogonalize_against_basis_p2', &
+                        this_module, this_procedure//', second pass')
         ! combine passes
         proj_coefficients = proj_coefficients + wrk
 
@@ -384,7 +412,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -430,7 +458,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -473,7 +501,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -519,7 +547,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -562,7 +590,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -608,7 +636,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -651,7 +679,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if
@@ -697,7 +725,7 @@ contains
             if (is_ortho) then
                 call log_information("Input basis orthonormal. Remove this check unless necessary for better performance", &
                 & this_module, this_procedure)
-            else 
+            else
                 call stop_error("Input basis not orthonormal.", this_module, this_procedure)
             end if
         end if

@@ -1,5 +1,5 @@
 module LightKrylov_Logger
-#ifdef MPI
+#ifdef LIGHTKRYLOV_MPI
    use mpi_f08
 #endif
    ! Fortran Standard Library
@@ -57,6 +57,7 @@ contains
       !! log unit identifier
 
       ! internals
+      character(len=*), parameter :: this_procedure = 'logger_setup'
       character(len=:), allocatable :: logfile_
       integer                       :: nio_
       integer                       :: log_level_
@@ -65,6 +66,7 @@ contains
       logical                       :: close_old_
       integer                       :: iunit_
       ! misc
+      character(len=128) :: msg
       integer :: stat
 
       logfile_ = optval(logfile, 'lightkrylov.log')
@@ -75,33 +77,39 @@ contains
       log_timestamp_ = optval(log_timestamp, .true.)
       close_old_ = optval(close_old, .true.)
 
-      ! Flush log units
-      if (close_old_) call reset_log_units()
-
-      ! set log level
-      call logger%configure(level=log_level_, time_stamp=log_timestamp_)
-
-      ! set up LightKrylov log file
-      call logger%add_log_file(logfile_, unit=iunit_, stat=stat)
-      if (stat /= 0) call stop_error('Unable to open logfile '//trim(logfile_)//'.', module=this_module, procedure='logger_setup')
-
       ! Set up comms
       call comm_setup()
 
       ! Set I/O rank
       if (nio_ /= 0) call set_io_rank(nio_)
+      if (io_rank()) then
+         write (msg, '(A,I0,A,I0)') 'IO rank = ', get_rank()
+         call logger%log_message(trim(msg), this_module, this_procedure)
+      end if
 
-      ! log to stdout
-      if (log_stdout_) then
-         call logger%add_log_unit(unit=6, stat=stat)
-         if (stat /= 0) call stop_error('Unable to add stdout to logger.', module=this_module, procedure='logger_setup')
+      if (io_rank()) then
+         ! Flush log units
+         if (close_old_) call reset_log_units()
+
+         ! set log level
+         call logger%configure(level=log_level_, time_stamp=log_timestamp_)
+
+         ! set up LightKrylov log file
+         call logger%add_log_file(logfile_, unit=iunit_, stat=stat)
+         if (stat /= 0) call stop_error('Unable to open logfile '//trim(logfile_)//'.', this_module, this_procedure)
+
+         ! log to stdout
+         if (log_stdout_) then
+            call logger%add_log_unit(unit=6, stat=stat)
+            if (stat /= 0) call stop_error('Unable to add stdout to logger.', this_module, this_procedure)
+         end if
+
+         ! return unit if requested
+         if (present(iunit)) iunit = iunit_
       end if
 
       ! mark that logger is active
       logger_is_active = .true.
-
-      ! return unit if requested
-      if (present(iunit)) iunit = iunit_
    end subroutine logger_setup
 
    subroutine log_message(msg, module, procedure, flush_log)
@@ -117,8 +125,10 @@ contains
       logical :: flush_
       flush_ = optval(flush_log, .true.)
       if (logger_is_active) then
-         call logger%log_message(msg, module=module, procedure=procedure)
-         if (flush_) call flush_log_units()
+         if (io_rank()) then
+            call logger%log_message(msg, module=module, procedure=procedure)
+            if (flush_) call flush_log_units()
+         end if
       else
          print '(A)', msg
       end if
@@ -137,8 +147,10 @@ contains
       logical :: flush_
       flush_ = optval(flush_log, .true.)
       if (logger_is_active) then
-         call logger%log_information(msg, module=module, procedure=procedure)
-         if (flush_) call flush_log_units()
+         if (io_rank()) then
+            call logger%log_information(msg, module=module, procedure=procedure)
+            if (flush_) call flush_log_units()
+         end if
       else
          print '("INFO: ",A)', msg
       end if
@@ -152,8 +164,10 @@ contains
       character(len=*), optional, intent(in)  :: procedure
       !! The name of the procedure in which the call happens
       if (logger_is_active) then
-         call logger%log_warning(msg, module=module, procedure=procedure)
-         call flush_log_units()
+         if (io_rank()) then
+            call logger%log_warning(msg, module=module, procedure=procedure)
+            call flush_log_units()
+         end if
       else
          print '("WARN: ",A)', msg
       end if
@@ -171,8 +185,11 @@ contains
       character(len=*), optional, intent(in)  :: errmsg
       !! error message
       if (logger_is_active) then
-         call logger%log_error(msg, module=module, procedure=procedure, stat=stat, errmsg=errmsg)
-         call flush_log_units()
+         if (io_rank()) then
+            call logger%log_error(msg, module=module, procedure=procedure, &
+                                  stat=stat, errmsg=errmsg)
+            call flush_log_units()
+         end if
       else
          print '(A,": ",A)', msg, errmsg
       end if
@@ -186,8 +203,10 @@ contains
       character(len=*), optional, intent(in)  :: procedure
       !! The name of the procedure in which the call happens
       if (logger_is_active) then
-         call logger%log_debug(msg, module=module, procedure=procedure)
-         call flush_log_units()
+         if (io_rank()) then
+            call logger%log_debug(msg, module=module, procedure=procedure)
+            call flush_log_units()
+         end if
       else
          print '("DEBUG: ",A)', msg
       end if
@@ -196,60 +215,69 @@ contains
    subroutine flush_log_units()
       integer, allocatable :: current_log_units(:)
       integer :: i
-      ! get current units
-      call logger%configuration(log_units=current_log_units)
-      do i = 1, size(current_log_units)
-         call flush (current_log_units(i))
-      end do
+      if (io_rank()) then
+         ! get current units
+         call logger%configuration(log_units=current_log_units)
+         do i = 1, size(current_log_units)
+            call flush (current_log_units(i))
+         end do
+      end if
    end subroutine flush_log_units
 
    subroutine reset_log_units()
       integer, allocatable :: current_log_units(:)
       integer :: i, iunit
-      ! get current units
-      call logger%configuration(log_units=current_log_units)
-      ! close all existing units (except stdout if it is included)
-      do i = 1, size(current_log_units)
-         iunit = current_log_units(i)
-         if (iunit == 6) then
-            call logger%remove_log_unit(unit=iunit)
-         else
-            call logger%remove_log_unit(unit=iunit, close_unit=.true.)
-         end if
-      end do
+      if (io_rank()) then
+         ! get current units
+         call logger%configuration(log_units=current_log_units)
+         ! close all existing units (except stdout if it is included)
+         do i = 1, size(current_log_units)
+            iunit = current_log_units(i)
+            if (iunit == 6) then
+               call logger%remove_log_unit(unit=iunit)
+            else
+               call logger%remove_log_unit(unit=iunit, close_unit=.true.)
+            end if
+         end do
+      end if
    end subroutine reset_log_units
 
    subroutine comm_setup()
       ! internal
       character(len=*), parameter :: this_procedure = 'comm_setup'
       character(len=128) :: msg
-#ifdef MPI
-      integer :: ierr, nid, comm_size
+#ifdef LIGHTKRYLOV_MPI
+      integer :: ierr, rank_local, size_local
       logical :: mpi_is_initialized
-      ! check if MPI has already been initialized and if not, initialize
+
       call MPI_Initialized(mpi_is_initialized, ierr)
       if (.not. mpi_is_initialized) then
-         call logger%log_message('Set up parallel run with MPI.', this_module, this_procedure)
          call MPI_Init(ierr)
-         if (ierr /= MPI_SUCCESS) call stop_error("Error initializing MPI", this_module, this_procedure)
-      else
-         call logger%log_message('MPI already initialized.', this_module, this_procedure)
+         if (ierr /= MPI_SUCCESS) call stop_error("Error initializing MPI", &
+                                                  this_module, this_procedure)
       end if
-      call MPI_Comm_rank(MPI_COMM_WORLD, nid, ierr); call set_rank(nid)
-      call MPI_Comm_size(MPI_COMM_WORLD, comm_size, ierr); call set_comm_size(comm_size)
-      write (msg, '(A,I0,A,I0)') 'IO rank = ', nid, ', comm_size = ', comm_size
-      call logger%log_message(trim(msg), this_module, this_procedure)
+
+      call MPI_Comm_rank(MPI_COMM_WORLD, rank_local, ierr)
+      call MPI_Comm_size(MPI_COMM_WORLD, size_local, ierr)
+
+      call set_rank(rank_local)
+      call set_comm_size(size_local)
+
+      if (rank_local == 0) then
+         call logger%log_message('Setup parallel run', this_module, this_procedure)
+         write (msg, '(A,I0,A,I0)') 'comm_size = ', size_local
+         call logger%log_message(trim(msg), this_module, this_procedure)
+      end if
 #else
-      write (msg, '(A)') 'Setup serial run'
       call set_rank(0)
       call set_comm_size(1)
-      call logger%log_message(trim(msg), this_module, this_procedure)
+      call logger%log_message('Setup serial run', this_module, this_procedure)
 #endif
    end subroutine comm_setup
 
    subroutine comm_close()
       integer :: ierr
-#ifdef MPI
+#ifdef LIGHTKRYLOV_MPI
       character(len=128) :: msg
       ! Finalize MPI
       call MPI_Finalize(ierr)
@@ -317,91 +345,106 @@ contains
             ! GETREF
             if (info < 0) then
                write (msg, '(A,I0,A)') "The ", -info, "-th argument has illegal value. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else
                write (msg, '(A,I0,A,I0,A)') "U(", info, ",", info, ") is exactly zero. The factorization ", &
                            & "has been completed but the factor U is exactly singular. ", &
                            & "Division by zero will occur if used to solve Ax=b. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'getri') then
             ! GETRI
             if (info < 0) then
                write (msg, '(A,I0,A)') "The ", -info, "-th argument has illegal value. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else
                write (msg, '(A,I0,A)') "U(", info, ",", info, ") is exactly zero. ", &
                            & "The matrix is singular and its inverse cannot be computed. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'geev') then
             ! GEEV
             if (info < 0) then
                write (msg, '(A,I0,A)') "The ", -info, "-th argument has illegal value. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else
                write (msg, '(A,I0,A)') "The QR alg. failed to compute all of the eigenvalues.", &
                            & "No eigenvector has been computed. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'syev') then
             ! SYEV
             if (info < 0) then
                write (msg, '(A,I0,A)') "The ", -info, "-th argument has illegal value. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else
                write (msg, '(A)') "The QR alg. failed to compute all of the eigenvalues.", &
                            & "No eigenvector has been computed. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'heev') then
             ! HEEV
             if (info < 0) then
                write (msg, '(A,I0,A)') "The ", -info, "-th argument has illegal value. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else
                write (msg, '(A)') "The QR alg. failed to compute all of the eigenvalues.", &
                            & "No eigenvector has been computed. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'gels') then
             ! GELS
             if (info < 0) then
                write (msg, '(A,I0,A)') "The ", -info, "-th argument has illegal value. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'gees') then
             ! GEES
             if (info < 0) then
                write (msg, '(A,I0,A)') "The ", -info, "-th argument has illegal value. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else
                write (msg, '(A)') "The QR alg. failed to compute all of the eigenvalues.", &
                            & "No eigenvector has been computed. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'trsen') then
             ! GEES
             if (info < 0) then
                write (msg, '(A,I0,A)') "The ", -info, "-th argument has illegal value. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else if (info == 1) then
                write (msg, '(A)') "The reordering of T failed because some eigenvalues are too", &
@@ -409,11 +452,13 @@ contains
                            & "T may have been partially reordered, and WR and WI ", &
                            & "contain the eigenvalues in the same order as in T; S and", &
                            & "SEP (if requested) are set to zero. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
             !
@@ -425,11 +470,13 @@ contains
                call log_warning(trim(msg), module=module, procedure=procedure)
             else if (info == -1) then
                write (msg, '(A)') "The input matrix is not positive (semi-)definite. "
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
             !
@@ -442,14 +489,16 @@ contains
                call log_debug(trim(msg), module=module, procedure=procedure)
             else if (info == -1) then
                write (msg, '(A)') 'The input Krylov basis is not orthonormal.'
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else if (info == -2) then
                write (msg, '(A)') 'Orthogonalization: The last column of the input basis is zero.'
                call log_debug(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'orthogonalize_against_basis_p1') then
@@ -459,14 +508,16 @@ contains
                call log_debug(trim(msg), module=module, procedure=procedure)
             else if (info == -1) then
                write (msg, '(A)') 'The input Krylov basis is not orthonormal.'
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else if (info == -2) then
                write (msg, '(A)') 'Orthogonalization: The last column of the input basis is zero.'
                call log_warning(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'orthogonalize_against_basis_p2') then
@@ -476,14 +527,16 @@ contains
                call log_debug(trim(msg), module=module, procedure=procedure)
             else if (info == -1) then
                write (msg, '(A)') 'The input Krylov basis is not orthonormal.'
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else if (info == -2) then
                write (msg, '(A)') 'Orthogonalization: The last column of the input basis is zero.'
                call log_warning(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'double_gram_schmidt_step') then
@@ -493,47 +546,95 @@ contains
                call log_debug(trim(msg), module=module, procedure=procedure)
             else if (info == -1) then
                write (msg, '(A)') 'The input Krylov basis is not orthonormal.'
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             else if (info == -2) then
                write (msg, '(A)') 'Orthogonalization: The last column of the input basis is zero.'
                call log_warning(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
-         else if (trim(to_lower(origin)) == 'qr') then
-            ! qr
+         else if (trim(to_lower(origin)) == 'biorthonormalize_bases') then
+            ! symmetric biorthogonalization
             if (info > 0) then
+               write (msg, '(I0,A)') info, ' columns retained after SVD.'
+               call log_debug(trim(msg), module=module, procedure=procedure)
+            else if (info == -1) then
+               write (msg, '(A)') "All singular values are below tolerance. Abort."
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            else
+               write (msg, '(A)') "Undocumented error. "//trim(str)
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            end if
+         else if ((trim(to_lower(origin)) == 'qr') .or. (trim(to_lower(origin)) == 'qr_pivot')) then
+            ! qr
+            select case (info)
+            case (1:)
                write (msg, '(A,I0,A)') 'QR factorization: Colinear column detected in column ', info,  &
                            & '. NOTE: Other subsequent columns may also be colinear.'
                call log_debug(trim(msg), module=module, procedure=procedure)
-            else
+            case (-1)
+               write (msg, '(A)') 'QR factorization: Q has size 0.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-2)
+               write (msg, '(A)') 'QR factorization: Dimensions of R are inconsistent.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-3)
+               write (msg, '(A)') 'QR factorization: Permutation vector is too small.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-4)
+               write (msg, '(A)') 'QR factorization: User-defined tolerance is negative.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case default
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
-            end if
-         else if (trim(to_lower(origin)) == 'qr_pivot') then
-            ! qr_pivot
-            if (info > 0) then
-               write (msg, '(A,I0,A)') 'QR factorization: Invariant subspace found after ', info, ' steps.'
-               call log_debug(trim(msg), module=module, procedure=procedure)
-            else
-               write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
-               ierr = -1
-            end if
+            end select
          else if (trim(to_lower(origin)) == 'arnoldi') then
             ! arnoldi
-            if (info > 0) then
+            select case (info)
+            case (0:)
                write (msg, '(A,I0,A)') 'Arnoldi factorization: Invariant subspace computed after ', info, ' iterations.'
                call log_debug(trim(msg), module=module, procedure=procedure)
-            else
+            case (-3)
+               write (msg, '(A)') 'Arnoldi factorization: Hessenberg matrix has incorrect dimensions.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-5)
+               write (msg, '(A)') 'Arnoldi factorization: Parameter kstart is invalid (either negative or larger than kend).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-6)
+               write (msg, '(A)') 'Arnoldi factorization: Parameter kend is invalid (either less than kstart or larger than kdim).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-7)
+               write (msg, '(A)') 'Arnoldi factorization: Parameter tol is invalid (negative).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case (-9)
+               write (msg, '(A)') 'Arnoldi factorization: Krylov subspace dimension and blocksize are incommensurate.'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+            case default
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
-            end if
+            end select
          else if (trim(to_lower(origin)) == 'bidiagonalization') then
             ! lanczos_bidiagonalization
             if (info > 0) then
@@ -541,13 +642,25 @@ contains
                call log_debug(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'lanczos') then
             ! lanczos_tridiagonalization
             if (info > 0) then
                write (msg, '(A,I0,A)') 'Lanczos Tridiagonalisation: Invariant subspace found after ', info, ' steps.'
+               call log_debug(trim(msg), module=module, procedure=procedure)
+            else
+               write (msg, '(A)') "Undocumented error. "//trim(str)
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            end if
+         else if (trim(to_lower(origin)) == 'ssy') then
+            ! ssy_tridiagonalization
+            if (info > 0) then
+               write (msg, '(A, I0, A)') 'Saunders-Simon-Yip Tridiagonalisation: Invariant subspace found after ', info, 'steps.'
                call log_debug(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
@@ -564,7 +677,8 @@ contains
                call log_information(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'eighs') then
@@ -574,7 +688,8 @@ contains
                call log_information(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'svds') then
@@ -584,7 +699,8 @@ contains
                call log_information(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'gmres') then
@@ -592,9 +708,14 @@ contains
             if (info > 0) then
                write (msg, '(A,I0,A)') 'GMRES iteration converged after ', info, ' iterations'
                call log_message(trim(msg), module=module, procedure=procedure)
+            else if (info < 0) then
+               write (msg, '(A,I0,A)') 'Maximum number of GMRES iterations reached (', abs(info), &
+                           & '). Solution tolerance not achieved.'
+               call log_message(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'fgmres') then
@@ -604,7 +725,8 @@ contains
                call log_message(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'cg') then
@@ -612,9 +734,14 @@ contains
             if (info > 0) then
                write (msg, '(A,I0,A)') 'CG iteration converged after ', info, ' iterations'
                call log_message(trim(msg), module=module, procedure=procedure)
+            else if (info < 0) then
+               write (msg, '(A,I0,A)') 'Maximum number of CG iterations reached (', abs(info), &
+                           & '). Solution tolerance not achieved.'
+               call log_message(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
          else if (trim(to_lower(origin)) == 'linear_solver') then
@@ -622,9 +749,14 @@ contains
             if (info > 0) then
                write (msg, '(A,I0,A)') 'The linear solver converged after ', info, ' iterations'
                call log_message(trim(msg), module=module, procedure=procedure)
+            else if (info < 0) then
+               write (msg, '(A,I0,A)') 'Maximum number of iterations reached (', abs(info), &
+                           & '). Solution tolerance not achieved.'
+               call log_message(trim(msg), module=module, procedure=procedure)
             else
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
             !
@@ -640,24 +772,28 @@ contains
                call log_debug(trim(msg), module=module, procedure=procedure)
             else if (info == -1) then
                write (msg, '(A)') 'kexpm did not converge. Maximum number of Krylov vectors reached.'
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
                write (msg, '(A)') "Undocumented error. "//trim(str)
-               call log_error(origin, module=module, procedure=procedure, stat=info, errmsg=trim(msg))
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
                ierr = -1
             end if
             !
             !  stop error
             !
          else if (trim(origin) == 'STOP_ERROR') then
-            call log_error(trim(origin), module=module, procedure=procedure, stat=info, errmsg=trim(str))
+            call log_error(trim(origin), module=module, procedure=procedure, &
+                           stat=info, errmsg=trim(str))
             ierr = -1
             !
             !   Default
             !
          else
             write (msg, '(A)') 'subroutine "'//trim(origin)//'" returned with a non-zero error flag.'
-            call log_error(trim(msg), module=module, procedure=procedure, stat=info, errmsg=trim(str))
+            call log_error(trim(msg), module=module, procedure=procedure, &
+                           stat=info, errmsg=trim(str))
             ierr = -1
          end if
       end if ! info /= 0
@@ -673,6 +809,9 @@ contains
             write (*, *)
             write (*, *) 'A fatal error was encountered. Aborting calculation as per user directive.'
             write (*, *)
+            if (logger_is_active) then
+               write (*, *) 'Details on the error have been written to the lightkrylov logfile.'
+            end if
             STOP 1
          end if
       end if

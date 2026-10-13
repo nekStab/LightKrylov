@@ -402,10 +402,25 @@ contains
       close (iunit)
    end subroutine report_LE
 
-   subroutine write_header()
+   subroutine write_header(overwrite)
+      logical, optional, intent(in) :: overwrite
       ! internals
+      character(len=*), parameter :: this_procedure = 'write_header'
       integer :: i, j, iunit
-      open (newunit=iunit, file=report_file_OTD, status='new', action='write')
+      logical :: if_overwrite, file_exists
+      character(len=128) :: msg
+      if_overwrite = optval(overwrite, .true.)
+      inquire (file=report_file_OTD, exist=file_exists)
+      if (file_exists) then
+          if (if_overwrite) then
+              open (newunit=iunit, file=report_file_OTD, status='replace', action='write')
+          else
+              write (*, '(A)') 'File "'//trim(report_file_OTD)//'" exists and overwrite=.false.: Abort.'
+              call logger%log_error(msg, this_module, this_procedure)
+          end if
+      else
+          open (newunit=iunit, file=report_file_OTD, status='new', action='write')
+      end if
       ! time, baseflow
       write (iunit, '(*(A16,1X))', ADVANCE='NO') 't', 'BF_x', 'BF_y', 'BF_z'
       ! basis vectors
@@ -440,10 +455,25 @@ contains
       write (iunit, *) ''; close (iunit)
    end subroutine write_header
 
-   subroutine write_header_LE()
+   subroutine write_header_LE(overwrite)
+      logical, optional, intent(in) :: overwrite
       ! internals
+      character(len=*), parameter :: this_procedure = 'write_header_LE'
       integer :: i, iunit
-      open (newunit=iunit, file=report_file_OTD_LE, status='new', action='write')
+      logical :: if_overwrite, file_exists
+      character(len=128) :: msg
+      if_overwrite = optval(overwrite, .true.)
+      inquire (file=report_file_OTD_LE, exist=file_exists)
+      if (file_exists) then
+          if (if_overwrite) then
+              open (newunit=iunit, file=report_file_OTD_LE, status='replace', action='write')
+          else
+              write (*, '(A)') 'File "'//trim(report_file_OTD)//'" exists and overwrite=.false.: Abort.'
+              call logger%log_error(msg, this_module, this_procedure)
+          end if
+      else
+          open (newunit=iunit, file=report_file_OTD_LE, status='new', action='write')
+      end if
       ! time, baseflow
       write (iunit, '(*(A16,1X))', ADVANCE='NO') 't', 'period'
       ! LE

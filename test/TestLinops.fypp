@@ -38,9 +38,10 @@ contains
 
         testsuite = [ &
                     new_unittest("Matrix-vector product", test_matvec_${type[0]}$${kind}$), &
-                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_${type[0]}$${kind}$),  &
-                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_${type[0]}$${kind}$),  &
-                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_${type[0]}$${kind}$) &
+                    new_unittest("Tranpose Matrix-vector product", test_rmatvec_${type[0]}$${kind}$), &
+                    new_unittest("Adjoint Matrix-vector product", test_adjoint_matvec_${type[0]}$${kind}$), &
+                    new_unittest("Tranpose Adjoint Matrix-vector product", test_adjoint_rmatvec_${type[0]}$${kind}$), &
+                    new_unittest("Linear operator axioms", test_linop_axioms_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_linop_${type[0]}$${kind}$_testsuite
@@ -182,6 +183,29 @@ contains
 
        return
     end subroutine test_adjoint_rmatvec_${type[0]}$${kind}$
+
+    subroutine test_linop_axioms_${type[0]}$${kind}$(error)
+        type(error_type), allocatable, intent(out) :: error
+        type(dense_linop_${type[0]}$${kind}$) :: A
+        type(dense_vector_${type[0]}$${kind}$) :: x
+        ${type}$ :: x_(n)
+        #:if type[0] == "c"
+        real(${kind}$) :: Adata(n, n, 2)
+        #:endif
+        logical :: success
+        ! Initialize matrix.
+        A = dense_linop_${type[0]}$${kind}$() ; allocate(A%data(n, n))
+        #:if type[0] == "c"
+        call random_number(Adata) ; A%data%re = Adata(:, :, 1) ; A%data%im = Adata(:, :, 2)
+        #:else
+        call random_number(A%data)
+        #:endif
+        ! Initialize mold vector.
+        x_ = 0.0_${kind}$ ; x = dense_vector(x_)
+        success = verify_linop_axioms(A, x)
+        call check(error, success .eqv. .true.)
+        call check_test(error, 'test_linop_axioms_${type[0]}$${kind}$', eq='Linear operator axioms')
+    end subroutine test_linop_axioms_${type[0]}$${kind}$
 
     #:endfor
 end module TestLinops

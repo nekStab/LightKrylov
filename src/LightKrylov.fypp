@@ -60,7 +60,8 @@ module LightKrylov
     public :: zero_basis
     public :: copy
     public :: rand_basis
-    
+    public :: verify_vector_axioms
+
     ! AbstractLinops exports.
     public :: abstract_linop
     #:for kind, type in RC_KINDS_TYPES
@@ -78,23 +79,28 @@ module LightKrylov
     #:endif
     #:endfor
     public :: adjoint
+    public :: verify_linop_axioms
 
     ! AbstractSystems exports.
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_system_${type[0]}$${kind}$
     public :: abstract_jacobian_linop_${type[0]}$${kind}$
     #:endfor
-    
+
     ! BaseKrylov exports.
     public :: qr
     public :: permcols, invperm
     public :: arnoldi
     public :: initialize_krylov_subspace
+    public :: initialize_random_orthonormal_basis
     public :: orthogonalize_against_basis
     public :: orthonormalize_basis
+    public :: is_orthonormal
+    public :: biorthonormalize_bases
     public :: bidiagonalization
     public :: lanczos
     public :: krylov_schur
+    public :: ssy
 
     ! IterativeSolvers exports.
     #:for kind, type in RC_KINDS_TYPES
