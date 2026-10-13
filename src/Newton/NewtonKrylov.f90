@@ -540,6 +540,10 @@ contains
         end if
 
         call sys%reset_eval_counter('newton%post')
+
+        ! Release the work vectors.
+        call residual%free() ; call increment%free()
+
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine newton_rsp
 
@@ -723,6 +727,10 @@ contains
         end if
 
         call sys%reset_eval_counter('newton%post')
+
+        ! Release the work vectors.
+        call residual%free() ; call increment%free()
+
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine newton_rdp
 
@@ -906,6 +914,10 @@ contains
         end if
 
         call sys%reset_eval_counter('newton%post')
+
+        ! Release the work vectors.
+        call residual%free() ; call increment%free()
+
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine newton_csp
 
@@ -1089,6 +1101,10 @@ contains
         end if
 
         call sys%reset_eval_counter('newton%post')
+
+        ! Release the work vectors.
+        call residual%free() ; call increment%free()
+
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine newton_cdp
 
@@ -1194,6 +1210,9 @@ contains
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
             call log_information(msg, this_module, this_procedure)
         end if
+
+        ! Release the work vectors.
+        call Xin%free() ; call residual%free()
     end subroutine increment_bisection_rsp
 
     subroutine increment_bisection_rdp(X, sys, increment, rold, tol, maxstep)
@@ -1297,6 +1316,9 @@ contains
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
             call log_information(msg, this_module, this_procedure)
         end if
+
+        ! Release the work vectors.
+        call Xin%free() ; call residual%free()
     end subroutine increment_bisection_rdp
 
     subroutine increment_bisection_csp(X, sys, increment, rold, tol, maxstep)
@@ -1400,6 +1422,9 @@ contains
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
             call log_information(msg, this_module, this_procedure)
         end if
+
+        ! Release the work vectors.
+        call Xin%free() ; call residual%free()
     end subroutine increment_bisection_csp
 
     subroutine increment_bisection_cdp(X, sys, increment, rold, tol, maxstep)
@@ -1503,6 +1528,9 @@ contains
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
             call log_information(msg, this_module, this_procedure)
         end if
+
+        ! Release the work vectors.
+        call Xin%free() ; call residual%free()
     end subroutine increment_bisection_cdp
 
 

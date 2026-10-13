@@ -423,6 +423,10 @@ contains
         end if
 
         call sys%reset_eval_counter('newton%post')
+
+        ! Release the work vectors.
+        call residual%free() ; call increment%free()
+
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine newton_${type[0]}$${kind}$
 
@@ -534,6 +538,9 @@ contains
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
             call log_information(msg, this_module, this_procedure)
         end if
+
+        ! Release the work vectors.
+        call Xin%free() ; call residual%free()
     end subroutine increment_bisection_${type[0]}$${kind}$
 
     #:endfor
