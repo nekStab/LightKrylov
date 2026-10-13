@@ -41,8 +41,8 @@ module LightKrylov_ExpmLib
             import abstract_vector_rsp
             import abstract_linop_rsp
             implicit none(type, external)
-            class(abstract_vector_rsp), intent(out) :: vec_out
-            !! Solution vector.
+            class(abstract_vector_rsp), intent(inout) :: vec_out
+            !! Solution vector. Allocated by the caller; its content is overwritten.
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to be exponentiated.
             class(abstract_vector_rsp), intent(in) :: vec_in
@@ -61,8 +61,8 @@ module LightKrylov_ExpmLib
             import abstract_vector_rdp
             import abstract_linop_rdp
             implicit none(type, external)
-            class(abstract_vector_rdp), intent(out) :: vec_out
-            !! Solution vector.
+            class(abstract_vector_rdp), intent(inout) :: vec_out
+            !! Solution vector. Allocated by the caller; its content is overwritten.
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator to be exponentiated.
             class(abstract_vector_rdp), intent(in) :: vec_in
@@ -81,8 +81,8 @@ module LightKrylov_ExpmLib
             import abstract_vector_csp
             import abstract_linop_csp
             implicit none(type, external)
-            class(abstract_vector_csp), intent(out) :: vec_out
-            !! Solution vector.
+            class(abstract_vector_csp), intent(inout) :: vec_out
+            !! Solution vector. Allocated by the caller; its content is overwritten.
             class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator to be exponentiated.
             class(abstract_vector_csp), intent(in) :: vec_in
@@ -101,8 +101,8 @@ module LightKrylov_ExpmLib
             import abstract_vector_cdp
             import abstract_linop_cdp
             implicit none(type, external)
-            class(abstract_vector_cdp), intent(out) :: vec_out
-            !! Solution vector.
+            class(abstract_vector_cdp), intent(inout) :: vec_out
+            !! Solution vector. Allocated by the caller; its content is overwritten.
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to be exponentiated.
             class(abstract_vector_cdp), intent(in) :: vec_in
@@ -131,7 +131,8 @@ module LightKrylov_ExpmLib
         !!
         !!  ### Arguments
         !!
-        !!  - `c`   :   Output vector (or vectors). It is an `intent(out)` argument.
+        !!  - `c`   :   Output vector (or vectors), allocated by the caller. Its content is
+        !!              overwritten. It is an `intent(inout)` argument.
         !!
         !!  - `A`   :   Linear operator to be exponentiated. It is an `intent(inout)` argument.
         !!
@@ -278,12 +279,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back into original space.
-            block
-                class(abstract_vector_rsp), allocatable :: Xwrk
-                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(beta*one_rsp, Xwrk, zero_rsp)
-                call Xwrk%free()
-            end block
+            call linear_combination(c, X(:kp), beta*E(:kp, 1))
         endif
 
         if (err_est <= tol) then
@@ -322,7 +318,7 @@ contains
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_rsp'
         integer, parameter :: kmax = 100
-        integer :: i, j, k, p, kpm, kp, kpp, nk
+        integer :: k, p, kpm, kp, kpp, nk
         ! Block-Arnoldi factorization.
         class(abstract_vector_rsp), allocatable :: X(:)
         real(sp), allocatable :: H(:, :)
@@ -403,17 +399,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back to original space.
-            block
-                class(abstract_vector_rsp), allocatable :: Xwrk(:)
-                call linear_combination(Xwrk, X(:kpp), E(:kpp, :p))   ! Xwrk = X·E
-                call zero_basis(C)
-                do i = 1, p
-                    do j = 1, p
-                        call C(i)%axpby(R(j, i), Xwrk(j), one_rsp)
-                    enddo
-                enddo
-                call free_basis(Xwrk)
-            end block
+            call linear_combination(C, X(:kpp), matmul(E(:kpp, :p), R(:p, :p)))
         endif
 
         if (err_est <= tol) then
@@ -550,12 +536,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back into original space.
-            block
-                class(abstract_vector_rdp), allocatable :: Xwrk
-                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(beta*one_rdp, Xwrk, zero_rdp)
-                call Xwrk%free()
-            end block
+            call linear_combination(c, X(:kp), beta*E(:kp, 1))
         endif
 
         if (err_est <= tol) then
@@ -594,7 +575,7 @@ contains
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_rdp'
         integer, parameter :: kmax = 100
-        integer :: i, j, k, p, kpm, kp, kpp, nk
+        integer :: k, p, kpm, kp, kpp, nk
         ! Block-Arnoldi factorization.
         class(abstract_vector_rdp), allocatable :: X(:)
         real(dp), allocatable :: H(:, :)
@@ -675,17 +656,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back to original space.
-            block
-                class(abstract_vector_rdp), allocatable :: Xwrk(:)
-                call linear_combination(Xwrk, X(:kpp), E(:kpp, :p))   ! Xwrk = X·E
-                call zero_basis(C)
-                do i = 1, p
-                    do j = 1, p
-                        call C(i)%axpby(R(j, i), Xwrk(j), one_rdp)
-                    enddo
-                enddo
-                call free_basis(Xwrk)
-            end block
+            call linear_combination(C, X(:kpp), matmul(E(:kpp, :p), R(:p, :p)))
         endif
 
         if (err_est <= tol) then
@@ -822,12 +793,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back into original space.
-            block
-                class(abstract_vector_csp), allocatable :: Xwrk
-                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(beta*one_csp, Xwrk, zero_csp)
-                call Xwrk%free()
-            end block
+            call linear_combination(c, X(:kp), beta*E(:kp, 1))
         endif
 
         if (err_est <= tol) then
@@ -866,7 +832,7 @@ contains
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_csp'
         integer, parameter :: kmax = 100
-        integer :: i, j, k, p, kpm, kp, kpp, nk
+        integer :: k, p, kpm, kp, kpp, nk
         ! Block-Arnoldi factorization.
         class(abstract_vector_csp), allocatable :: X(:)
         complex(sp), allocatable :: H(:, :)
@@ -947,17 +913,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back to original space.
-            block
-                class(abstract_vector_csp), allocatable :: Xwrk(:)
-                call linear_combination(Xwrk, X(:kpp), E(:kpp, :p))   ! Xwrk = X·E
-                call zero_basis(C)
-                do i = 1, p
-                    do j = 1, p
-                        call C(i)%axpby(R(j, i), Xwrk(j), one_csp)
-                    enddo
-                enddo
-                call free_basis(Xwrk)
-            end block
+            call linear_combination(C, X(:kpp), matmul(E(:kpp, :p), R(:p, :p)))
         endif
 
         if (err_est <= tol) then
@@ -1094,12 +1050,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back into original space.
-            block
-                class(abstract_vector_cdp), allocatable :: Xwrk
-                call linear_combination(Xwrk, X(:kp), E(:kp, 1))
-                call c%axpby(beta*one_cdp, Xwrk, zero_cdp)
-                call Xwrk%free()
-            end block
+            call linear_combination(c, X(:kp), beta*E(:kp, 1))
         endif
 
         if (err_est <= tol) then
@@ -1138,7 +1089,7 @@ contains
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_cdp'
         integer, parameter :: kmax = 100
-        integer :: i, j, k, p, kpm, kp, kpp, nk
+        integer :: k, p, kpm, kp, kpp, nk
         ! Block-Arnoldi factorization.
         class(abstract_vector_cdp), allocatable :: X(:)
         complex(dp), allocatable :: H(:, :)
@@ -1219,17 +1170,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back to original space.
-            block
-                class(abstract_vector_cdp), allocatable :: Xwrk(:)
-                call linear_combination(Xwrk, X(:kpp), E(:kpp, :p))   ! Xwrk = X·E
-                call zero_basis(C)
-                do i = 1, p
-                    do j = 1, p
-                        call C(i)%axpby(R(j, i), Xwrk(j), one_cdp)
-                    enddo
-                enddo
-                call free_basis(Xwrk)
-            end block
+            call linear_combination(C, X(:kpp), matmul(E(:kpp, :p), R(:p, :p)))
         endif
 
         if (err_est <= tol) then
