@@ -1,7 +1,7 @@
 #:include "../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module LightKrylov
-    ! --> Definitions of various constants.
+    ! --> Definitions of various constants.a
     use LightKrylov_Constants
     ! --> Set of utility functions.
     use LightKrylov_Utils
@@ -132,7 +132,11 @@ module LightKrylov
     public :: abstract_exptA_${type[0]}$${kind}$
     #:endfor
     public :: kexpm
+    public :: kexpm_substep
     public :: krylov_exptA
+    #:for kind in REAL_KINDS
+    public :: kexpm_${kind}$_opts, kexpm_${kind}$_metadata
+    #:endfor
 
     ! Timer exports
     public :: lightkrylov_timer

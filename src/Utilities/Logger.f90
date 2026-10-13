@@ -775,6 +775,32 @@ contains
                call log_error(origin, module=module, procedure=procedure, &
                               stat=info, errmsg=trim(msg))
                ierr = -1
+            else if (info == -3) then
+               write (msg, '(A)') 'kexpm: invalid workspace X (fewer than 2*blksize vectors or not a multiple of blksize).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            else if (info == -4) then
+               write (msg, '(A)') 'kexpm: invalid Krylov dimension (kdim < 1).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            else if (info == -5) then
+               write (msg, '(A)') 'kexpm: invalid tolerance (tol < 0).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            else if (info == -6) then
+               write (msg, '(A)') 'kexpm: invalid block (B is empty or size(C) /= size(B)).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            else if (info == -7) then
+               write (msg, '(A)') 'kexpm: invalid options (max_rejections < 1 or max_substeps < 1).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            else
                write (msg, '(A)') "Undocumented error. "//trim(str)
                call log_error(origin, module=module, procedure=procedure, &
                               stat=info, errmsg=trim(msg))
