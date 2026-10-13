@@ -70,8 +70,10 @@ contains
         type(gmres_${kind}$_opts)     :: opts
         type(gmres_${kind}$_metadata) :: gmres_meta
 
-        ! Krylov subspace
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: V(:)
+        ! Workspace: work vector and Krylov subspace (pointers into `work` or into `wloc`).
+        class(abstract_vector_${type[0]}$${kind}$), allocatable, target :: wloc(:)
+        class(abstract_vector_${type[0]}$${kind}$), pointer :: wrk, V(:)
+        integer :: nwork
         ! Hessenberg matrix.
         ${type}$, allocatable :: H(:, :)
         ! Least-squares variables.
@@ -84,7 +86,6 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'gmres_${type[0]}$${kind}$'
         integer :: k, iostat
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -106,14 +107,18 @@ contains
         tol   = atol_ + rtol_ * b%norm()
         trans = optval(transpose, .false.)
 
-        ! Initialize working variables.
-        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call wrk%init_like(b)
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = gmres_work_size(kdim)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            wrk => work(1) ; V => work(2:nwork)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            wrk => wloc(1) ; V => wloc(2:nwork)
+        endif
         call wrk%zero()
-        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(V, b)
         call zero_basis(V)
         allocate(H(kdim+1, kdim), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -254,9 +259,9 @@ contains
             end select
         end if
 
-        ! Cleanup
-        call wrk%free()
-        call free_basis(V)
+        ! Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(wrk, V)
 
         call A%reset_counter(trans, 'gmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)

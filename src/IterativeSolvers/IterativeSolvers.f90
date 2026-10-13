@@ -49,6 +49,8 @@ module LightKrylov_IterativeSolvers
     public :: eigs
     public :: eighs
     public :: svds
+    public :: gmres_work_size, fgmres_work_size, cg_work_size
+    public :: eigs_work_size, eighs_work_size, svds_work_size
     public :: gmres
     public :: gmres_rsp
     public :: gmres_rdp
@@ -167,7 +169,7 @@ module LightKrylov_IterativeSolvers
     !--------------------------------------------------------
 
     abstract interface
-        subroutine abstract_linear_solver_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        subroutine abstract_linear_solver_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta, work)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_rsp, abstract_vector_rsp, abstract_opts, abstract_metadata, abstract_precond_rsp, sp
             implicit none(type, external)
@@ -191,9 +193,12 @@ module LightKrylov_IterativeSolvers
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_rsp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional), allocated by the caller. Solvers that do not need one may ignore it.
+            !! For the solvers provided by `LightKrylov`, see `gmres_work_size` and `fgmres_work_size`.
         end subroutine abstract_linear_solver_rsp
 
-        subroutine abstract_linear_solver_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        subroutine abstract_linear_solver_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta, work)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_rdp, abstract_vector_rdp, abstract_opts, abstract_metadata, abstract_precond_rdp, dp
             implicit none(type, external)
@@ -217,9 +222,12 @@ module LightKrylov_IterativeSolvers
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_rdp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional), allocated by the caller. Solvers that do not need one may ignore it.
+            !! For the solvers provided by `LightKrylov`, see `gmres_work_size` and `fgmres_work_size`.
         end subroutine abstract_linear_solver_rdp
 
-        subroutine abstract_linear_solver_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        subroutine abstract_linear_solver_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta, work)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_csp, abstract_vector_csp, abstract_opts, abstract_metadata, abstract_precond_csp, sp
             implicit none(type, external)
@@ -243,9 +251,12 @@ module LightKrylov_IterativeSolvers
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_csp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional), allocated by the caller. Solvers that do not need one may ignore it.
+            !! For the solvers provided by `LightKrylov`, see `gmres_work_size` and `fgmres_work_size`.
         end subroutine abstract_linear_solver_csp
 
-        subroutine abstract_linear_solver_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        subroutine abstract_linear_solver_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta, work)
             !! Abstract interface to use a user-defined linear solver in `LightKrylov`.
             import abstract_linop_cdp, abstract_vector_cdp, abstract_opts, abstract_metadata, abstract_precond_cdp, dp
             implicit none(type, external)
@@ -269,6 +280,9 @@ module LightKrylov_IterativeSolvers
             !! Determine whether \(\mathbf{A}\) (`.false.`) or \(\mathbf{A}^T\) (`.true.`) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_cdp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional), allocated by the caller. Solvers that do not need one may ignore it.
+            !! For the solvers provided by `LightKrylov`, see `gmres_work_size` and `fgmres_work_size`.
         end subroutine abstract_linear_solver_cdp
 
     end interface
@@ -396,7 +410,7 @@ module LightKrylov_IterativeSolvers
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call gmres(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options] [, transpose])
+        !!      call gmres(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options] [, transpose] [, meta] [, work])
         !!  ```
         !!
         !!  ### Arguments
@@ -429,9 +443,13 @@ module LightKrylov_IterativeSolvers
         !!  - `transpose` (optional):   `logical` flag controlling whether \( Ax = b\) or \( A^H x = b \) is being solved.
         !!
         !!  - `meta` (optional) :   Container for the gmres metadata. It needs to be of type `gmres_metadata`.
+        !!
+        !!  - `work` (optional) :   Caller-provided workspace of at least `gmres_work_size(kdim)` vectors. It is
+        !!                          shaped with `init_like`, its content is undefined on exit, and it is
+        !!                          never freed by the solver. If absent, the solver allocates it internally.
 
         ! --- Interface for GMRES with Abstract Linops and Abstract Vectors ---
-        module subroutine gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        module subroutine gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta, work)
             implicit none(type, external)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -453,6 +471,9 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_rsp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `gmres_work_size(kdim)` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine gmres_rsp
 
         module subroutine dense_gmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
@@ -479,7 +500,7 @@ module LightKrylov_IterativeSolvers
             !! Metadata.
         end subroutine dense_gmres_rsp
 
-        module subroutine gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        module subroutine gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta, work)
             implicit none(type, external)
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -501,6 +522,9 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_rdp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `gmres_work_size(kdim)` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine gmres_rdp
 
         module subroutine dense_gmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
@@ -527,7 +551,7 @@ module LightKrylov_IterativeSolvers
             !! Metadata.
         end subroutine dense_gmres_rdp
 
-        module subroutine gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        module subroutine gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta, work)
             implicit none(type, external)
             class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -549,6 +573,9 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_csp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `gmres_work_size(kdim)` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine gmres_csp
 
         module subroutine dense_gmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
@@ -575,7 +602,7 @@ module LightKrylov_IterativeSolvers
             !! Metadata.
         end subroutine dense_gmres_csp
 
-        module subroutine gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        module subroutine gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta, work)
             implicit none(type, external)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -597,6 +624,9 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_cdp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `gmres_work_size(kdim)` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine gmres_cdp
 
         module subroutine dense_gmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
@@ -748,7 +778,7 @@ module LightKrylov_IterativeSolvers
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call fgmres(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options] [, transpose])
+        !!      call fgmres(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options] [, transpose] [, meta] [, work])
         !!  ```
         !!
         !!  ### Arguments
@@ -780,7 +810,11 @@ module LightKrylov_IterativeSolvers
         !!
         !!  - `transpose` (optional):   `logical` flag controlling whether \( Ax = b\) or
         !!                              \( A^H x = b \) is being solved.
-        module subroutine fgmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        !!
+        !!  - `work` (optional) :   Caller-provided workspace of at least `fgmres_work_size(kdim)` vectors. It is
+        !!                          shaped with `init_like`, its content is undefined on exit, and it is
+        !!                          never freed by the solver. If absent, the solver allocates it internally.
+        module subroutine fgmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta, work)
             implicit none(type, external)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -802,6 +836,9 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_rsp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `fgmres_work_size(kdim)` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine fgmres_rsp
 
         module subroutine dense_fgmres_rsp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
@@ -828,7 +865,7 @@ module LightKrylov_IterativeSolvers
             !! Metadata.
         end subroutine dense_fgmres_rsp
 
-        module subroutine fgmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        module subroutine fgmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta, work)
             implicit none(type, external)
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -850,6 +887,9 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_rdp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `fgmres_work_size(kdim)` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine fgmres_rdp
 
         module subroutine dense_fgmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
@@ -876,7 +916,7 @@ module LightKrylov_IterativeSolvers
             !! Metadata.
         end subroutine dense_fgmres_rdp
 
-        module subroutine fgmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        module subroutine fgmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta, work)
             implicit none(type, external)
             class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -898,6 +938,9 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_csp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `fgmres_work_size(kdim)` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine fgmres_csp
 
         module subroutine dense_fgmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
@@ -924,7 +967,7 @@ module LightKrylov_IterativeSolvers
             !! Metadata.
         end subroutine dense_fgmres_csp
 
-        module subroutine fgmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
+        module subroutine fgmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta, work)
             implicit none(type, external)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -946,6 +989,9 @@ module LightKrylov_IterativeSolvers
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_cdp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `fgmres_work_size(kdim)` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine fgmres_cdp
 
         module subroutine dense_fgmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
@@ -1080,7 +1126,7 @@ module LightKrylov_IterativeSolvers
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call cg(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options])
+        !!      call cg(A, b, x, info [, rtol] [, atol] [, preconditioner] [, options] [, meta] [, work])
         !!  ```
         !!
         !!  ### Arguments
@@ -1109,7 +1155,11 @@ module LightKrylov_IterativeSolvers
         !!
         !!  - `options` (optional)  :   Container for the gmres options given by the `cg_opts` type.
         !!                              It is an optional `intent(in)` argument.
-        module subroutine cg_rsp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+        !!
+        !!  - `work` (optional) :   Caller-provided workspace of at least `cg_work_size()` vectors. It is
+        !!                          shaped with `init_like`, its content is undefined on exit, and it is
+        !!                          never freed by the solver. If absent, the solver allocates it internally.
+        module subroutine cg_rsp(A, b, x, info, rtol, atol, preconditioner, options, meta, work)
             implicit none(type, external)
             class(abstract_sym_linop_rsp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -1129,9 +1179,12 @@ module LightKrylov_IterativeSolvers
             !! Options for the conjugate gradient solver.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_rsp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `cg_work_size()` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine cg_rsp
 
-        module subroutine cg_rdp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+        module subroutine cg_rdp(A, b, x, info, rtol, atol, preconditioner, options, meta, work)
             implicit none(type, external)
             class(abstract_sym_linop_rdp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -1151,9 +1204,12 @@ module LightKrylov_IterativeSolvers
             !! Options for the conjugate gradient solver.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_rdp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `cg_work_size()` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine cg_rdp
 
-        module subroutine cg_csp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+        module subroutine cg_csp(A, b, x, info, rtol, atol, preconditioner, options, meta, work)
             implicit none(type, external)
             class(abstract_hermitian_linop_csp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -1173,9 +1229,12 @@ module LightKrylov_IterativeSolvers
             !! Options for the conjugate gradient solver.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_csp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `cg_work_size()` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine cg_csp
 
-        module subroutine cg_cdp(A, b, x, info, rtol, atol, preconditioner, options, meta)
+        module subroutine cg_cdp(A, b, x, info, rtol, atol, preconditioner, options, meta, work)
             implicit none(type, external)
             class(abstract_hermitian_linop_cdp), intent(inout) :: A
             !! Linear operator to be inverted.
@@ -1195,6 +1254,9 @@ module LightKrylov_IterativeSolvers
             !! Options for the conjugate gradient solver.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
+            class(abstract_vector_cdp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `cg_work_size()` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine cg_cdp
 
     end interface
@@ -1235,7 +1297,7 @@ module LightKrylov_IterativeSolvers
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call svds(A, U, S, V, residuals, info [, kdim] [,tolerance])
+        !!      call svds(A, U, S, V, residuals, info [, u0] [, kdim] [,tolerance] [, uwork] [, vwork])
         !!  ```
         !!
         !!  ### Arguments
@@ -1270,7 +1332,11 @@ module LightKrylov_IterativeSolvers
         !!  This implementation does not currently include an automatic restarting procedure
         !!  such as `krylov_schur` for `eigs`. This is work in progress.
         !!  @endnote
-        module subroutine svds_rsp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
+        !!
+        !!  - `uwork`, `vwork` (optional) :   Caller-provided workspace of at least `svds_work_size(nsv, kdim)` vectors each (in the spaces of `U` and `V`). It is
+        !!                          shaped with `init_like`, its content is undefined on exit, and it is
+        !!                          never freed by the solver. If absent, the solver allocates it internally.
+        module subroutine svds_rsp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate, uwork, vwork)
             implicit none(type, external)
             class(abstract_linop_rsp), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
@@ -1291,9 +1357,13 @@ module LightKrylov_IterativeSolvers
             !! Tolerance.
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
+            class(abstract_vector_rsp), optional, intent(inout), target :: uwork(:)
+            !! Workspace (optional) in the space of `U`, of at least `svds_work_size(nsv, kdim)` vectors.
+            class(abstract_vector_rsp), optional, intent(inout), target :: vwork(:)
+            !! Workspace (optional) in the space of `V`, of at least `svds_work_size(nsv, kdim)` vectors.
         end subroutine svds_rsp
 
-        module subroutine svds_rdp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
+        module subroutine svds_rdp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate, uwork, vwork)
             implicit none(type, external)
             class(abstract_linop_rdp), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
@@ -1314,9 +1384,13 @@ module LightKrylov_IterativeSolvers
             !! Tolerance.
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
+            class(abstract_vector_rdp), optional, intent(inout), target :: uwork(:)
+            !! Workspace (optional) in the space of `U`, of at least `svds_work_size(nsv, kdim)` vectors.
+            class(abstract_vector_rdp), optional, intent(inout), target :: vwork(:)
+            !! Workspace (optional) in the space of `V`, of at least `svds_work_size(nsv, kdim)` vectors.
         end subroutine svds_rdp
 
-        module subroutine svds_csp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
+        module subroutine svds_csp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate, uwork, vwork)
             implicit none(type, external)
             class(abstract_linop_csp), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
@@ -1337,9 +1411,13 @@ module LightKrylov_IterativeSolvers
             !! Tolerance.
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
+            class(abstract_vector_csp), optional, intent(inout), target :: uwork(:)
+            !! Workspace (optional) in the space of `U`, of at least `svds_work_size(nsv, kdim)` vectors.
+            class(abstract_vector_csp), optional, intent(inout), target :: vwork(:)
+            !! Workspace (optional) in the space of `V`, of at least `svds_work_size(nsv, kdim)` vectors.
         end subroutine svds_csp
 
-        module subroutine svds_cdp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate)
+        module subroutine svds_cdp(A, U, S, V, residuals, info, u0, kdim, tolerance, write_intermediate, uwork, vwork)
             implicit none(type, external)
             class(abstract_linop_cdp), intent(inout) :: A
             !! Linear operator whose leading singular triplets need to be computed.
@@ -1360,6 +1438,10 @@ module LightKrylov_IterativeSolvers
             !! Tolerance.
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
+            class(abstract_vector_cdp), optional, intent(inout), target :: uwork(:)
+            !! Workspace (optional) in the space of `U`, of at least `svds_work_size(nsv, kdim)` vectors.
+            class(abstract_vector_cdp), optional, intent(inout), target :: vwork(:)
+            !! Workspace (optional) in the space of `V`, of at least `svds_work_size(nsv, kdim)` vectors.
         end subroutine svds_cdp
 
     end interface
@@ -1393,7 +1475,7 @@ module LightKrylov_IterativeSolvers
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call eighs(A, X, eigvals, residuals, info [, kdim] [,tolerance])
+        !!      call eighs(A, X, eigvals, residuals, info [, x0] [, kdim] [,tolerance] [, work])
         !!  ```
         !!
         !!  ### Arguments
@@ -1425,7 +1507,11 @@ module LightKrylov_IterativeSolvers
         !!  This implementation does not currently include an automatic restarting procedure
         !!  such as `krylov_schur` for `eigs`. This is work in progress.
         !!  @endnote
-        module subroutine eighs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
+        !!
+        !!  - `work` (optional) :   Caller-provided workspace of at least `eighs_work_size(nev, kdim)` vectors. It is
+        !!                          shaped with `init_like`, its content is undefined on exit, and it is
+        !!                          never freed by the solver. If absent, the solver allocates it internally.
+        module subroutine eighs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate, work)
             implicit none(type, external)
             class(abstract_sym_linop_rsp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
@@ -1445,9 +1531,12 @@ module LightKrylov_IterativeSolvers
             !! Tolerance
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
+            class(abstract_vector_rsp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `eighs_work_size(nev, kdim)` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine eighs_rsp
 
-        module subroutine eighs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
+        module subroutine eighs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate, work)
             implicit none(type, external)
             class(abstract_sym_linop_rdp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
@@ -1467,9 +1556,12 @@ module LightKrylov_IterativeSolvers
             !! Tolerance
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
+            class(abstract_vector_rdp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `eighs_work_size(nev, kdim)` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine eighs_rdp
 
-        module subroutine eighs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
+        module subroutine eighs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate, work)
             implicit none(type, external)
             class(abstract_hermitian_linop_csp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
@@ -1489,9 +1581,12 @@ module LightKrylov_IterativeSolvers
             !! Tolerance
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
+            class(abstract_vector_csp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `eighs_work_size(nev, kdim)` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine eighs_csp
 
-        module subroutine eighs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate)
+        module subroutine eighs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, write_intermediate, work)
             implicit none(type, external)
             class(abstract_hermitian_linop_cdp), intent(inout) :: A
             !! Linear operator whose leading eigenpairs need to be computed.
@@ -1511,6 +1606,9 @@ module LightKrylov_IterativeSolvers
             !! Tolerance
             logical, optional, intent(in) :: write_intermediate
             !! Write intermediate eigenvalues to file during iteration?
+            class(abstract_vector_cdp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `eighs_work_size(nev, kdim)` vectors, allocated by the caller.
+            !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
         end subroutine eighs_cdp
 
     end interface
@@ -1575,7 +1673,7 @@ module LightKrylov_IterativeSolvers
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call eigs(A, X, eigvals, residuals, info [, kdim] [, select] [,tolerance] [, transpose])
+        !!      call eigs(A, X, eigvals, residuals, info [, x0] [, kdim] [,tolerance] [, transpose] [, work])
         !!  ```
         !!
         !!  ### Arguments
@@ -1609,6 +1707,11 @@ module LightKrylov_IterativeSolvers
         !!  - `transpose` (*optional*)  :   `logical` flag determining whether the eigenvalues of \(A\)
         !!                                  or \(A^H\) need to be computed. It is an optional `intent(in)`
         !!                                  argument.
+        !!
+        !!  - `work` (optional) :   Caller-provided workspace of at least `eigs_work_size(nev, kdim)` vectors
+        !!                          (Krylov basis plus Krylov-Schur restart). It is shaped with `init_like`,
+        !!                          its content is undefined on exit, and it is never freed by the solver.
+        !!                          If absent, the solver allocates it internally.
         module procedure eigs_rsp
         module procedure eigs_rdp
         module procedure eigs_csp
@@ -1616,6 +1719,63 @@ module LightKrylov_IterativeSolvers
     end interface
 
 contains
+
+    !------------------------------------------------
+    !-----     WORKSPACE SIZE QUERIES             -----
+    !------------------------------------------------
+
+    pure integer function gmres_work_size(kdim) result(nwork)
+        !! Number of vectors required in the `work` argument of `gmres`: `kdim + 2`
+        !! (Krylov basis of dimension `kdim + 1` and one work vector).
+        integer, optional, intent(in) :: kdim
+        !! Krylov subspace dimension, i.e. `opts%kdim` (default: the `gmres_opts` default).
+        type(gmres_dp_opts) :: defaults
+        nwork = optval(kdim, defaults%kdim) + 2
+    end function gmres_work_size
+
+    pure integer function fgmres_work_size(kdim) result(nwork)
+        !! Number of vectors required in the `work` argument of `fgmres`: `2*kdim + 2`
+        !! (Krylov basis and preconditioned basis, each of dimension `kdim + 1`).
+        integer, optional, intent(in) :: kdim
+        !! Krylov subspace dimension, i.e. `opts%kdim` (default: the `fgmres_opts` default).
+        type(fgmres_dp_opts) :: defaults
+        nwork = 2*optval(kdim, defaults%kdim) + 2
+    end function fgmres_work_size
+
+    pure integer function cg_work_size() result(nwork)
+        !! Number of vectors required in the `work` argument of `cg`: 4
+        !! (residual, search direction, its image by `A`, and preconditioned residual).
+        nwork = 4
+    end function cg_work_size
+
+    pure integer function eigs_work_size(nev, kdim) result(nwork)
+        !! Number of vectors required in the `work` argument of `eigs`: `2*kdim + 1`
+        !! (Krylov basis of dimension `kdim + 1` and `kdim` vectors for the Krylov-Schur restart).
+        integer, intent(in) :: nev
+        !! Number of requested eigenpairs, i.e. `size(X)`.
+        integer, optional, intent(in) :: kdim
+        !! Krylov subspace dimension (default `4*nev`, as in `eigs`).
+        nwork = 2*optval(kdim, 4*nev) + 1
+    end function eigs_work_size
+
+    pure integer function eighs_work_size(nev, kdim) result(nwork)
+        !! Number of vectors required in the `work` argument of `eighs`: `kdim + 1`.
+        integer, intent(in) :: nev
+        !! Number of requested eigenpairs, i.e. `size(X)`.
+        integer, optional, intent(in) :: kdim
+        !! Krylov subspace dimension (default `4*nev`, as in `eighs`).
+        nwork = optval(kdim, 4*nev) + 1
+    end function eighs_work_size
+
+    pure integer function svds_work_size(nsv, kdim) result(nwork)
+        !! Number of vectors required in **each** of the `uwork` and `vwork` arguments of `svds`:
+        !! `kdim + 1`.
+        integer, intent(in) :: nsv
+        !! Number of requested singular triplets, i.e. `size(U)`.
+        integer, optional, intent(in) :: kdim
+        !! Krylov subspace dimension (default `4*nsv`, as in `svds`).
+        nwork = optval(kdim, 4*nsv) + 1
+    end function svds_work_size
 
     !-------------------------------------
     !-----     UTILITY FUNCTIONS     -----
@@ -1864,7 +2024,7 @@ contains
     !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
     !---------------------------------------------------
 
-    subroutine eigs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
+    subroutine eigs_rsp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate, work)
         implicit none(type, external)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
@@ -1886,13 +2046,18 @@ contains
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
         logical, optional, intent(in) :: write_intermediate
         !! Write intermediate eigenvalues to file during iteration?
+        class(abstract_vector_rsp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `eigs_work_size(nev, kdim)` vectors, allocated by the caller.
+        !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
 
         !--------------------------------------
         !-----     Internal variables     -----
         !--------------------------------------
 
-        ! Krylov subspace and Krylov subspace dimension.
-        class(abstract_vector_rsp), allocatable :: Xwrk(:)
+        ! Krylov subspace (points into the workspace) and Krylov subspace dimension.
+        class(abstract_vector_rsp), allocatable, target :: wloc(:)
+        class(abstract_vector_rsp), pointer :: Xwrk(:), KSwrk(:)
+        integer :: nwork
         integer :: kdim_, kstart
         ! Hessenberg matrix.
         real(sp), allocatable :: H(:, :)
@@ -1921,10 +2086,18 @@ contains
         allocate(eigvals(nev), source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Xwrk, X(1))
+        ! Workspace: Krylov basis (kdim_+1 vectors) followed by the Krylov-Schur restart
+        ! basis (kdim_ vectors). User-provided, or allocated here and released at exit.
+        nwork = eigs_work_size(nev, kdim_)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, X(1), this_module, this_procedure)
+            Xwrk => work(1:kdim_+1) ; KSwrk => work(kdim_+2:nwork)
+        else
+            allocate(wloc(nwork), mold=X(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, X(1))
+            Xwrk => wloc(1:kdim_+1) ; KSwrk => wloc(kdim_+2:nwork)
+        endif
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -1987,7 +2160,7 @@ contains
             call log_information(msg, this_module, this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
-            call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
+            call krylov_schur(kstart, Xwrk, H, median_selector, work=KSwrk) ; kstart = kstart + 1
 
         end do krylovschur
 
@@ -2022,7 +2195,8 @@ contains
         enddo
 
         ! Cleanup.
-        call free_basis(Xwrk)
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(Xwrk, KSwrk)
         
         info = niter
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -2035,7 +2209,7 @@ contains
         end function median_selector
     end subroutine eigs_rsp
 
-    subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
+    subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate, work)
         implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
@@ -2057,13 +2231,18 @@ contains
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
         logical, optional, intent(in) :: write_intermediate
         !! Write intermediate eigenvalues to file during iteration?
+        class(abstract_vector_rdp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `eigs_work_size(nev, kdim)` vectors, allocated by the caller.
+        !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
 
         !--------------------------------------
         !-----     Internal variables     -----
         !--------------------------------------
 
-        ! Krylov subspace and Krylov subspace dimension.
-        class(abstract_vector_rdp), allocatable :: Xwrk(:)
+        ! Krylov subspace (points into the workspace) and Krylov subspace dimension.
+        class(abstract_vector_rdp), allocatable, target :: wloc(:)
+        class(abstract_vector_rdp), pointer :: Xwrk(:), KSwrk(:)
+        integer :: nwork
         integer :: kdim_, kstart
         ! Hessenberg matrix.
         real(dp), allocatable :: H(:, :)
@@ -2092,10 +2271,18 @@ contains
         allocate(eigvals(nev), source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Xwrk, X(1))
+        ! Workspace: Krylov basis (kdim_+1 vectors) followed by the Krylov-Schur restart
+        ! basis (kdim_ vectors). User-provided, or allocated here and released at exit.
+        nwork = eigs_work_size(nev, kdim_)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, X(1), this_module, this_procedure)
+            Xwrk => work(1:kdim_+1) ; KSwrk => work(kdim_+2:nwork)
+        else
+            allocate(wloc(nwork), mold=X(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, X(1))
+            Xwrk => wloc(1:kdim_+1) ; KSwrk => wloc(kdim_+2:nwork)
+        endif
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2158,7 +2345,7 @@ contains
             call log_information(msg, this_module, this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
-            call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
+            call krylov_schur(kstart, Xwrk, H, median_selector, work=KSwrk) ; kstart = kstart + 1
 
         end do krylovschur
 
@@ -2193,7 +2380,8 @@ contains
         enddo
 
         ! Cleanup.
-        call free_basis(Xwrk)
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(Xwrk, KSwrk)
         
         info = niter
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -2206,7 +2394,7 @@ contains
         end function median_selector
     end subroutine eigs_rdp
 
-    subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
+    subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate, work)
         implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
@@ -2228,13 +2416,18 @@ contains
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
         logical, optional, intent(in) :: write_intermediate
         !! Write intermediate eigenvalues to file during iteration?
+        class(abstract_vector_csp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `eigs_work_size(nev, kdim)` vectors, allocated by the caller.
+        !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
 
         !--------------------------------------
         !-----     Internal variables     -----
         !--------------------------------------
 
-        ! Krylov subspace and Krylov subspace dimension.
-        class(abstract_vector_csp), allocatable :: Xwrk(:)
+        ! Krylov subspace (points into the workspace) and Krylov subspace dimension.
+        class(abstract_vector_csp), allocatable, target :: wloc(:)
+        class(abstract_vector_csp), pointer :: Xwrk(:), KSwrk(:)
+        integer :: nwork
         integer :: kdim_, kstart
         ! Hessenberg matrix.
         complex(sp), allocatable :: H(:, :)
@@ -2262,10 +2455,18 @@ contains
         allocate(eigvals(nev), source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Xwrk, X(1))
+        ! Workspace: Krylov basis (kdim_+1 vectors) followed by the Krylov-Schur restart
+        ! basis (kdim_ vectors). User-provided, or allocated here and released at exit.
+        nwork = eigs_work_size(nev, kdim_)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, X(1), this_module, this_procedure)
+            Xwrk => work(1:kdim_+1) ; KSwrk => work(kdim_+2:nwork)
+        else
+            allocate(wloc(nwork), mold=X(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, X(1))
+            Xwrk => wloc(1:kdim_+1) ; KSwrk => wloc(kdim_+2:nwork)
+        endif
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2319,7 +2520,7 @@ contains
             call log_information(msg, this_module, this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
-            call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
+            call krylov_schur(kstart, Xwrk, H, median_selector, work=KSwrk) ; kstart = kstart + 1
 
         end do krylovschur
 
@@ -2354,7 +2555,8 @@ contains
         enddo
 
         ! Cleanup.
-        call free_basis(Xwrk)
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(Xwrk, KSwrk)
         
         info = niter
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -2367,7 +2569,7 @@ contains
         end function median_selector
     end subroutine eigs_csp
 
-    subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
+    subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate, work)
         implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose leading eigenpairs need to be computed.
@@ -2389,13 +2591,18 @@ contains
         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
         logical, optional, intent(in) :: write_intermediate
         !! Write intermediate eigenvalues to file during iteration?
+        class(abstract_vector_cdp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `eigs_work_size(nev, kdim)` vectors, allocated by the caller.
+        !! It is shaped with `init_like` and its content is undefined on exit; it is never freed here.
 
         !--------------------------------------
         !-----     Internal variables     -----
         !--------------------------------------
 
-        ! Krylov subspace and Krylov subspace dimension.
-        class(abstract_vector_cdp), allocatable :: Xwrk(:)
+        ! Krylov subspace (points into the workspace) and Krylov subspace dimension.
+        class(abstract_vector_cdp), allocatable, target :: wloc(:)
+        class(abstract_vector_cdp), pointer :: Xwrk(:), KSwrk(:)
+        integer :: nwork
         integer :: kdim_, kstart
         ! Hessenberg matrix.
         complex(dp), allocatable :: H(:, :)
@@ -2423,10 +2630,18 @@ contains
         allocate(eigvals(nev), source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Xwrk, X(1))
+        ! Workspace: Krylov basis (kdim_+1 vectors) followed by the Krylov-Schur restart
+        ! basis (kdim_ vectors). User-provided, or allocated here and released at exit.
+        nwork = eigs_work_size(nev, kdim_)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, X(1), this_module, this_procedure)
+            Xwrk => work(1:kdim_+1) ; KSwrk => work(kdim_+2:nwork)
+        else
+            allocate(wloc(nwork), mold=X(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, X(1))
+            Xwrk => wloc(1:kdim_+1) ; KSwrk => wloc(kdim_+2:nwork)
+        endif
         call zero_basis(Xwrk)
 
         if (present(x0)) then
@@ -2480,7 +2695,7 @@ contains
             call log_information(msg, this_module, this_procedure)
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
-            call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
+            call krylov_schur(kstart, Xwrk, H, median_selector, work=KSwrk) ; kstart = kstart + 1
 
         end do krylovschur
 
@@ -2515,7 +2730,8 @@ contains
         enddo
 
         ! Cleanup.
-        call free_basis(Xwrk)
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(Xwrk, KSwrk)
         
         info = niter
         if (time_lightkrylov()) call timer%stop(this_procedure)

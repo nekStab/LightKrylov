@@ -64,6 +64,7 @@ module LightKrylov
     public :: linear_combination
     public :: axpby_basis
     public :: zero_basis
+    public :: init_like_basis, free_basis, prepare_workspace
     public :: copy
     public :: rand_basis
     public :: verify_vector_axioms
@@ -126,6 +127,7 @@ module LightKrylov
     public :: bidiagonalization
     public :: lanczos
     public :: krylov_schur
+    public :: krylov_schur_work_size, biorthonormalize_work_size
     public :: ssy
 
     ! IterativeSolvers exports.
@@ -150,9 +152,12 @@ module LightKrylov
     public :: fgmres_csp
     public :: fgmres_cdp
     public :: cg
+    public :: eigs_work_size, eighs_work_size, svds_work_size
+    public :: gmres_work_size, fgmres_work_size, cg_work_size
 
     ! Newton-Krylov exports.
     public :: newton
+    public :: newton_work_size
     public :: constant_tol_sp, dynamic_tol_sp
     public :: constant_tol_dp, dynamic_tol_dp
 
@@ -162,6 +167,7 @@ module LightKrylov
     public :: abstract_exptA_csp
     public :: abstract_exptA_cdp
     public :: kexpm
+    public :: kexpm_work_size
     public :: krylov_exptA
 
     ! Timer exports

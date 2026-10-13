@@ -19,6 +19,7 @@ module LightKrylov_NewtonKrylov
     character(len=*), parameter :: this_module_long = 'LightKrylov_NewtonKrylov'
 
     public :: newton
+    public :: newton_work_size
     #:for kind in REAL_KINDS
     public :: constant_tol_${kind}$
     public :: dynamic_tol_${kind}$
@@ -134,6 +135,15 @@ module LightKrylov_NewtonKrylov
         !! - Frantz, R. A., Loiseau, J. C., & Robinet, J. C. (2023). "Krylov methods for
         !!   large-scale dynamical systems: Application in fluid dynamics". Applied Mechanics
         !!   Reviews, 75(3), 030802.
+        !!
+        !! **Workspace**
+        !!
+        !! The optional `work(:)` argument holds `newton_work_size(nwork_solver)` vectors provided by
+        !! the caller: the first 3 are used by the Newton iteration itself (residual, increment and
+        !! step-bisection backup), and the remaining ones are forwarded to the linear solver as its
+        !! own `work` argument (e.g. `nwork_solver = gmres_work_size(kdim)`). The workspace is shaped
+        !! with `init_like`, its content is undefined on exit, and it is never freed. If absent, the
+        !! Newton work vectors are allocated internally and the linear solver allocates its own.
         #:for kind, type in RC_KINDS_TYPES
         module procedure newton_${type[0]}$${kind}$
         #:endfor
@@ -161,6 +171,15 @@ module LightKrylov_NewtonKrylov
     end interface
 
 contains
+
+    pure integer function newton_work_size(nwork_solver) result(nwork)
+        !! Number of vectors required in the `work` argument of `newton`: 3 for the Newton
+        !! iteration itself plus the workspace of the linear solver, which receives the rest.
+        integer, intent(in) :: nwork_solver
+        !! Workspace size of the linear solver, e.g. `gmres_work_size(kdim)`.
+        nwork = 3 + nwork_solver
+    end function newton_work_size
+
     !------------------------------------------------------
     !-----     TYPE BOUND PROCEDURES FOR METADATA     -----
     !------------------------------------------------------
@@ -243,7 +262,7 @@ contains
 
     #:endfor
     #:for kind, type in RC_KINDS_TYPES
-    subroutine newton_${type[0]}$${kind}$(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta)
+    subroutine newton_${type[0]}$${kind}$(sys, X, solver, info, rtol, atol, options, linear_solver_options, preconditioner, scheduler, meta, work)
         class(abstract_system_${type[0]}$${kind}$),                         intent(inout) :: sys
         !! Dynamical system for which we wish to compute a fixed point
         class(abstract_vector_${type[0]}$${kind}$),                         intent(inout) :: X
@@ -267,14 +286,19 @@ contains
         procedure(abstract_scheduler_${kind}$),         optional                :: scheduler
         class(abstract_metadata),                       optional,   intent(out) :: meta
         !! Metadata.
+        class(abstract_vector_${type[0]}$${kind}$), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `newton_work_size(nwork_solver)` vectors.
 
         !--------------------------------------
         !-----     Internal variables     -----
         !--------------------------------------
 
         character(len=*), parameter :: this_procedure = 'newton_${type[0]}$${kind}$'
+        integer, parameter :: nwork_newton = 3
         procedure(abstract_scheduler_${kind}$),      pointer :: tolerance_scheduler => null()
-        class(abstract_vector_${type[0]}$${kind}$), allocatable        :: residual, increment
+        ! Work vectors (pointers into `work` or into `wloc`).
+        class(abstract_vector_${type[0]}$${kind}$), allocatable, target :: wloc(:)
+        class(abstract_vector_${type[0]}$${kind}$), pointer :: residual, increment, Xin
         real(${kind}$)           :: rnorm, tol, target_tol
         integer            :: i, maxiter, maxstep_bisection, iostat
         type(newton_${kind}$_metadata) :: newton_meta
@@ -303,15 +327,18 @@ contains
         info = 0
         maxiter = opts%maxiter
         maxstep_bisection = opts%maxstep_bisection
-        ! local variables
-        allocate(residual, mold=X, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call residual%init_like(X)
-        call residual%zero()
-        allocate(increment,mold=X, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call increment%init_like(X)
-        call increment%zero()
+        ! Newton work vectors: user-provided (first 3 vectors of `work`), or allocated here
+        ! and released at exit. The rest of `work` is forwarded to the linear solver.
+        if (present(work)) then
+            call prepare_workspace(work, nwork_newton, X, this_module, this_procedure)
+            residual => work(1) ; increment => work(2) ; Xin => work(3)
+        else
+            allocate(wloc(nwork_newton), mold=X, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, X)
+            residual => wloc(1) ; increment => wloc(2) ; Xin => wloc(3)
+        endif
+        call residual%zero() ; call increment%zero()
         ! inout arguments
         if (.not. allocated(sys%jacobian%X)) then
             allocate(sys%jacobian%X, mold=X, stat=iostat, errmsg=msg)
@@ -357,13 +384,19 @@ contains
 
                 ! Solve the linear system using GMRES.
                 call residual%chsgn(); call increment%zero()
-                call solver(sys%jacobian, residual, increment, info, atol=tol, &
-                    & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
+                if (present(work)) then
+                    call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                        & preconditioner=preconditioner, options=linear_solver_options, transpose=.false., &
+                        & work=work(nwork_newton+1:))
+                else
+                    call solver(sys%jacobian, residual, increment, info, atol=tol, &
+                        & preconditioner=preconditioner, options=linear_solver_options, transpose=.false.)
+                endif
                 call check_info(info, 'linear_solver', this_module, this_procedure)
 
                 ! Update the solution and overwrite X0
                 if (opts%ifbisect) then
-                    call increment_bisection_${type[0]}$${kind}$(X, sys, increment, rnorm, tol, maxstep_bisection)
+                    call increment_bisection_${type[0]}$${kind}$(X, sys, increment, rnorm, tol, maxstep_bisection, Xin, residual)
                 else
                     call X%add(increment)
                 endif
@@ -424,8 +457,9 @@ contains
 
         call sys%reset_eval_counter('newton%post')
 
-        ! Release the work vectors.
-        call residual%free() ; call increment%free()
+        ! Release the work vectors created by this routine (never a caller-provided workspace).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(residual, increment, Xin)
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine newton_${type[0]}$${kind}$
@@ -433,7 +467,7 @@ contains
     #:endfor
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine increment_bisection_${type[0]}$${kind}$(X, sys, increment, rold, tol, maxstep)
+    subroutine increment_bisection_${type[0]}$${kind}$(X, sys, increment, rold, tol, maxstep, Xin, residual)
         !! Classic 1D bisection method based on the golden ratio to damped the Newton step in
         !! order to maximally reduce the residual at each iteration.
         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X
@@ -451,7 +485,7 @@ contains
 
         ! internals
         character(len=*), parameter :: this_procedure = 'increment_bisection_${type[0]}$${kind}$'
-        integer :: i, j, idx(1), iostat
+        integer :: i, j, idx(1)
         real(${kind}$) :: invphi, invphi2
         #:if type[0] == "c"
         complex(${kind}$) :: alpha(4), step
@@ -459,13 +493,13 @@ contains
         real(${kind}$) :: alpha(4), step
         #:endif
         real(${kind}$) :: res(4)
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xin, residual
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: Xin
+        !! Work vector (backup of the current state), provided by `newton`.
+        class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: residual
+        !! Work vector for residual evaluations, provided by `newton` (its content is overwritten).
         character(len=256) :: msg
 
-        allocate(Xin, residual, mold=X, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
         call copy(Xin, X)
-        call residual%init_like(X)
         call residual%zero()
         step    = one_${type[0]}$${kind}$
         invphi  = (sqrt(5.0_${kind}$) - 1.0_${kind}$)/2.0_${kind}$  ! 1 / phi
@@ -538,9 +572,6 @@ contains
             write(msg,'(A)') 'Full Newton step reduces the residual. Skip bisection.'
             call log_information(msg, this_module, this_procedure)
         end if
-
-        ! Release the work vectors.
-        call Xin%free() ; call residual%free()
     end subroutine increment_bisection_${type[0]}$${kind}$
 
     #:endfor

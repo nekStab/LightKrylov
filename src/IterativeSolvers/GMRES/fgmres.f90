@@ -114,7 +114,11 @@ contains
         type(fgmres_sp_metadata) :: fgmres_meta
 
         ! Krylov subspace
-        class(abstract_vector_rsp), allocatable :: V(:), Z(:)
+        ! Workspace: Krylov subspace and preconditioned subspace (pointers into `work` or 
+        ! into `wloc`).
+        class(abstract_vector_rsp), allocatable, target :: wloc(:)
+        class(abstract_vector_rsp), pointer :: V(:), Z(:)
+        integer :: nwork
         ! Hessenberg matrix.
         real(sp), allocatable :: H(:, :)
         ! Least-squares variables.
@@ -127,7 +131,6 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'fgmres_rsp'
         integer :: i, k, iostat
-        class(abstract_vector_rsp), allocatable :: wrk
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -150,17 +153,18 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call wrk%init_like(b)
-        call wrk%zero()
-        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(V, b)
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = fgmres_work_size(kdim)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            V => work(1:kdim+1) ; Z => work(kdim+2:nwork)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            V => wloc(1:kdim+1) ; Z => wloc(kdim+2:nwork)
+        endif
         call zero_basis(V)
-        allocate(Z(kdim+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Z, b)
         call zero_basis(Z)
         allocate(H(kdim+1, kdim), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -302,9 +306,8 @@ contains
         end if
 
         ! Cleanup
-        call wrk%free()
-        call free_basis(V)
-        call free_basis(Z)
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(V, Z)
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -319,7 +322,11 @@ contains
         type(fgmres_dp_metadata) :: fgmres_meta
 
         ! Krylov subspace
-        class(abstract_vector_rdp), allocatable :: V(:), Z(:)
+        ! Workspace: Krylov subspace and preconditioned subspace (pointers into `work` or 
+        ! into `wloc`).
+        class(abstract_vector_rdp), allocatable, target :: wloc(:)
+        class(abstract_vector_rdp), pointer :: V(:), Z(:)
+        integer :: nwork
         ! Hessenberg matrix.
         real(dp), allocatable :: H(:, :)
         ! Least-squares variables.
@@ -332,7 +339,6 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'fgmres_rdp'
         integer :: i, k, iostat
-        class(abstract_vector_rdp), allocatable :: wrk
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -355,17 +361,18 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call wrk%init_like(b)
-        call wrk%zero()
-        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(V, b)
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = fgmres_work_size(kdim)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            V => work(1:kdim+1) ; Z => work(kdim+2:nwork)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            V => wloc(1:kdim+1) ; Z => wloc(kdim+2:nwork)
+        endif
         call zero_basis(V)
-        allocate(Z(kdim+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Z, b)
         call zero_basis(Z)
         allocate(H(kdim+1, kdim), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -507,9 +514,8 @@ contains
         end if
 
         ! Cleanup
-        call wrk%free()
-        call free_basis(V)
-        call free_basis(Z)
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(V, Z)
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -524,7 +530,11 @@ contains
         type(fgmres_sp_metadata) :: fgmres_meta
 
         ! Krylov subspace
-        class(abstract_vector_csp), allocatable :: V(:), Z(:)
+        ! Workspace: Krylov subspace and preconditioned subspace (pointers into `work` or 
+        ! into `wloc`).
+        class(abstract_vector_csp), allocatable, target :: wloc(:)
+        class(abstract_vector_csp), pointer :: V(:), Z(:)
+        integer :: nwork
         ! Hessenberg matrix.
         complex(sp), allocatable :: H(:, :)
         ! Least-squares variables.
@@ -537,7 +547,6 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'fgmres_csp'
         integer :: i, k, iostat
-        class(abstract_vector_csp), allocatable :: wrk
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -560,17 +569,18 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call wrk%init_like(b)
-        call wrk%zero()
-        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(V, b)
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = fgmres_work_size(kdim)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            V => work(1:kdim+1) ; Z => work(kdim+2:nwork)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            V => wloc(1:kdim+1) ; Z => wloc(kdim+2:nwork)
+        endif
         call zero_basis(V)
-        allocate(Z(kdim+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Z, b)
         call zero_basis(Z)
         allocate(H(kdim+1, kdim), source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -712,9 +722,8 @@ contains
         end if
 
         ! Cleanup
-        call wrk%free()
-        call free_basis(V)
-        call free_basis(Z)
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(V, Z)
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -729,7 +738,11 @@ contains
         type(fgmres_dp_metadata) :: fgmres_meta
 
         ! Krylov subspace
-        class(abstract_vector_cdp), allocatable :: V(:), Z(:)
+        ! Workspace: Krylov subspace and preconditioned subspace (pointers into `work` or 
+        ! into `wloc`).
+        class(abstract_vector_cdp), allocatable, target :: wloc(:)
+        class(abstract_vector_cdp), pointer :: V(:), Z(:)
+        integer :: nwork
         ! Hessenberg matrix.
         complex(dp), allocatable :: H(:, :)
         ! Least-squares variables.
@@ -742,7 +755,6 @@ contains
         ! Miscellaneous.
         character(len=*), parameter :: this_procedure = 'fgmres_cdp'
         integer :: i, k, iostat
-        class(abstract_vector_cdp), allocatable :: wrk
         character(len=256) :: msg
 
         if (time_lightkrylov()) call timer%start(this_procedure)
@@ -765,17 +777,18 @@ contains
         trans = optval(transpose, .false.)
 
         ! Initialize working variables.
-        allocate(wrk, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call wrk%init_like(b)
-        call wrk%zero()
-        allocate(V(kdim+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(V, b)
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = fgmres_work_size(kdim)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            V => work(1:kdim+1) ; Z => work(kdim+2:nwork)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            V => wloc(1:kdim+1) ; Z => wloc(kdim+2:nwork)
+        endif
         call zero_basis(V)
-        allocate(Z(kdim+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Z, b)
         call zero_basis(Z)
         allocate(H(kdim+1, kdim), source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -917,9 +930,8 @@ contains
         end if
 
         ! Cleanup
-        call wrk%free()
-        call free_basis(V)
-        call free_basis(Z)
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(V, Z)
 
         call A%reset_counter(trans, 'fgmres%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)

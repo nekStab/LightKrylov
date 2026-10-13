@@ -411,14 +411,22 @@ contains
 
         ! apply symmetric transformation in-place
         block
-            class(abstract_vector_rsp), allocatable :: Xwrk(:)
+            class(abstract_vector_rsp), allocatable, target :: wloc(:)
+            class(abstract_vector_rsp), pointer :: Xwrk(:)
             integer :: iostat
             character(len=100) :: errmsg
 
-            ! One work basis, reused for both projections and released once.
-            allocate(Xwrk(nretain), mold=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, this_procedure)
-            call init_like_basis(Xwrk, X(1))
+            ! One work basis, reused for both projections: user-provided, or allocated here
+            ! and released once.
+            if (present(work)) then
+                call prepare_workspace(work, nretain, X(1), this_module, this_procedure)
+                Xwrk => work(1:nretain)
+            else
+                allocate(wloc(nretain), mold=X(1), stat=iostat, errmsg=errmsg)
+                call check_allocation(iostat, errmsg, this_module, this_procedure)
+                call init_like_basis(wloc, X(1))
+                Xwrk => wloc
+            endif
 
             call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
             call copy(X(:nretain), Xwrk)
@@ -427,7 +435,8 @@ contains
             call copy(Y(:nretain), Xwrk)
             call zero_basis(Y(nretain+1:))
 
-            call free_basis(Xwrk)
+            if (.not. present(work)) call free_basis(wloc)
+            nullify(Xwrk)
         end block
 
         if (present(info)) info = nretain
@@ -469,14 +478,22 @@ contains
 
         ! apply symmetric transformation in-place
         block
-            class(abstract_vector_rdp), allocatable :: Xwrk(:)
+            class(abstract_vector_rdp), allocatable, target :: wloc(:)
+            class(abstract_vector_rdp), pointer :: Xwrk(:)
             integer :: iostat
             character(len=100) :: errmsg
 
-            ! One work basis, reused for both projections and released once.
-            allocate(Xwrk(nretain), mold=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, this_procedure)
-            call init_like_basis(Xwrk, X(1))
+            ! One work basis, reused for both projections: user-provided, or allocated here
+            ! and released once.
+            if (present(work)) then
+                call prepare_workspace(work, nretain, X(1), this_module, this_procedure)
+                Xwrk => work(1:nretain)
+            else
+                allocate(wloc(nretain), mold=X(1), stat=iostat, errmsg=errmsg)
+                call check_allocation(iostat, errmsg, this_module, this_procedure)
+                call init_like_basis(wloc, X(1))
+                Xwrk => wloc
+            endif
 
             call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
             call copy(X(:nretain), Xwrk)
@@ -485,7 +502,8 @@ contains
             call copy(Y(:nretain), Xwrk)
             call zero_basis(Y(nretain+1:))
 
-            call free_basis(Xwrk)
+            if (.not. present(work)) call free_basis(wloc)
+            nullify(Xwrk)
         end block
 
         if (present(info)) info = nretain
@@ -527,14 +545,22 @@ contains
 
         ! apply symmetric transformation in-place
         block
-            class(abstract_vector_csp), allocatable :: Xwrk(:)
+            class(abstract_vector_csp), allocatable, target :: wloc(:)
+            class(abstract_vector_csp), pointer :: Xwrk(:)
             integer :: iostat
             character(len=100) :: errmsg
 
-            ! One work basis, reused for both projections and released once.
-            allocate(Xwrk(nretain), mold=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, this_procedure)
-            call init_like_basis(Xwrk, X(1))
+            ! One work basis, reused for both projections: user-provided, or allocated here
+            ! and released once.
+            if (present(work)) then
+                call prepare_workspace(work, nretain, X(1), this_module, this_procedure)
+                Xwrk => work(1:nretain)
+            else
+                allocate(wloc(nretain), mold=X(1), stat=iostat, errmsg=errmsg)
+                call check_allocation(iostat, errmsg, this_module, this_procedure)
+                call init_like_basis(wloc, X(1))
+                Xwrk => wloc
+            endif
 
             call linear_combination(Xwrk, X, matmul(hermitian(VT(:nretain, :)), diag(S(:nretain))))
             call copy(X(:nretain), Xwrk)
@@ -543,7 +569,8 @@ contains
             call copy(Y(:nretain), Xwrk)
             call zero_basis(Y(nretain+1:))
 
-            call free_basis(Xwrk)
+            if (.not. present(work)) call free_basis(wloc)
+            nullify(Xwrk)
         end block
 
         if (present(info)) info = nretain
@@ -585,14 +612,22 @@ contains
 
         ! apply symmetric transformation in-place
         block
-            class(abstract_vector_cdp), allocatable :: Xwrk(:)
+            class(abstract_vector_cdp), allocatable, target :: wloc(:)
+            class(abstract_vector_cdp), pointer :: Xwrk(:)
             integer :: iostat
             character(len=100) :: errmsg
 
-            ! One work basis, reused for both projections and released once.
-            allocate(Xwrk(nretain), mold=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, this_procedure)
-            call init_like_basis(Xwrk, X(1))
+            ! One work basis, reused for both projections: user-provided, or allocated here
+            ! and released once.
+            if (present(work)) then
+                call prepare_workspace(work, nretain, X(1), this_module, this_procedure)
+                Xwrk => work(1:nretain)
+            else
+                allocate(wloc(nretain), mold=X(1), stat=iostat, errmsg=errmsg)
+                call check_allocation(iostat, errmsg, this_module, this_procedure)
+                call init_like_basis(wloc, X(1))
+                Xwrk => wloc
+            endif
 
             call linear_combination(Xwrk, X, matmul(hermitian(VT(:nretain, :)), diag(S(:nretain))))
             call copy(X(:nretain), Xwrk)
@@ -601,7 +636,8 @@ contains
             call copy(Y(:nretain), Xwrk)
             call zero_basis(Y(nretain+1:))
 
-            call free_basis(Xwrk)
+            if (.not. present(work)) call free_basis(wloc)
+            nullify(Xwrk)
         end block
 
         if (present(info)) info = nretain

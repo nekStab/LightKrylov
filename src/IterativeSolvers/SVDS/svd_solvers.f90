@@ -53,7 +53,10 @@ contains
     module procedure svds_rsp
         ! Left and right Krylov subspaces.
         integer :: kdim_
-        class(abstract_vector_rsp), allocatable :: Uwrk(:), Vwrk(:)
+        ! Krylov bases for the column and row spans (point into `uwork`/`vwork` or into local arrays).
+        class(abstract_vector_rsp), allocatable, target :: uloc(:), vloc(:)
+        class(abstract_vector_rsp), pointer :: Uwrk(:), Vwrk(:)
+        integer :: nwork
         ! Bidiagonal matrix.
         real(sp), allocatable :: B(:, :)
         ! Working arrays for the singular vectors and singular values.
@@ -75,10 +78,17 @@ contains
         tol     = optval(tolerance, rtol_sp)
         outpost = optval(write_intermediate, .false.)
 
-        ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Uwrk, U(1))
+        ! Workspaces: user-provided, or allocated here and released at exit.
+        nwork = svds_work_size(nsv, kdim_)
+        if (present(uwork)) then
+            call prepare_workspace(uwork, nwork, U(1), this_module, this_procedure)
+            Uwrk => uwork(1:nwork)
+        else
+            allocate(uloc(nwork), mold=U(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(uloc, U(1))
+            Uwrk => uloc
+        endif
         call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
@@ -86,9 +96,15 @@ contains
         else
             call Uwrk(1)%rand(.true.)
         endif
-        allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Vwrk, V(1))
+        if (present(vwork)) then
+            call prepare_workspace(vwork, nwork, V(1), this_module, this_procedure)
+            Vwrk => vwork(1:nwork)
+        else
+            allocate(vloc(nwork), mold=V(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(vloc, V(1))
+            Vwrk => vloc
+        endif
         call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -146,8 +162,9 @@ contains
         enddo
 
         ! Cleanup
-        call free_basis(Uwrk)
-        call free_basis(Vwrk)
+        if (.not. present(uwork)) call free_basis(uloc)
+        if (.not. present(vwork)) call free_basis(vloc)
+        nullify(Uwrk, Vwrk)
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure svds_rsp
@@ -156,7 +173,10 @@ contains
     module procedure svds_rdp
         ! Left and right Krylov subspaces.
         integer :: kdim_
-        class(abstract_vector_rdp), allocatable :: Uwrk(:), Vwrk(:)
+        ! Krylov bases for the column and row spans (point into `uwork`/`vwork` or into local arrays).
+        class(abstract_vector_rdp), allocatable, target :: uloc(:), vloc(:)
+        class(abstract_vector_rdp), pointer :: Uwrk(:), Vwrk(:)
+        integer :: nwork
         ! Bidiagonal matrix.
         real(dp), allocatable :: B(:, :)
         ! Working arrays for the singular vectors and singular values.
@@ -178,10 +198,17 @@ contains
         tol     = optval(tolerance, rtol_dp)
         outpost = optval(write_intermediate, .false.)
 
-        ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Uwrk, U(1))
+        ! Workspaces: user-provided, or allocated here and released at exit.
+        nwork = svds_work_size(nsv, kdim_)
+        if (present(uwork)) then
+            call prepare_workspace(uwork, nwork, U(1), this_module, this_procedure)
+            Uwrk => uwork(1:nwork)
+        else
+            allocate(uloc(nwork), mold=U(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(uloc, U(1))
+            Uwrk => uloc
+        endif
         call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
@@ -189,9 +216,15 @@ contains
         else
             call Uwrk(1)%rand(.true.)
         endif
-        allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Vwrk, V(1))
+        if (present(vwork)) then
+            call prepare_workspace(vwork, nwork, V(1), this_module, this_procedure)
+            Vwrk => vwork(1:nwork)
+        else
+            allocate(vloc(nwork), mold=V(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(vloc, V(1))
+            Vwrk => vloc
+        endif
         call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -249,8 +282,9 @@ contains
         enddo
 
         ! Cleanup
-        call free_basis(Uwrk)
-        call free_basis(Vwrk)
+        if (.not. present(uwork)) call free_basis(uloc)
+        if (.not. present(vwork)) call free_basis(vloc)
+        nullify(Uwrk, Vwrk)
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure svds_rdp
@@ -259,7 +293,10 @@ contains
     module procedure svds_csp
         ! Left and right Krylov subspaces.
         integer :: kdim_
-        class(abstract_vector_csp), allocatable :: Uwrk(:), Vwrk(:)
+        ! Krylov bases for the column and row spans (point into `uwork`/`vwork` or into local arrays).
+        class(abstract_vector_csp), allocatable, target :: uloc(:), vloc(:)
+        class(abstract_vector_csp), pointer :: Uwrk(:), Vwrk(:)
+        integer :: nwork
         ! Bidiagonal matrix.
         complex(sp), allocatable :: B(:, :)
         ! Working arrays for the singular vectors and singular values.
@@ -281,10 +318,17 @@ contains
         tol     = optval(tolerance, rtol_sp)
         outpost = optval(write_intermediate, .false.)
 
-        ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Uwrk, U(1))
+        ! Workspaces: user-provided, or allocated here and released at exit.
+        nwork = svds_work_size(nsv, kdim_)
+        if (present(uwork)) then
+            call prepare_workspace(uwork, nwork, U(1), this_module, this_procedure)
+            Uwrk => uwork(1:nwork)
+        else
+            allocate(uloc(nwork), mold=U(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(uloc, U(1))
+            Uwrk => uloc
+        endif
         call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
@@ -292,9 +336,15 @@ contains
         else
             call Uwrk(1)%rand(.true.)
         endif
-        allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Vwrk, V(1))
+        if (present(vwork)) then
+            call prepare_workspace(vwork, nwork, V(1), this_module, this_procedure)
+            Vwrk => vwork(1:nwork)
+        else
+            allocate(vloc(nwork), mold=V(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(vloc, V(1))
+            Vwrk => vloc
+        endif
         call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -352,8 +402,9 @@ contains
         enddo
 
         ! Cleanup
-        call free_basis(Uwrk)
-        call free_basis(Vwrk)
+        if (.not. present(uwork)) call free_basis(uloc)
+        if (.not. present(vwork)) call free_basis(vloc)
+        nullify(Uwrk, Vwrk)
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure svds_csp
@@ -362,7 +413,10 @@ contains
     module procedure svds_cdp
         ! Left and right Krylov subspaces.
         integer :: kdim_
-        class(abstract_vector_cdp), allocatable :: Uwrk(:), Vwrk(:)
+        ! Krylov bases for the column and row spans (point into `uwork`/`vwork` or into local arrays).
+        class(abstract_vector_cdp), allocatable, target :: uloc(:), vloc(:)
+        class(abstract_vector_cdp), pointer :: Uwrk(:), Vwrk(:)
+        integer :: nwork
         ! Bidiagonal matrix.
         complex(dp), allocatable :: B(:, :)
         ! Working arrays for the singular vectors and singular values.
@@ -384,10 +438,17 @@ contains
         tol     = optval(tolerance, rtol_dp)
         outpost = optval(write_intermediate, .false.)
 
-        ! Allocate working variables.
-        allocate(Uwrk(kdim_+1), mold=U(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Uwrk, U(1))
+        ! Workspaces: user-provided, or allocated here and released at exit.
+        nwork = svds_work_size(nsv, kdim_)
+        if (present(uwork)) then
+            call prepare_workspace(uwork, nwork, U(1), this_module, this_procedure)
+            Uwrk => uwork(1:nwork)
+        else
+            allocate(uloc(nwork), mold=U(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(uloc, U(1))
+            Uwrk => uloc
+        endif
         call zero_basis(Uwrk)
         if (present(u0)) then
             call copy(Uwrk(1), u0)
@@ -395,9 +456,15 @@ contains
         else
             call Uwrk(1)%rand(.true.)
         endif
-        allocate(Vwrk(kdim_+1), mold=V(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Vwrk, V(1))
+        if (present(vwork)) then
+            call prepare_workspace(vwork, nwork, V(1), this_module, this_procedure)
+            Vwrk => vwork(1:nwork)
+        else
+            allocate(vloc(nwork), mold=V(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(vloc, V(1))
+            Vwrk => vloc
+        endif
         call zero_basis(Vwrk)
         allocate(svdvals_wrk(kdim_), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
@@ -455,8 +522,9 @@ contains
         enddo
 
         ! Cleanup
-        call free_basis(Uwrk)
-        call free_basis(Vwrk)
+        if (.not. present(uwork)) call free_basis(uloc)
+        if (.not. present(vwork)) call free_basis(vloc)
+        nullify(Uwrk, Vwrk)
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure svds_cdp

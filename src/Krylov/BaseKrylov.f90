@@ -50,6 +50,7 @@ module LightKrylov_BaseKrylov
     public :: initialize_krylov_subspace
     public :: initialize_random_orthonormal_basis
     public :: krylov_schur
+    public :: krylov_schur_work_size, biorthonormalize_work_size
 
     !------------------------------------
     !-----                          -----
@@ -1220,7 +1221,7 @@ module LightKrylov_BaseKrylov
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call biorthonormalize_bases(X, Y [, tol] [, info])
+        !!      call biorthonormalize_bases(X, Y [, tol] [, info] [, work])
         !!  ```
         !!
         !!  ### Arguments
@@ -1233,10 +1234,12 @@ module LightKrylov_BaseKrylov
         !!                            It is an `intent(in)` argument.
         !!  - `info` (*optional*)  :  Integer flag. Returns the number of retained singular vectors, 
         !!                            or a negative value on error. It is an `intent(out)` argument.
+        !!  - `work` (*optional*)  :  Caller-provided workspace of at least `biorthonormalize_work_size(size(X))`
+        !!                            vectors, not overlapping `X` or `Y`. If absent, it is allocated internally.
         !!  @warning
         !!      This function performs standard symmetric biorthonormalization and will return an error if the bases are not of the same size.
         !!  @endwarning
-        module subroutine biorthonormalize_bases_rsp(X, Y, tol, info)
+        module subroutine biorthonormalize_bases_rsp(X, Y, tol, info, work)
             !! Symmetrically biorthonormalizes the two `abstract_vector` bases `X` and `Y`.
             implicit none(type, external)
             class(abstract_vector_rsp), intent(inout) :: X(:)
@@ -1247,8 +1250,10 @@ module LightKrylov_BaseKrylov
             !! Relative tolerance for SVD truncation (default: abs tolerance).
             integer, optional, intent(out) :: info
             !! Number of retained singular vectors, or negative on error.
+            class(abstract_vector_rsp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `biorthonormalize_work_size(size(X))` vectors.
         end subroutine biorthonormalize_bases_rsp
-        module subroutine biorthonormalize_bases_rdp(X, Y, tol, info)
+        module subroutine biorthonormalize_bases_rdp(X, Y, tol, info, work)
             !! Symmetrically biorthonormalizes the two `abstract_vector` bases `X` and `Y`.
             implicit none(type, external)
             class(abstract_vector_rdp), intent(inout) :: X(:)
@@ -1259,8 +1264,10 @@ module LightKrylov_BaseKrylov
             !! Relative tolerance for SVD truncation (default: abs tolerance).
             integer, optional, intent(out) :: info
             !! Number of retained singular vectors, or negative on error.
+            class(abstract_vector_rdp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `biorthonormalize_work_size(size(X))` vectors.
         end subroutine biorthonormalize_bases_rdp
-        module subroutine biorthonormalize_bases_csp(X, Y, tol, info)
+        module subroutine biorthonormalize_bases_csp(X, Y, tol, info, work)
             !! Symmetrically biorthonormalizes the two `abstract_vector` bases `X` and `Y`.
             implicit none(type, external)
             class(abstract_vector_csp), intent(inout) :: X(:)
@@ -1271,8 +1278,10 @@ module LightKrylov_BaseKrylov
             !! Relative tolerance for SVD truncation (default: abs tolerance).
             integer, optional, intent(out) :: info
             !! Number of retained singular vectors, or negative on error.
+            class(abstract_vector_csp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `biorthonormalize_work_size(size(X))` vectors.
         end subroutine biorthonormalize_bases_csp
-        module subroutine biorthonormalize_bases_cdp(X, Y, tol, info)
+        module subroutine biorthonormalize_bases_cdp(X, Y, tol, info, work)
             !! Symmetrically biorthonormalizes the two `abstract_vector` bases `X` and `Y`.
             implicit none(type, external)
             class(abstract_vector_cdp), intent(inout) :: X(:)
@@ -1283,6 +1292,8 @@ module LightKrylov_BaseKrylov
             !! Relative tolerance for SVD truncation (default: abs tolerance).
             integer, optional, intent(out) :: info
             !! Number of retained singular vectors, or negative on error.
+            class(abstract_vector_cdp), optional, intent(inout), target :: work(:)
+            !! Workspace (optional) of at least `biorthonormalize_work_size(size(X))` vectors.
         end subroutine biorthonormalize_bases_cdp
     end interface biorthonormalize_bases
 
@@ -1480,7 +1491,7 @@ module LightKrylov_BaseKrylov
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call krylov_schur(n, X, H, select_eigs)
+        !!      call krylov_schur(n, X, H, select_eigs [, work])
         !!  ```
         !!
         !!  ### Arguments
@@ -1500,6 +1511,9 @@ module LightKrylov_BaseKrylov
         !!
         !!  - `select_eigs` :   Procedure to select which eigenvalues to move in the upper-left
         !!                  block. It is an `intent(inout)` argument.
+        !!
+        !!  - `work` (optional) :   Caller-provided workspace of at least `krylov_schur_work_size(size(X))`
+        !!                          vectors, not overlapping `X`. If absent, it is allocated internally.
         module procedure krylov_schur_rsp
         module procedure krylov_schur_rdp
         module procedure krylov_schur_csp
@@ -1529,11 +1543,31 @@ module LightKrylov_BaseKrylov
 
 contains
 
+    !------------------------------------------------
+    !-----     WORKSPACE SIZE QUERIES             -----
+    !------------------------------------------------
+
+    pure integer function krylov_schur_work_size(nx) result(nwork)
+        !! Number of vectors required in the `work` argument of `krylov_schur`: `nx - 1`, an upper
+        !! bound on the number of selected eigenvalues (the routine only uses as many as it selects).
+        integer, intent(in) :: nx
+        !! Size of the Krylov basis `X`.
+        nwork = max(nx - 1, 0)
+    end function krylov_schur_work_size
+
+    pure integer function biorthonormalize_work_size(nx) result(nwork)
+        !! Number of vectors required in the `work` argument of `biorthonormalize_bases`: `nx`,
+        !! an upper bound on the number of retained singular vectors.
+        integer, intent(in) :: nx
+        !! Size of the bases `X` and `Y`.
+        nwork = nx
+    end function biorthonormalize_work_size
+
     !----------------------------------------
     !-----     KRYLOV-SCHUR RESTART     -----
     !----------------------------------------
 
-    subroutine krylov_schur_rsp(n, X, H, select_eigs)
+    subroutine krylov_schur_rsp(n, X, H, select_eigs, work)
         character(len=*), parameter :: this_procedure = 'krylov_schur_rsp'
         integer, intent(out) :: n
         !! Number eigenvalues that have been moved to the upper
@@ -1544,6 +1578,10 @@ contains
         !! Upper Hessenberg matrix.
         procedure(eigvals_select_sp) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
+        class(abstract_vector_rsp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `krylov_schur_work_size(size(X))` vectors, allocated by
+        !! the caller. It must not overlap `X`. It is shaped with `init_like`, its content is
+        !! undefined on exit, and it is never freed here. If absent, it is allocated internally.
 
         ! Schur-related.
         real(sp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
@@ -1569,14 +1607,23 @@ contains
         ! Update the Hessenberg matrix and Krylov basis.
         block
             real(sp) :: b(size(H, 2))
-            class(abstract_vector_rsp), allocatable :: Xwrk(:)
+            class(abstract_vector_rsp), allocatable, target :: wloc(:)
+            class(abstract_vector_rsp), pointer :: Xwrk(:)
             integer :: iostat
             character(len=100) :: errmsg
 
+            ! Work basis of n vectors: user-provided, or allocated here and released below.
+            if (present(work)) then
+                call prepare_workspace(work, n, X(1), this_module, this_procedure)
+                Xwrk => work(1:n)
+            else
+                allocate(wloc(n), mold=X(1), stat=iostat, errmsg=errmsg)
+                call check_allocation(iostat, errmsg, this_module, this_procedure)
+                call init_like_basis(wloc, X(1))
+                Xwrk => wloc
+            endif
+
             ! Update the Krylov basis: X(:n) <- X(:kdim) Z(:, :n).
-            allocate(Xwrk(n), mold=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, this_procedure)
-            call init_like_basis(Xwrk, X(1))
             call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
             call copy(X(:n), Xwrk)
             ! Residual vector moves to position n+1 (nothing to do if it is already there).
@@ -1590,13 +1637,14 @@ contains
             H(:, n+1:) = zero_rsp
             
             ! Cleanup.
-            call free_basis(Xwrk)
+            if (.not. present(work)) call free_basis(wloc)
+            nullify(Xwrk)
         end block
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine krylov_schur_rsp
 
-    subroutine krylov_schur_rdp(n, X, H, select_eigs)
+    subroutine krylov_schur_rdp(n, X, H, select_eigs, work)
         character(len=*), parameter :: this_procedure = 'krylov_schur_rdp'
         integer, intent(out) :: n
         !! Number eigenvalues that have been moved to the upper
@@ -1607,6 +1655,10 @@ contains
         !! Upper Hessenberg matrix.
         procedure(eigvals_select_dp) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
+        class(abstract_vector_rdp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `krylov_schur_work_size(size(X))` vectors, allocated by
+        !! the caller. It must not overlap `X`. It is shaped with `init_like`, its content is
+        !! undefined on exit, and it is never freed here. If absent, it is allocated internally.
 
         ! Schur-related.
         real(dp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
@@ -1632,14 +1684,23 @@ contains
         ! Update the Hessenberg matrix and Krylov basis.
         block
             real(dp) :: b(size(H, 2))
-            class(abstract_vector_rdp), allocatable :: Xwrk(:)
+            class(abstract_vector_rdp), allocatable, target :: wloc(:)
+            class(abstract_vector_rdp), pointer :: Xwrk(:)
             integer :: iostat
             character(len=100) :: errmsg
 
+            ! Work basis of n vectors: user-provided, or allocated here and released below.
+            if (present(work)) then
+                call prepare_workspace(work, n, X(1), this_module, this_procedure)
+                Xwrk => work(1:n)
+            else
+                allocate(wloc(n), mold=X(1), stat=iostat, errmsg=errmsg)
+                call check_allocation(iostat, errmsg, this_module, this_procedure)
+                call init_like_basis(wloc, X(1))
+                Xwrk => wloc
+            endif
+
             ! Update the Krylov basis: X(:n) <- X(:kdim) Z(:, :n).
-            allocate(Xwrk(n), mold=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, this_procedure)
-            call init_like_basis(Xwrk, X(1))
             call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
             call copy(X(:n), Xwrk)
             ! Residual vector moves to position n+1 (nothing to do if it is already there).
@@ -1653,13 +1714,14 @@ contains
             H(:, n+1:) = zero_rdp
             
             ! Cleanup.
-            call free_basis(Xwrk)
+            if (.not. present(work)) call free_basis(wloc)
+            nullify(Xwrk)
         end block
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine krylov_schur_rdp
 
-    subroutine krylov_schur_csp(n, X, H, select_eigs)
+    subroutine krylov_schur_csp(n, X, H, select_eigs, work)
         character(len=*), parameter :: this_procedure = 'krylov_schur_csp'
         integer, intent(out) :: n
         !! Number eigenvalues that have been moved to the upper
@@ -1670,6 +1732,10 @@ contains
         !! Upper Hessenberg matrix.
         procedure(eigvals_select_sp) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
+        class(abstract_vector_csp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `krylov_schur_work_size(size(X))` vectors, allocated by
+        !! the caller. It must not overlap `X`. It is shaped with `init_like`, its content is
+        !! undefined on exit, and it is never freed here. If absent, it is allocated internally.
 
         ! Schur-related.
         complex(sp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
@@ -1695,14 +1761,23 @@ contains
         ! Update the Hessenberg matrix and Krylov basis.
         block
             complex(sp) :: b(size(H, 2))
-            class(abstract_vector_csp), allocatable :: Xwrk(:)
+            class(abstract_vector_csp), allocatable, target :: wloc(:)
+            class(abstract_vector_csp), pointer :: Xwrk(:)
             integer :: iostat
             character(len=100) :: errmsg
 
+            ! Work basis of n vectors: user-provided, or allocated here and released below.
+            if (present(work)) then
+                call prepare_workspace(work, n, X(1), this_module, this_procedure)
+                Xwrk => work(1:n)
+            else
+                allocate(wloc(n), mold=X(1), stat=iostat, errmsg=errmsg)
+                call check_allocation(iostat, errmsg, this_module, this_procedure)
+                call init_like_basis(wloc, X(1))
+                Xwrk => wloc
+            endif
+
             ! Update the Krylov basis: X(:n) <- X(:kdim) Z(:, :n).
-            allocate(Xwrk(n), mold=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, this_procedure)
-            call init_like_basis(Xwrk, X(1))
             call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
             call copy(X(:n), Xwrk)
             ! Residual vector moves to position n+1 (nothing to do if it is already there).
@@ -1716,13 +1791,14 @@ contains
             H(:, n+1:) = zero_csp
             
             ! Cleanup.
-            call free_basis(Xwrk)
+            if (.not. present(work)) call free_basis(wloc)
+            nullify(Xwrk)
         end block
 
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end subroutine krylov_schur_csp
 
-    subroutine krylov_schur_cdp(n, X, H, select_eigs)
+    subroutine krylov_schur_cdp(n, X, H, select_eigs, work)
         character(len=*), parameter :: this_procedure = 'krylov_schur_cdp'
         integer, intent(out) :: n
         !! Number eigenvalues that have been moved to the upper
@@ -1733,6 +1809,10 @@ contains
         !! Upper Hessenberg matrix.
         procedure(eigvals_select_dp) :: select_eigs
         !! Procedure to select the eigenvalues to move in the upper left-block.
+        class(abstract_vector_cdp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `krylov_schur_work_size(size(X))` vectors, allocated by
+        !! the caller. It must not overlap `X`. It is shaped with `init_like`, its content is
+        !! undefined on exit, and it is never freed here. If absent, it is allocated internally.
 
         ! Schur-related.
         complex(dp) :: Z(size(H, 2), size(H, 2)), T(size(H, 2), size(H, 2))
@@ -1758,14 +1838,23 @@ contains
         ! Update the Hessenberg matrix and Krylov basis.
         block
             complex(dp) :: b(size(H, 2))
-            class(abstract_vector_cdp), allocatable :: Xwrk(:)
+            class(abstract_vector_cdp), allocatable, target :: wloc(:)
+            class(abstract_vector_cdp), pointer :: Xwrk(:)
             integer :: iostat
             character(len=100) :: errmsg
 
+            ! Work basis of n vectors: user-provided, or allocated here and released below.
+            if (present(work)) then
+                call prepare_workspace(work, n, X(1), this_module, this_procedure)
+                Xwrk => work(1:n)
+            else
+                allocate(wloc(n), mold=X(1), stat=iostat, errmsg=errmsg)
+                call check_allocation(iostat, errmsg, this_module, this_procedure)
+                call init_like_basis(wloc, X(1))
+                Xwrk => wloc
+            endif
+
             ! Update the Krylov basis: X(:n) <- X(:kdim) Z(:, :n).
-            allocate(Xwrk(n), mold=X(1), stat=iostat, errmsg=errmsg)
-            call check_allocation(iostat, errmsg, this_module, this_procedure)
-            call init_like_basis(Xwrk, X(1))
             call linear_combination(Xwrk, X(:size(H, 2)), Z(:, :n))
             call copy(X(:n), Xwrk)
             ! Residual vector moves to position n+1 (nothing to do if it is already there).
@@ -1779,7 +1868,8 @@ contains
             H(:, n+1:) = zero_cdp
             
             ! Cleanup.
-            call free_basis(Xwrk)
+            if (.not. present(work)) call free_basis(wloc)
+            nullify(Xwrk)
         end block
 
         if (time_lightkrylov()) call timer%stop(this_procedure)

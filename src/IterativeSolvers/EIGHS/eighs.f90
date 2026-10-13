@@ -55,8 +55,10 @@ contains
     !--------------------------------------------------
 
     module procedure eighs_rsp
-        class(abstract_vector_rsp), allocatable :: Xwrk(:)
-        ! Krylov subspace.
+        class(abstract_vector_rsp), allocatable, target :: wloc(:)
+        class(abstract_vector_rsp), pointer :: Xwrk(:)
+        ! Krylov subspace (points into `work` or into `wloc`).
+        integer :: nwork
         integer :: kdim_
         ! Krylov subspace dimension.
         real(sp), allocatable :: T(:, :)
@@ -84,10 +86,17 @@ contains
         tol     = optval(tolerance, rtol_sp)
         outpost = optval(write_intermediate, .false.)
 
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Xwrk, X(1))
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = eighs_work_size(nev, kdim_)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, X(1), this_module, this_procedure)
+            Xwrk => work(1:nwork)
+        else
+            allocate(wloc(nwork), mold=X(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, X(1))
+            Xwrk => wloc
+        endif
         call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
@@ -153,14 +162,17 @@ contains
         info = k
 
         ! Cleanup
-        call free_basis(Xwrk)
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(Xwrk)
         
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure eighs_rsp
 
     module procedure eighs_rdp
-        class(abstract_vector_rdp), allocatable :: Xwrk(:)
-        ! Krylov subspace.
+        class(abstract_vector_rdp), allocatable, target :: wloc(:)
+        class(abstract_vector_rdp), pointer :: Xwrk(:)
+        ! Krylov subspace (points into `work` or into `wloc`).
+        integer :: nwork
         integer :: kdim_
         ! Krylov subspace dimension.
         real(dp), allocatable :: T(:, :)
@@ -188,10 +200,17 @@ contains
         tol     = optval(tolerance, rtol_dp)
         outpost = optval(write_intermediate, .false.)
 
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Xwrk, X(1))
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = eighs_work_size(nev, kdim_)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, X(1), this_module, this_procedure)
+            Xwrk => work(1:nwork)
+        else
+            allocate(wloc(nwork), mold=X(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, X(1))
+            Xwrk => wloc
+        endif
         call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
@@ -257,14 +276,17 @@ contains
         info = k
 
         ! Cleanup
-        call free_basis(Xwrk)
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(Xwrk)
         
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure eighs_rdp
 
     module procedure eighs_csp
-        class(abstract_vector_csp), allocatable :: Xwrk(:)
-        ! Krylov subspace.
+        class(abstract_vector_csp), allocatable, target :: wloc(:)
+        class(abstract_vector_csp), pointer :: Xwrk(:)
+        ! Krylov subspace (points into `work` or into `wloc`).
+        integer :: nwork
         integer :: kdim_
         ! Krylov subspace dimension.
         complex(sp), allocatable :: T(:, :)
@@ -292,10 +314,17 @@ contains
         tol     = optval(tolerance, rtol_sp)
         outpost = optval(write_intermediate, .false.)
 
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Xwrk, X(1))
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = eighs_work_size(nev, kdim_)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, X(1), this_module, this_procedure)
+            Xwrk => work(1:nwork)
+        else
+            allocate(wloc(nwork), mold=X(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, X(1))
+            Xwrk => wloc
+        endif
         call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
@@ -361,14 +390,17 @@ contains
         info = k
 
         ! Cleanup
-        call free_basis(Xwrk)
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(Xwrk)
         
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure eighs_csp
 
     module procedure eighs_cdp
-        class(abstract_vector_cdp), allocatable :: Xwrk(:)
-        ! Krylov subspace.
+        class(abstract_vector_cdp), allocatable, target :: wloc(:)
+        class(abstract_vector_cdp), pointer :: Xwrk(:)
+        ! Krylov subspace (points into `work` or into `wloc`).
+        integer :: nwork
         integer :: kdim_
         ! Krylov subspace dimension.
         complex(dp), allocatable :: T(:, :)
@@ -396,10 +428,17 @@ contains
         tol     = optval(tolerance, rtol_dp)
         outpost = optval(write_intermediate, .false.)
 
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), mold=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(Xwrk, X(1))
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = eighs_work_size(nev, kdim_)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, X(1), this_module, this_procedure)
+            Xwrk => work(1:nwork)
+        else
+            allocate(wloc(nwork), mold=X(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, X(1))
+            Xwrk => wloc
+        endif
         call zero_basis(Xwrk)
         if (present(x0)) then
             call copy(Xwrk(1), x0)
@@ -465,7 +504,8 @@ contains
         info = k
 
         ! Cleanup
-        call free_basis(Xwrk)
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(Xwrk)
         
         if (time_lightkrylov()) call timer%stop(this_procedure)
     end procedure eighs_cdp

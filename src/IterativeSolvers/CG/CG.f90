@@ -103,7 +103,11 @@ contains
         type(cg_sp_metadata) :: cg_meta
 
         ! Working variables.
-        class(abstract_vector_rsp), allocatable :: r, p, Ap, z
+        ! Residual, search direction, its image and preconditioned residual (pointers into
+        ! `work` or into `wloc`).
+        class(abstract_vector_rsp), allocatable, target :: wloc(:)
+        class(abstract_vector_rsp), pointer :: r, p, Ap, z
+        integer :: nwork
         real(sp) :: alpha, beta, r_dot_r_old, r_dot_r_new
         real(sp) :: residual
 
@@ -123,19 +127,18 @@ contains
         endif
         tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
-        ! Initialize vectors.
-        allocate(r, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call r%init_like(b)
-        call r%zero()
-        allocate(p, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call p%init_like(b)
-        call p%zero()
-        allocate(Ap, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call Ap%init_like(b)
-        call Ap%zero()
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = cg_work_size()
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            r => work(1) ; p => work(2) ; Ap => work(3) ; z => work(4)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            r => wloc(1) ; p => wloc(2) ; Ap => wloc(3) ; z => wloc(4)
+        endif
+        call r%zero() ; call p%zero() ; call Ap%zero()
 
          ! Initialize meta & reset matvec counter
         cg_meta = cg_sp_metadata()
@@ -144,12 +147,6 @@ contains
         info = 0
 
         associate(ifprecond => present(preconditioner))
-        if (ifprecond) then
-            allocate(z, mold=r, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            call z%init_like(r)
-        end if
-
         ! Compute initial residual r = b - Ax.
         if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
@@ -233,11 +230,9 @@ contains
             end select
         end if
 
-        ! Cleanup
-        if (allocated(z)) call z%free()
-        call r%free()
-        call p%free()
-        call Ap%free()
+        ! Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(r, p, Ap, z)
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -251,7 +246,11 @@ contains
         type(cg_dp_metadata) :: cg_meta
 
         ! Working variables.
-        class(abstract_vector_rdp), allocatable :: r, p, Ap, z
+        ! Residual, search direction, its image and preconditioned residual (pointers into
+        ! `work` or into `wloc`).
+        class(abstract_vector_rdp), allocatable, target :: wloc(:)
+        class(abstract_vector_rdp), pointer :: r, p, Ap, z
+        integer :: nwork
         real(dp) :: alpha, beta, r_dot_r_old, r_dot_r_new
         real(dp) :: residual
 
@@ -271,19 +270,18 @@ contains
         endif
         tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
-        ! Initialize vectors.
-        allocate(r, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call r%init_like(b)
-        call r%zero()
-        allocate(p, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call p%init_like(b)
-        call p%zero()
-        allocate(Ap, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call Ap%init_like(b)
-        call Ap%zero()
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = cg_work_size()
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            r => work(1) ; p => work(2) ; Ap => work(3) ; z => work(4)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            r => wloc(1) ; p => wloc(2) ; Ap => wloc(3) ; z => wloc(4)
+        endif
+        call r%zero() ; call p%zero() ; call Ap%zero()
 
          ! Initialize meta & reset matvec counter
         cg_meta = cg_dp_metadata()
@@ -292,12 +290,6 @@ contains
         info = 0
 
         associate(ifprecond => present(preconditioner))
-        if (ifprecond) then
-            allocate(z, mold=r, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            call z%init_like(r)
-        end if
-
         ! Compute initial residual r = b - Ax.
         if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
@@ -381,11 +373,9 @@ contains
             end select
         end if
 
-        ! Cleanup
-        if (allocated(z)) call z%free()
-        call r%free()
-        call p%free()
-        call Ap%free()
+        ! Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(r, p, Ap, z)
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -399,7 +389,11 @@ contains
         type(cg_sp_metadata) :: cg_meta
 
         ! Working variables.
-        class(abstract_vector_csp), allocatable :: r, p, Ap, z
+        ! Residual, search direction, its image and preconditioned residual (pointers into
+        ! `work` or into `wloc`).
+        class(abstract_vector_csp), allocatable, target :: wloc(:)
+        class(abstract_vector_csp), pointer :: r, p, Ap, z
+        integer :: nwork
         complex(sp) :: alpha, beta, r_dot_r_old, r_dot_r_new
         real(sp) :: residual
 
@@ -419,19 +413,18 @@ contains
         endif
         tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
-        ! Initialize vectors.
-        allocate(r, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call r%init_like(b)
-        call r%zero()
-        allocate(p, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call p%init_like(b)
-        call p%zero()
-        allocate(Ap, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call Ap%init_like(b)
-        call Ap%zero()
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = cg_work_size()
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            r => work(1) ; p => work(2) ; Ap => work(3) ; z => work(4)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            r => wloc(1) ; p => wloc(2) ; Ap => wloc(3) ; z => wloc(4)
+        endif
+        call r%zero() ; call p%zero() ; call Ap%zero()
 
          ! Initialize meta & reset matvec counter
         cg_meta = cg_sp_metadata()
@@ -440,12 +433,6 @@ contains
         info = 0
 
         associate(ifprecond => present(preconditioner))
-        if (ifprecond) then
-            allocate(z, mold=r, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            call z%init_like(r)
-        end if
-
         ! Compute initial residual r = b - Ax.
         if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
@@ -529,11 +516,9 @@ contains
             end select
         end if
 
-        ! Cleanup
-        if (allocated(z)) call z%free()
-        call r%free()
-        call p%free()
-        call Ap%free()
+        ! Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(r, p, Ap, z)
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)
@@ -547,7 +532,11 @@ contains
         type(cg_dp_metadata) :: cg_meta
 
         ! Working variables.
-        class(abstract_vector_cdp), allocatable :: r, p, Ap, z
+        ! Residual, search direction, its image and preconditioned residual (pointers into
+        ! `work` or into `wloc`).
+        class(abstract_vector_cdp), allocatable, target :: wloc(:)
+        class(abstract_vector_cdp), pointer :: r, p, Ap, z
+        integer :: nwork
         complex(dp) :: alpha, beta, r_dot_r_old, r_dot_r_new
         real(dp) :: residual
 
@@ -567,19 +556,18 @@ contains
         endif
         tol = atol_ + rtol_ * b%norm() ; maxiter = opts%maxiter
 
-        ! Initialize vectors.
-        allocate(r, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call r%init_like(b)
-        call r%zero()
-        allocate(p, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call p%init_like(b)
-        call p%zero()
-        allocate(Ap, mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call Ap%init_like(b)
-        call Ap%zero()
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = cg_work_size()
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            r => work(1) ; p => work(2) ; Ap => work(3) ; z => work(4)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            r => wloc(1) ; p => wloc(2) ; Ap => wloc(3) ; z => wloc(4)
+        endif
+        call r%zero() ; call p%zero() ; call Ap%zero()
 
          ! Initialize meta & reset matvec counter
         cg_meta = cg_dp_metadata()
@@ -588,12 +576,6 @@ contains
         info = 0
 
         associate(ifprecond => present(preconditioner))
-        if (ifprecond) then
-            allocate(z, mold=r, stat=iostat, errmsg=msg)
-            call check_allocation(iostat, msg, this_module, this_procedure)
-            call z%init_like(r)
-        end if
-
         ! Compute initial residual r = b - Ax.
         if (x%norm() > 0) call A%apply_matvec(x, r)
         call r%sub(b) ; call r%chsgn()
@@ -677,11 +659,9 @@ contains
             end select
         end if
 
-        ! Cleanup
-        if (allocated(z)) call z%free()
-        call r%free()
-        call p%free()
-        call Ap%free()
+        ! Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(r, p, Ap, z)
 
         call A%reset_counter(.false., 'cg%post')
         if (time_lightkrylov()) call timer%stop(this_procedure)

@@ -28,6 +28,7 @@ module LightKrylov_ExpmLib
     public :: abstract_exptA_csp
     public :: abstract_exptA_cdp
     public :: kexpm
+    public :: kexpm_work_size
     public :: krylov_exptA
     public :: krylov_exptA_rsp
     public :: krylov_exptA_rdp
@@ -126,7 +127,7 @@ module LightKrylov_ExpmLib
         !!  ### Syntax
         !!
         !!  ```fortran
-        !!      call kexpm(c, A, b, tau, tol, info [, trans] [, kdim])
+        !!      call kexpm(c, A, b, tau, tol, info [, trans] [, kdim] [, work])
         !!  ```
         !!
         !!  ### Arguments
@@ -147,6 +148,10 @@ module LightKrylov_ExpmLib
         !!                              (default `trans=.false.`)
         !!
         !!  - `kdim` (optional)     :   Dimension of the Krylov subspace used in the Arnoldi method.
+        !!
+        !!  - `work` (optional)     :   Caller-provided workspace of at least `kexpm_work_size(kdim [, size(B)])`
+        !!                              vectors. It is shaped with `init_like`, its content is undefined on
+        !!                              exit, and it is never freed. If absent, it is allocated internally.
         module procedure kexpm_vec_rsp
         module procedure kexpm_mat_rsp
         module procedure kexpm_vec_rdp
@@ -188,7 +193,21 @@ module LightKrylov_ExpmLib
     end interface
 
 contains
-    subroutine kexpm_vec_rsp(c, A, b, tau, tol, info, trans, kdim)
+
+    pure integer function kexpm_work_size(kdim, blksize) result(nwork)
+        !! Number of vectors required in the `work` argument of `kexpm`: `kdim + 1` for a single
+        !! vector, and `p*(kdim*p + 1)` for a block of `p = size(B)` vectors (the block variant
+        !! performs up to `kdim*p` block-Arnoldi steps).
+        integer, optional, intent(in) :: kdim
+        !! Maximum dimension of the Krylov subspace (default 100, as in `kexpm`).
+        integer, optional, intent(in) :: blksize
+        !! Number of input vectors, i.e. `size(B)` for the block variant (default 1).
+        integer :: k, p
+        k = optval(kdim, 100) ; p = optval(blksize, 1)
+        nwork = p*(k*p + 1)
+    end function kexpm_work_size
+
+    subroutine kexpm_vec_rsp(c, A, b, tau, tol, info, trans, kdim, work)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_rsp), intent(inout) :: c
@@ -206,14 +225,18 @@ contains
         !! Use transpose?
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
+        class(abstract_vector_rsp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `kexpm_work_size(kdim [, blksize])` vectors.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_rsp'
         integer, parameter :: kmax = 100
         integer :: k, km, kp, nk
-        ! Arnoldi factorization.
-        class(abstract_vector_rsp), allocatable :: X(:)
+        ! Arnoldi factorization (Krylov basis points into `work` or into `wloc`).
+        class(abstract_vector_rsp), allocatable, target :: wloc(:)
+        class(abstract_vector_rsp), pointer :: X(:)
         real(sp), allocatable :: H(:, :)
+        integer :: nwork
         ! Normaliztion & temporary arrays.
         real(sp), allocatable :: E(:, :)
         real(sp) :: err_est, beta
@@ -229,10 +252,17 @@ contains
 
         info = 0
 
-        ! Allocate & initialise arrays.
-        allocate(X(nk+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(X, b)
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = kexpm_work_size(nk)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            X => work(1:nwork)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            X => wloc
+        endif
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), source=zero_rsp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
         ! inout arguments
@@ -279,6 +309,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back into original space.
+            ! c = beta X(:kp) E(:kp, 1), computed directly into c (no temporary vector).
             call linear_combination(c, X(:kp), beta*E(:kp, 1))
         endif
 
@@ -292,11 +323,12 @@ contains
             info = -1
         endif
 
-        !> Cleanup.
-        call free_basis(X)
+        !> Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(X)
     end subroutine kexpm_vec_rsp
 
-    subroutine kexpm_mat_rsp(C, A, B, tau, tol, info, trans, kdim)
+    subroutine kexpm_mat_rsp(C, A, B, tau, tol, info, trans, kdim, work)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
         class(abstract_vector_rsp), intent(inout) :: C(:)
@@ -314,13 +346,17 @@ contains
         !! Use transpose ?
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
+        class(abstract_vector_rsp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `kexpm_work_size(kdim [, blksize])` vectors.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_rsp'
         integer, parameter :: kmax = 100
         integer :: k, p, kpm, kp, kpp, nk
-        ! Block-Arnoldi factorization.
-        class(abstract_vector_rsp), allocatable :: X(:)
+        ! Block-Arnoldi factorization (Krylov basis points into `work` or into `wloc`).
+        class(abstract_vector_rsp), allocatable, target :: wloc(:)
+        class(abstract_vector_rsp), pointer :: X(:)
+        integer :: nwork
         real(sp), allocatable :: H(:, :)
         ! Normalization & temporary arrays.
         real(sp), allocatable :: R(:, :), E(:, :)
@@ -349,9 +385,17 @@ contains
         allocate(perm(p), ptrans(p), source=0, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        allocate(X(p*(nk+1)), mold=B(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(X, B(1))
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = kexpm_work_size(nsteps, p)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, B(1), this_module, this_procedure)
+            X => work(1:nwork)
+        else
+            allocate(wloc(nwork), mold=B(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, B(1))
+            X => wloc
+        endif
 
         ! Initialize Krylov subspace.
         call copy(X(:p), B)
@@ -399,6 +443,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back to original space.
+            ! C = (X E) R = X (E R), computed directly into C (no temporary basis).
             call linear_combination(C, X(:kpp), matmul(E(:kpp, :p), R(:p, :p)))
         endif
 
@@ -412,8 +457,9 @@ contains
             info = -1
         endif
 
-        ! Cleanup.
-        call free_basis(X)
+        ! Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(X)
     end subroutine kexpm_mat_rsp
 
     subroutine krylov_exptA_rsp(vec_out, A, vec_in, tau, info, trans)
@@ -445,7 +491,7 @@ contains
         call check_info(info, 'kexpm', this_module, this_procedure)
     end subroutine krylov_exptA_rsp
 
-    subroutine kexpm_vec_rdp(c, A, b, tau, tol, info, trans, kdim)
+    subroutine kexpm_vec_rdp(c, A, b, tau, tol, info, trans, kdim, work)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_rdp), intent(inout) :: c
@@ -463,14 +509,18 @@ contains
         !! Use transpose?
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
+        class(abstract_vector_rdp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `kexpm_work_size(kdim [, blksize])` vectors.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_rdp'
         integer, parameter :: kmax = 100
         integer :: k, km, kp, nk
-        ! Arnoldi factorization.
-        class(abstract_vector_rdp), allocatable :: X(:)
+        ! Arnoldi factorization (Krylov basis points into `work` or into `wloc`).
+        class(abstract_vector_rdp), allocatable, target :: wloc(:)
+        class(abstract_vector_rdp), pointer :: X(:)
         real(dp), allocatable :: H(:, :)
+        integer :: nwork
         ! Normaliztion & temporary arrays.
         real(dp), allocatable :: E(:, :)
         real(dp) :: err_est, beta
@@ -486,10 +536,17 @@ contains
 
         info = 0
 
-        ! Allocate & initialise arrays.
-        allocate(X(nk+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(X, b)
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = kexpm_work_size(nk)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            X => work(1:nwork)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            X => wloc
+        endif
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), source=zero_rdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
         ! inout arguments
@@ -536,6 +593,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back into original space.
+            ! c = beta X(:kp) E(:kp, 1), computed directly into c (no temporary vector).
             call linear_combination(c, X(:kp), beta*E(:kp, 1))
         endif
 
@@ -549,11 +607,12 @@ contains
             info = -1
         endif
 
-        !> Cleanup.
-        call free_basis(X)
+        !> Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(X)
     end subroutine kexpm_vec_rdp
 
-    subroutine kexpm_mat_rdp(C, A, B, tau, tol, info, trans, kdim)
+    subroutine kexpm_mat_rdp(C, A, B, tau, tol, info, trans, kdim, work)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
         class(abstract_vector_rdp), intent(inout) :: C(:)
@@ -571,13 +630,17 @@ contains
         !! Use transpose ?
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
+        class(abstract_vector_rdp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `kexpm_work_size(kdim [, blksize])` vectors.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_rdp'
         integer, parameter :: kmax = 100
         integer :: k, p, kpm, kp, kpp, nk
-        ! Block-Arnoldi factorization.
-        class(abstract_vector_rdp), allocatable :: X(:)
+        ! Block-Arnoldi factorization (Krylov basis points into `work` or into `wloc`).
+        class(abstract_vector_rdp), allocatable, target :: wloc(:)
+        class(abstract_vector_rdp), pointer :: X(:)
+        integer :: nwork
         real(dp), allocatable :: H(:, :)
         ! Normalization & temporary arrays.
         real(dp), allocatable :: R(:, :), E(:, :)
@@ -606,9 +669,17 @@ contains
         allocate(perm(p), ptrans(p), source=0, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        allocate(X(p*(nk+1)), mold=B(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(X, B(1))
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = kexpm_work_size(nsteps, p)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, B(1), this_module, this_procedure)
+            X => work(1:nwork)
+        else
+            allocate(wloc(nwork), mold=B(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, B(1))
+            X => wloc
+        endif
 
         ! Initialize Krylov subspace.
         call copy(X(:p), B)
@@ -656,6 +727,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back to original space.
+            ! C = (X E) R = X (E R), computed directly into C (no temporary basis).
             call linear_combination(C, X(:kpp), matmul(E(:kpp, :p), R(:p, :p)))
         endif
 
@@ -669,8 +741,9 @@ contains
             info = -1
         endif
 
-        ! Cleanup.
-        call free_basis(X)
+        ! Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(X)
     end subroutine kexpm_mat_rdp
 
     subroutine krylov_exptA_rdp(vec_out, A, vec_in, tau, info, trans)
@@ -702,7 +775,7 @@ contains
         call check_info(info, 'kexpm', this_module, this_procedure)
     end subroutine krylov_exptA_rdp
 
-    subroutine kexpm_vec_csp(c, A, b, tau, tol, info, trans, kdim)
+    subroutine kexpm_vec_csp(c, A, b, tau, tol, info, trans, kdim, work)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_csp), intent(inout) :: c
@@ -720,14 +793,18 @@ contains
         !! Use transpose?
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
+        class(abstract_vector_csp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `kexpm_work_size(kdim [, blksize])` vectors.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_csp'
         integer, parameter :: kmax = 100
         integer :: k, km, kp, nk
-        ! Arnoldi factorization.
-        class(abstract_vector_csp), allocatable :: X(:)
+        ! Arnoldi factorization (Krylov basis points into `work` or into `wloc`).
+        class(abstract_vector_csp), allocatable, target :: wloc(:)
+        class(abstract_vector_csp), pointer :: X(:)
         complex(sp), allocatable :: H(:, :)
+        integer :: nwork
         ! Normaliztion & temporary arrays.
         complex(sp), allocatable :: E(:, :)
         real(sp) :: err_est, beta
@@ -743,10 +820,17 @@ contains
 
         info = 0
 
-        ! Allocate & initialise arrays.
-        allocate(X(nk+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(X, b)
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = kexpm_work_size(nk)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            X => work(1:nwork)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            X => wloc
+        endif
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), source=zero_csp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
         ! inout arguments
@@ -793,6 +877,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back into original space.
+            ! c = beta X(:kp) E(:kp, 1), computed directly into c (no temporary vector).
             call linear_combination(c, X(:kp), beta*E(:kp, 1))
         endif
 
@@ -806,11 +891,12 @@ contains
             info = -1
         endif
 
-        !> Cleanup.
-        call free_basis(X)
+        !> Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(X)
     end subroutine kexpm_vec_csp
 
-    subroutine kexpm_mat_csp(C, A, B, tau, tol, info, trans, kdim)
+    subroutine kexpm_mat_csp(C, A, B, tau, tol, info, trans, kdim, work)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
         class(abstract_vector_csp), intent(inout) :: C(:)
@@ -828,13 +914,17 @@ contains
         !! Use transpose ?
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
+        class(abstract_vector_csp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `kexpm_work_size(kdim [, blksize])` vectors.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_csp'
         integer, parameter :: kmax = 100
         integer :: k, p, kpm, kp, kpp, nk
-        ! Block-Arnoldi factorization.
-        class(abstract_vector_csp), allocatable :: X(:)
+        ! Block-Arnoldi factorization (Krylov basis points into `work` or into `wloc`).
+        class(abstract_vector_csp), allocatable, target :: wloc(:)
+        class(abstract_vector_csp), pointer :: X(:)
+        integer :: nwork
         complex(sp), allocatable :: H(:, :)
         ! Normalization & temporary arrays.
         complex(sp), allocatable :: R(:, :), E(:, :)
@@ -863,9 +953,17 @@ contains
         allocate(perm(p), ptrans(p), source=0, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        allocate(X(p*(nk+1)), mold=B(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(X, B(1))
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = kexpm_work_size(nsteps, p)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, B(1), this_module, this_procedure)
+            X => work(1:nwork)
+        else
+            allocate(wloc(nwork), mold=B(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, B(1))
+            X => wloc
+        endif
 
         ! Initialize Krylov subspace.
         call copy(X(:p), B)
@@ -913,6 +1011,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back to original space.
+            ! C = (X E) R = X (E R), computed directly into C (no temporary basis).
             call linear_combination(C, X(:kpp), matmul(E(:kpp, :p), R(:p, :p)))
         endif
 
@@ -926,8 +1025,9 @@ contains
             info = -1
         endif
 
-        ! Cleanup.
-        call free_basis(X)
+        ! Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(X)
     end subroutine kexpm_mat_csp
 
     subroutine krylov_exptA_csp(vec_out, A, vec_in, tau, info, trans)
@@ -959,7 +1059,7 @@ contains
         call check_info(info, 'kexpm', this_module, this_procedure)
     end subroutine krylov_exptA_csp
 
-    subroutine kexpm_vec_cdp(c, A, b, tau, tol, info, trans, kdim)
+    subroutine kexpm_vec_cdp(c, A, b, tau, tol, info, trans, kdim, work)
         !! Best approximation of \( \exp(\tau \mathbf{A}) \mathbf{b} \) in the computed Krylov subspace
         implicit none(type, external)
         class(abstract_vector_cdp), intent(inout) :: c
@@ -977,14 +1077,18 @@ contains
         !! Use transpose?
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
+        class(abstract_vector_cdp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `kexpm_work_size(kdim [, blksize])` vectors.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_vec_cdp'
         integer, parameter :: kmax = 100
         integer :: k, km, kp, nk
-        ! Arnoldi factorization.
-        class(abstract_vector_cdp), allocatable :: X(:)
+        ! Arnoldi factorization (Krylov basis points into `work` or into `wloc`).
+        class(abstract_vector_cdp), allocatable, target :: wloc(:)
+        class(abstract_vector_cdp), pointer :: X(:)
         complex(dp), allocatable :: H(:, :)
+        integer :: nwork
         ! Normaliztion & temporary arrays.
         complex(dp), allocatable :: E(:, :)
         real(dp) :: err_est, beta
@@ -1000,10 +1104,17 @@ contains
 
         info = 0
 
-        ! Allocate & initialise arrays.
-        allocate(X(nk+1), mold=b, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(X, b)
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = kexpm_work_size(nk)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, b, this_module, this_procedure)
+            X => work(1:nwork)
+        else
+            allocate(wloc(nwork), mold=b, stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, b)
+            X => wloc
+        endif
         allocate(H(nk+1, nk+1), E(nk+1, nk+1), source=zero_cdp, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
         ! inout arguments
@@ -1050,6 +1161,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back into original space.
+            ! c = beta X(:kp) E(:kp, 1), computed directly into c (no temporary vector).
             call linear_combination(c, X(:kp), beta*E(:kp, 1))
         endif
 
@@ -1063,11 +1175,12 @@ contains
             info = -1
         endif
 
-        !> Cleanup.
-        call free_basis(X)
+        !> Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(X)
     end subroutine kexpm_vec_cdp
 
-    subroutine kexpm_mat_cdp(C, A, B, tau, tol, info, trans, kdim)
+    subroutine kexpm_mat_cdp(C, A, B, tau, tol, info, trans, kdim, work)
         !! Best Krylov approximation of \( \mathbf{C} = \exp(\tau \mathbf{A}) \mathbf{B} \) in the computed Krylov subspace.
         implicit none(type, external)
         class(abstract_vector_cdp), intent(inout) :: C(:)
@@ -1085,13 +1198,17 @@ contains
         !! Use transpose ?
         integer, optional, intent(in) :: kdim
         !! Maximum size of the Krylov subspace.
+        class(abstract_vector_cdp), optional, intent(inout), target :: work(:)
+        !! Workspace (optional) of at least `kexpm_work_size(kdim [, blksize])` vectors.
 
         ! ----- Internal variables -----
         character(len=*), parameter :: this_procedure = 'kexpm_mat_cdp'
         integer, parameter :: kmax = 100
         integer :: k, p, kpm, kp, kpp, nk
-        ! Block-Arnoldi factorization.
-        class(abstract_vector_cdp), allocatable :: X(:)
+        ! Block-Arnoldi factorization (Krylov basis points into `work` or into `wloc`).
+        class(abstract_vector_cdp), allocatable, target :: wloc(:)
+        class(abstract_vector_cdp), pointer :: X(:)
+        integer :: nwork
         complex(dp), allocatable :: H(:, :)
         ! Normalization & temporary arrays.
         complex(dp), allocatable :: R(:, :), E(:, :)
@@ -1120,9 +1237,17 @@ contains
         allocate(perm(p), ptrans(p), source=0, stat=iostat, errmsg=msg)
         call check_allocation(iostat, msg, this_module, this_procedure)
 
-        allocate(X(p*(nk+1)), mold=B(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call init_like_basis(X, B(1))
+        ! Workspace: user-provided, or allocated here and released at exit.
+        nwork = kexpm_work_size(nsteps, p)
+        if (present(work)) then
+            call prepare_workspace(work, nwork, B(1), this_module, this_procedure)
+            X => work(1:nwork)
+        else
+            allocate(wloc(nwork), mold=B(1), stat=iostat, errmsg=msg)
+            call check_allocation(iostat, msg, this_module, this_procedure)
+            call init_like_basis(wloc, B(1))
+            X => wloc
+        endif
 
         ! Initialize Krylov subspace.
         call copy(X(:p), B)
@@ -1170,6 +1295,7 @@ contains
             enddo expm_arnoldi
 
             ! Project back to original space.
+            ! C = (X E) R = X (E R), computed directly into C (no temporary basis).
             call linear_combination(C, X(:kpp), matmul(E(:kpp, :p), R(:p, :p)))
         endif
 
@@ -1183,8 +1309,9 @@ contains
             info = -1
         endif
 
-        ! Cleanup.
-        call free_basis(X)
+        ! Cleanup (a caller-provided workspace is never freed here).
+        if (.not. present(work)) call free_basis(wloc)
+        nullify(X)
     end subroutine kexpm_mat_cdp
 
     subroutine krylov_exptA_cdp(vec_out, A, vec_in, tau, info, trans)
