@@ -1,7 +1,7 @@
 #:include "../../include/common.fypp"
 #:set RC_KINDS_TYPES = REAL_KINDS_TYPES + CMPLX_KINDS_TYPES
 module LightKrylov_AbstractVectors
-    !! This module provides the base class `absract_vector` from which all Krylov vectors
+    !! This module provides the base class `abstract_vector` from which all Krylov vectors
     !! needs to be derived. To use `LightKrylov`, you need to extend one of the
     !! followings:
     !!
@@ -16,7 +16,7 @@ module LightKrylov_AbstractVectors
     !! - `zero(self)`                   :   A subroutine zeroing-out the vector.
     !! - `rand(self, ifnorm)`           :   A subroutine creating a random vector, possibily normalized to have unit-norm (`ifnorm = .true.`).
     !! - `scal(self, alpha)`            :   A subroutine computing *in-place* the scalar multiplication \( \mathbf{x} \leftarrow \alpha \mathbf{x} \).
-    !! - `axpby(alpha, vec, beta, self) :   A subroutine computing *in-place* the product \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
+    !! - `axpby(alpha, vec, beta, self)`:   A subroutine computing *in-place* the product \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
     !! - `dot(self, vec)`               :   A function computing the inner product \( \alpha = \langle \mathbf{x} \vert \mathbf{y} \rangle \).
     !! - `get_size(self)`               :   A function returning the dimension \( n \) of the vector \( \mathbf{x} \).
     !! - `init_like(self, mold)`        :   A subroutine to initialize the vector after allocation to match the size and structure of the mold.
@@ -42,10 +42,15 @@ module LightKrylov_AbstractVectors
     !! - `swap(self, other)`      :   Exchange the full state of two vectors; both remain valid. Default:
     !!                                 three `assign` through a temporary vector. Override it to exchange
     !!                                 storage instead (e.g. `move_alloc`) for a copy-free swap.
-    !! - `free(self)`             :   Release unmanaged resources. Only ever called by the owner of the vector.
+    !! - `free(self)`             :   Release the storage held by the vector. Only ever called by the owner of the vector.
+    !!                                 Types holding allocatable components should override it to deallocate them,
+    !!                                 so that memory is returned immediately rather than when the object goes out of scope.
     !!
     !! `assign` and `swap` are declared on the root `abstract_vector` and take `class(abstract_vector)`
     !! arguments, so that overrides in concrete types use `select type` on the second argument.
+    !!
+    !! Any temporary vector created by the library is released explicitly, with `free` followed by
+    !! `deallocate`, rather than relying on automatic deallocation at the end of its scope.
     !!
     !! This module also provides the following utility subroutines:
     !!
@@ -56,7 +61,7 @@ module LightKrylov_AbstractVectors
     !! - `zero_basis(X)`                    : Zero-out a collection of `abstract_vectors`.
     !! - `copy(out, from)`                  : Copy a vector (or, elementally, a collection of vectors) through `assign`. `out` must be pre-allocated.
     !! - `init_like_basis(out, mold)`       : Initialize size and structure of a collection of `abstract_vectors` based on mold.
-    !! - `free_basis()         `            : Free the memory of a collection of `abstract_vectors`.
+    !! - `free_basis(X)        `            : Free the memory of a collection of `abstract_vectors`.
     !! - `rand_basis(X, ifnorm)`            : Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
     !! @warning
     !! The resulting vectors do not form an orthonormal basis. For this purpose use the utility function `initialize_random_orthonormal_basis`.
@@ -404,12 +409,13 @@ module LightKrylov_AbstractVectors
         !! Exchange the full state of two existing vectors; both remain valid.
         !! Overridable; the kind-level abstract types provide a generic default.
         procedure, pass(self), public :: free => free_abstract_vector
-        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
+        !! Releases the storage owned by `self`. Terminal: after `free`, the only
         !! valid operation on `self` is another `free` (or `init_like`). Idempotent: safe to call
-        !! on an already-freed vector. The default only clears `is_initialized`, which is correct
-        !! for types whose storage is a managed Fortran allocatable. Types holding unmanaged
-        !! resources (e.g. device buffers) override this to release them, behind a guard so the
-        !! explicit end-of-use call and any `final` backstop never double-release.
+        !! on an already-freed vector. The default only clears `is_initialized`, since the
+        !! abstract type cannot see the storage of its extensions. Concrete types should override
+        !! it to deallocate their allocatable components (as `dense_vector` does) or release
+        !! unmanaged resources (e.g. device buffers), behind a guard so the explicit end-of-use
+        !! call and any `final` backstop never double-release.
     end type abstract_vector
 
     abstract interface
@@ -582,7 +588,7 @@ module LightKrylov_AbstractVectors
     !----------------------------------------------------------------------------------
 
     type, extends(abstract_vector_${type[0]}$${kind}$), public :: dense_vector_${type[0]}$${kind}$
-        integer :: n
+        integer :: n = 0
         ${type}$, allocatable :: data(:)
     contains
         private
@@ -599,11 +605,14 @@ module LightKrylov_AbstractVectors
         procedure, pass(self), public :: get_size => dense_get_size_${type[0]}$${kind}$
         !! Return size of specific abstract vector
         procedure, pass(self), public :: init_like => dense_init_like_${type[0]}$${kind}$
-        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
+        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, 
+        !! release and reallocate if the shape differs.
         procedure, pass(self), public :: assign => dense_assign_${type[0]}$${kind}$
         !! Copy assignment through a direct array copy.
         procedure, pass(self), public :: swap => dense_swap_${type[0]}$${kind}$
         !! Copy-free swap exchanging the underlying allocations with `move_alloc`.
+        procedure, pass(self), public :: free => dense_free_${type[0]}$${kind}$
+        !! Deallocates the underlying array (idempotent).
     end type dense_vector_${type[0]}$${kind}$
     #:endfor
 
@@ -622,10 +631,9 @@ contains
 
     subroutine free_abstract_vector(self)
         implicit none(type, external)
-        !! Default `free`. Correct for types whose only storage is a managed Fortran
-        !! allocatable, which is released automatically on deallocation / scope exit. Types
-        !! holding unmanaged resources override this to release them, guarded for idempotency.
-        !! Clears the `is_initialized` flag so that the action is terminal.
+        !! Default `free`. The abstract type cannot see the storage of its extensions, so this
+        !! only clears the `is_initialized` flag (making the action terminal). Concrete types
+        !! override it to deallocate their components or release unmanaged resources.
         class(abstract_vector), intent(inout) :: self
         self%is_initialized = .false.
     end subroutine free_abstract_vector
@@ -715,7 +723,9 @@ contains
             call tmp%assign(self)
             call self%assign(other)
             call other%assign(tmp)
+            ! Release the content of the temporary, then the temporary itself.
             call tmp%free()
+            deallocate(tmp)
         class default
             call type_error('other', 'abstract_vector_${type[0]}$${kind}$', 'INOUT', this_module, &
                           & 'swap_${type[0]}$${kind}$')
@@ -734,6 +744,7 @@ contains
         ${type}$, intent(in) :: x(:)
         type(dense_vector_${type[0]}$${kind}$) :: vec
         vec%n = size(x) ; vec%data = x
+        vec%is_initialized = .true.
     end function initialize_dense_vector_from_array_${type[0]}$${kind}$
 
     subroutine dense_zero_${type[0]}$${kind}$(self)
@@ -754,15 +765,29 @@ contains
         logical, optional, intent(in) :: ifnorm
         integer :: iostat
         character(len=100) :: errmsg
-        #:if type[0] == "r"
-        call random_number(self%data)
-        #:else
+        #:if type[0] == "c"
         real(${kind}$), allocatable :: y(:, :)
+        #:endif
+
+        ! Make sure the storage exists (same convention as `dense_zero`).
+        if (.not. allocated(self%data)) then
+            allocate(self%data(self%n), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_rand_${type[0]}$${kind}$")
+        endif
+
+        ! Fill with random entries.
+        #:if type[0] == "r"
+        call random_number(self%data); self%data = 2.0_${kind}$*self%data - 1.0_${kind}$
+        #:else
         allocate(y(size(self%data), 2), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "dense_rand_${type[0]}$${kind}$")
         call random_number(y)
-        self%data%re = y(:, 1) ; self%data%im = y(:, 2)
+        self%data%re = 2.0_${kind}$*y(:, 1) - 1.0_${kind}$ ; self%data%im = 2.0_${kind}$*y(:, 2) - 1.0_${kind}$
+        deallocate(y)
         #:endif
+
+        ! Normalize if requested.
+        if (optval(ifnorm, .false.)) call self%scal(one_${type[0]}$${kind}$ / self%norm())
     end subroutine dense_rand_${type[0]}$${kind}$
 
     subroutine dense_scal_${type[0]}$${kind}$(self, alpha)
@@ -785,9 +810,10 @@ contains
         if(.not. allocated(self%data)) then
             allocate(self%data(m), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=errmsg)
             call check_allocation(iostat, errmsg, this_module, "dense_axpby_${type[0]}$${kind}$")
+            self%n = m ; self%is_initialized = .true.
         endif
         n = self%get_size()
-        if (m /= n) call stop_error("Inconsistent size between the two vectors.")
+        if (m /= n) call stop_error("Inconsistent size between the two vectors.", this_module, 'dense_axpby_${type[0]}$${kind}$')
 
         select type (vec)
         type is(dense_vector_${type[0]}$${kind}$)
@@ -825,7 +851,11 @@ contains
         implicit none(type, external)
         class(dense_vector_${type[0]}$${kind}$), intent(in) :: self
         integer :: n
-        n = size(self%data)
+        if (.not. allocated(self%data)) then
+            n = 0
+        else
+            n = size(self%data)
+        end if
     end function dense_get_size_${type[0]}$${kind}$
 
     subroutine dense_init_like_${type[0]}$${kind}$(self, mold)
@@ -889,6 +919,7 @@ contains
             call move_alloc(self%data, tmp)
             call move_alloc(other%data, self%data)
             call move_alloc(tmp, other%data)
+            ! `tmp` is unallocated after the last `move_alloc`: nothing to release.
             n = self%n ; self%n = other%n ; other%n = n
             flag = self%is_initialized ; self%is_initialized = other%is_initialized ; other%is_initialized = flag
             flag = self%owns_data ; self%owns_data = other%owns_data ; other%owns_data = flag
@@ -897,6 +928,17 @@ contains
                           & 'dense_swap_${type[0]}$${kind}$')
         end select
     end subroutine dense_swap_${type[0]}$${kind}$
+
+    subroutine dense_free_${type[0]}$${kind}$(self)
+        implicit none(type, external)
+        !! Deallocates the underlying array so that its memory is returned immediately, rather
+        !! than when the object itself goes out of scope. Idempotent; `init_like` reallocates.
+        !! An allocatable component can never alias another vector, so `owns_data` plays no role.
+        class(dense_vector_${type[0]}$${kind}$), intent(inout) :: self
+        if (allocated(self%data)) deallocate(self%data)
+        self%n = 0
+        self%is_initialized = .false.
+    end subroutine dense_free_${type[0]}$${kind}$
 
     #:endfor
 
@@ -990,7 +1032,11 @@ contains
         do i = 1, size(X)
             do j = i, size(X)
                 G(i, j) = X(i)%dot(X(j))
+                #:if type[0] == "r"
                 G(j, i) = G(i, j)
+                #:else
+                G(j, i) = conjg(G(i, j))
+                #:endif
             enddo
         enddo
     end function gram_matrix_${type[0]}$${kind}$
@@ -1117,6 +1163,10 @@ contains
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
+        if (ntrials_ <= 0) then
+            write(msg, '(A,I0,A)') "Number of trials must be positive: ntrials = ", ntrials_, "."
+            call stop_error(msg, this_module, "verify_vector_axioms_${type[0]}$${kind}$")
+        end if
         tol = optval(tolerance, 10.0_${kind}$**(-(precision(1.0_${kind}$)-1)))
 
         !> Run all tests to verify axioms.
@@ -1127,7 +1177,7 @@ contains
             !-----     VECTOR ADDITION     -----
             !-----------------------------------
 
-            addition_distributivity: block
+            addition_associativity: block
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, w
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: wrk1, wrk2
 
@@ -1154,13 +1204,14 @@ contains
                 !> Cleanup.
                 call wrk1%free() ; call wrk2%free()
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w, wrk1, wrk2)
 
                 !> Exit if the test fails.
                 if (.not. success) then
-                    failed_test = 'addition_distributivity'
+                    failed_test = 'addition_associativity'
                     exit verification
                 end if
-            end block addition_distributivity
+            end block addition_associativity
 
             addition_commutativity: block
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, w
@@ -1182,6 +1233,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -1208,6 +1260,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call z%free()
+                deallocate(u, v, z)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -1228,6 +1281,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -1256,6 +1310,7 @@ contains
                 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
                 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -1294,6 +1349,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
                 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -1334,6 +1390,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -1372,6 +1429,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !>  Exit if the test fails.
                 if (.not. success) then
@@ -1408,6 +1466,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -1436,6 +1495,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call u0%free() ; call v0%free()
+                deallocate(u, v, u0, v0)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -1462,6 +1522,7 @@ contains
 
                 ! Cleanup.
                 call u%free()
+                deallocate(u)
 
                 !> Exit if the test fails.
                 if (.not. success) then

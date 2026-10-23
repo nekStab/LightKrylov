@@ -1,5 +1,5 @@
 module LightKrylov_AbstractVectors
-    !! This module provides the base class `absract_vector` from which all Krylov vectors
+    !! This module provides the base class `abstract_vector` from which all Krylov vectors
     !! needs to be derived. To use `LightKrylov`, you need to extend one of the
     !! followings:
     !!
@@ -14,7 +14,7 @@ module LightKrylov_AbstractVectors
     !! - `zero(self)`                   :   A subroutine zeroing-out the vector.
     !! - `rand(self, ifnorm)`           :   A subroutine creating a random vector, possibily normalized to have unit-norm (`ifnorm = .true.`).
     !! - `scal(self, alpha)`            :   A subroutine computing *in-place* the scalar multiplication \( \mathbf{x} \leftarrow \alpha \mathbf{x} \).
-    !! - `axpby(alpha, vec, beta, self) :   A subroutine computing *in-place* the product \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
+    !! - `axpby(alpha, vec, beta, self)`:   A subroutine computing *in-place* the product \( \mathbf{y} \leftarrow \alpha \mathbf{x} + \beta \mathbf{y} \).
     !! - `dot(self, vec)`               :   A function computing the inner product \( \alpha = \langle \mathbf{x} \vert \mathbf{y} \rangle \).
     !! - `get_size(self)`               :   A function returning the dimension \( n \) of the vector \( \mathbf{x} \).
     !! - `init_like(self, mold)`        :   A subroutine to initialize the vector after allocation to match the size and structure of the mold.
@@ -40,10 +40,15 @@ module LightKrylov_AbstractVectors
     !! - `swap(self, other)`      :   Exchange the full state of two vectors; both remain valid. Default:
     !!                                 three `assign` through a temporary vector. Override it to exchange
     !!                                 storage instead (e.g. `move_alloc`) for a copy-free swap.
-    !! - `free(self)`             :   Release unmanaged resources. Only ever called by the owner of the vector.
+    !! - `free(self)`             :   Release the storage held by the vector. Only ever called by the owner of the vector.
+    !!                                 Types holding allocatable components should override it to deallocate them,
+    !!                                 so that memory is returned immediately rather than when the object goes out of scope.
     !!
     !! `assign` and `swap` are declared on the root `abstract_vector` and take `class(abstract_vector)`
     !! arguments, so that overrides in concrete types use `select type` on the second argument.
+    !!
+    !! Any temporary vector created by the library is released explicitly, with `free` followed by
+    !! `deallocate`, rather than relying on automatic deallocation at the end of its scope.
     !!
     !! This module also provides the following utility subroutines:
     !!
@@ -54,7 +59,7 @@ module LightKrylov_AbstractVectors
     !! - `zero_basis(X)`                    : Zero-out a collection of `abstract_vectors`.
     !! - `copy(out, from)`                  : Copy a vector (or, elementally, a collection of vectors) through `assign`. `out` must be pre-allocated.
     !! - `init_like_basis(out, mold)`       : Initialize size and structure of a collection of `abstract_vectors` based on mold.
-    !! - `free_basis()         `            : Free the memory of a collection of `abstract_vectors`.
+    !! - `free_basis(X)        `            : Free the memory of a collection of `abstract_vectors`.
     !! - `rand_basis(X, ifnorm)`            : Create a collection of random `abstract_vectors`. If `ifnorm = .true.`, the vectors are normalized to have unit-norm.
     !! @warning
     !! The resulting vectors do not form an orthonormal basis. For this purpose use the utility function `initialize_random_orthonormal_basis`.
@@ -422,12 +427,13 @@ module LightKrylov_AbstractVectors
         !! Exchange the full state of two existing vectors; both remain valid.
         !! Overridable; the kind-level abstract types provide a generic default.
         procedure, pass(self), public :: free => free_abstract_vector
-        !! Releases any unmanaged resources owned by `self`. Terminal: after `free`, the only
+        !! Releases the storage owned by `self`. Terminal: after `free`, the only
         !! valid operation on `self` is another `free` (or `init_like`). Idempotent: safe to call
-        !! on an already-freed vector. The default only clears `is_initialized`, which is correct
-        !! for types whose storage is a managed Fortran allocatable. Types holding unmanaged
-        !! resources (e.g. device buffers) override this to release them, behind a guard so the
-        !! explicit end-of-use call and any `final` backstop never double-release.
+        !! on an already-freed vector. The default only clears `is_initialized`, since the
+        !! abstract type cannot see the storage of its extensions. Concrete types should override
+        !! it to deallocate their allocatable components (as `dense_vector` does) or release
+        !! unmanaged resources (e.g. device buffers), behind a guard so the explicit end-of-use
+        !! call and any `final` backstop never double-release.
     end type abstract_vector
 
     abstract interface
@@ -969,7 +975,7 @@ module LightKrylov_AbstractVectors
     !----------------------------------------------------------------------------------
 
     type, extends(abstract_vector_rsp), public :: dense_vector_rsp
-        integer :: n
+        integer :: n = 0
         real(sp), allocatable :: data(:)
     contains
         private
@@ -986,18 +992,21 @@ module LightKrylov_AbstractVectors
         procedure, pass(self), public :: get_size => dense_get_size_rsp
         !! Return size of specific abstract vector
         procedure, pass(self), public :: init_like => dense_init_like_rsp
-        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
+        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, 
+        !! release and reallocate if the shape differs.
         procedure, pass(self), public :: assign => dense_assign_rsp
         !! Copy assignment through a direct array copy.
         procedure, pass(self), public :: swap => dense_swap_rsp
         !! Copy-free swap exchanging the underlying allocations with `move_alloc`.
+        procedure, pass(self), public :: free => dense_free_rsp
+        !! Deallocates the underlying array (idempotent).
     end type dense_vector_rsp
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
     !----------------------------------------------------------------------------------
 
     type, extends(abstract_vector_rdp), public :: dense_vector_rdp
-        integer :: n
+        integer :: n = 0
         real(dp), allocatable :: data(:)
     contains
         private
@@ -1014,18 +1023,21 @@ module LightKrylov_AbstractVectors
         procedure, pass(self), public :: get_size => dense_get_size_rdp
         !! Return size of specific abstract vector
         procedure, pass(self), public :: init_like => dense_init_like_rdp
-        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
+        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, 
+        !! release and reallocate if the shape differs.
         procedure, pass(self), public :: assign => dense_assign_rdp
         !! Copy assignment through a direct array copy.
         procedure, pass(self), public :: swap => dense_swap_rdp
         !! Copy-free swap exchanging the underlying allocations with `move_alloc`.
+        procedure, pass(self), public :: free => dense_free_rdp
+        !! Deallocates the underlying array (idempotent).
     end type dense_vector_rdp
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
     !----------------------------------------------------------------------------------
 
     type, extends(abstract_vector_csp), public :: dense_vector_csp
-        integer :: n
+        integer :: n = 0
         complex(sp), allocatable :: data(:)
     contains
         private
@@ -1042,18 +1054,21 @@ module LightKrylov_AbstractVectors
         procedure, pass(self), public :: get_size => dense_get_size_csp
         !! Return size of specific abstract vector
         procedure, pass(self), public :: init_like => dense_init_like_csp
-        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
+        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, 
+        !! release and reallocate if the shape differs.
         procedure, pass(self), public :: assign => dense_assign_csp
         !! Copy assignment through a direct array copy.
         procedure, pass(self), public :: swap => dense_swap_csp
         !! Copy-free swap exchanging the underlying allocations with `move_alloc`.
+        procedure, pass(self), public :: free => dense_free_csp
+        !! Deallocates the underlying array (idempotent).
     end type dense_vector_csp
     !----------------------------------------------------------------------------------
     !-----     Convenience vector type to wrap standard Fortran rank-1 arrays     -----
     !----------------------------------------------------------------------------------
 
     type, extends(abstract_vector_cdp), public :: dense_vector_cdp
-        integer :: n
+        integer :: n = 0
         complex(dp), allocatable :: data(:)
     contains
         private
@@ -1070,11 +1085,14 @@ module LightKrylov_AbstractVectors
         procedure, pass(self), public :: get_size => dense_get_size_cdp
         !! Return size of specific abstract vector
         procedure, pass(self), public :: init_like => dense_init_like_cdp
-        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, release and reallocate if the shape differs.
+        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, 
+        !! release and reallocate if the shape differs.
         procedure, pass(self), public :: assign => dense_assign_cdp
         !! Copy assignment through a direct array copy.
         procedure, pass(self), public :: swap => dense_swap_cdp
         !! Copy-free swap exchanging the underlying allocations with `move_alloc`.
+        procedure, pass(self), public :: free => dense_free_cdp
+        !! Deallocates the underlying array (idempotent).
     end type dense_vector_cdp
 
     interface dense_vector
@@ -1093,10 +1111,9 @@ contains
 
     subroutine free_abstract_vector(self)
         implicit none(type, external)
-        !! Default `free`. Correct for types whose only storage is a managed Fortran
-        !! allocatable, which is released automatically on deallocation / scope exit. Types
-        !! holding unmanaged resources override this to release them, guarded for idempotency.
-        !! Clears the `is_initialized` flag so that the action is terminal.
+        !! Default `free`. The abstract type cannot see the storage of its extensions, so this
+        !! only clears the `is_initialized` flag (making the action terminal). Concrete types
+        !! override it to deallocate their components or release unmanaged resources.
         class(abstract_vector), intent(inout) :: self
         self%is_initialized = .false.
     end subroutine free_abstract_vector
@@ -1185,7 +1202,9 @@ contains
             call tmp%assign(self)
             call self%assign(other)
             call other%assign(tmp)
+            ! Release the content of the temporary, then the temporary itself.
             call tmp%free()
+            deallocate(tmp)
         class default
             call type_error('other', 'abstract_vector_rsp', 'INOUT', this_module, &
                           & 'swap_rsp')
@@ -1272,7 +1291,9 @@ contains
             call tmp%assign(self)
             call self%assign(other)
             call other%assign(tmp)
+            ! Release the content of the temporary, then the temporary itself.
             call tmp%free()
+            deallocate(tmp)
         class default
             call type_error('other', 'abstract_vector_rdp', 'INOUT', this_module, &
                           & 'swap_rdp')
@@ -1359,7 +1380,9 @@ contains
             call tmp%assign(self)
             call self%assign(other)
             call other%assign(tmp)
+            ! Release the content of the temporary, then the temporary itself.
             call tmp%free()
+            deallocate(tmp)
         class default
             call type_error('other', 'abstract_vector_csp', 'INOUT', this_module, &
                           & 'swap_csp')
@@ -1446,7 +1469,9 @@ contains
             call tmp%assign(self)
             call self%assign(other)
             call other%assign(tmp)
+            ! Release the content of the temporary, then the temporary itself.
             call tmp%free()
+            deallocate(tmp)
         class default
             call type_error('other', 'abstract_vector_cdp', 'INOUT', this_module, &
                           & 'swap_cdp')
@@ -1463,6 +1488,7 @@ contains
         real(sp), intent(in) :: x(:)
         type(dense_vector_rsp) :: vec
         vec%n = size(x) ; vec%data = x
+        vec%is_initialized = .true.
     end function initialize_dense_vector_from_array_rsp
 
     subroutine dense_zero_rsp(self)
@@ -1483,7 +1509,18 @@ contains
         logical, optional, intent(in) :: ifnorm
         integer :: iostat
         character(len=100) :: errmsg
-        call random_number(self%data)
+
+        ! Make sure the storage exists (same convention as `dense_zero`).
+        if (.not. allocated(self%data)) then
+            allocate(self%data(self%n), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_rand_rsp")
+        endif
+
+        ! Fill with random entries.
+        call random_number(self%data); self%data = 2.0_sp*self%data - 1.0_sp
+
+        ! Normalize if requested.
+        if (optval(ifnorm, .false.)) call self%scal(one_rsp / self%norm())
     end subroutine dense_rand_rsp
 
     subroutine dense_scal_rsp(self, alpha)
@@ -1506,9 +1543,10 @@ contains
         if(.not. allocated(self%data)) then
             allocate(self%data(m), source=zero_rsp, stat=iostat, errmsg=errmsg)
             call check_allocation(iostat, errmsg, this_module, "dense_axpby_rsp")
+            self%n = m ; self%is_initialized = .true.
         endif
         n = self%get_size()
-        if (m /= n) call stop_error("Inconsistent size between the two vectors.")
+        if (m /= n) call stop_error("Inconsistent size between the two vectors.", this_module, 'dense_axpby_rsp')
 
         select type (vec)
         type is(dense_vector_rsp)
@@ -1542,7 +1580,11 @@ contains
         implicit none(type, external)
         class(dense_vector_rsp), intent(in) :: self
         integer :: n
-        n = size(self%data)
+        if (.not. allocated(self%data)) then
+            n = 0
+        else
+            n = size(self%data)
+        end if
     end function dense_get_size_rsp
 
     subroutine dense_init_like_rsp(self, mold)
@@ -1606,6 +1648,7 @@ contains
             call move_alloc(self%data, tmp)
             call move_alloc(other%data, self%data)
             call move_alloc(tmp, other%data)
+            ! `tmp` is unallocated after the last `move_alloc`: nothing to release.
             n = self%n ; self%n = other%n ; other%n = n
             flag = self%is_initialized ; self%is_initialized = other%is_initialized ; other%is_initialized = flag
             flag = self%owns_data ; self%owns_data = other%owns_data ; other%owns_data = flag
@@ -1615,11 +1658,23 @@ contains
         end select
     end subroutine dense_swap_rsp
 
+    subroutine dense_free_rsp(self)
+        implicit none(type, external)
+        !! Deallocates the underlying array so that its memory is returned immediately, rather
+        !! than when the object itself goes out of scope. Idempotent; `init_like` reallocates.
+        !! An allocatable component can never alias another vector, so `owns_data` plays no role.
+        class(dense_vector_rsp), intent(inout) :: self
+        if (allocated(self%data)) deallocate(self%data)
+        self%n = 0
+        self%is_initialized = .false.
+    end subroutine dense_free_rsp
+
     function initialize_dense_vector_from_array_rdp(x) result(vec)
         implicit none(type, external)
         real(dp), intent(in) :: x(:)
         type(dense_vector_rdp) :: vec
         vec%n = size(x) ; vec%data = x
+        vec%is_initialized = .true.
     end function initialize_dense_vector_from_array_rdp
 
     subroutine dense_zero_rdp(self)
@@ -1640,7 +1695,18 @@ contains
         logical, optional, intent(in) :: ifnorm
         integer :: iostat
         character(len=100) :: errmsg
-        call random_number(self%data)
+
+        ! Make sure the storage exists (same convention as `dense_zero`).
+        if (.not. allocated(self%data)) then
+            allocate(self%data(self%n), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_rand_rdp")
+        endif
+
+        ! Fill with random entries.
+        call random_number(self%data); self%data = 2.0_dp*self%data - 1.0_dp
+
+        ! Normalize if requested.
+        if (optval(ifnorm, .false.)) call self%scal(one_rdp / self%norm())
     end subroutine dense_rand_rdp
 
     subroutine dense_scal_rdp(self, alpha)
@@ -1663,9 +1729,10 @@ contains
         if(.not. allocated(self%data)) then
             allocate(self%data(m), source=zero_rdp, stat=iostat, errmsg=errmsg)
             call check_allocation(iostat, errmsg, this_module, "dense_axpby_rdp")
+            self%n = m ; self%is_initialized = .true.
         endif
         n = self%get_size()
-        if (m /= n) call stop_error("Inconsistent size between the two vectors.")
+        if (m /= n) call stop_error("Inconsistent size between the two vectors.", this_module, 'dense_axpby_rdp')
 
         select type (vec)
         type is(dense_vector_rdp)
@@ -1699,7 +1766,11 @@ contains
         implicit none(type, external)
         class(dense_vector_rdp), intent(in) :: self
         integer :: n
-        n = size(self%data)
+        if (.not. allocated(self%data)) then
+            n = 0
+        else
+            n = size(self%data)
+        end if
     end function dense_get_size_rdp
 
     subroutine dense_init_like_rdp(self, mold)
@@ -1763,6 +1834,7 @@ contains
             call move_alloc(self%data, tmp)
             call move_alloc(other%data, self%data)
             call move_alloc(tmp, other%data)
+            ! `tmp` is unallocated after the last `move_alloc`: nothing to release.
             n = self%n ; self%n = other%n ; other%n = n
             flag = self%is_initialized ; self%is_initialized = other%is_initialized ; other%is_initialized = flag
             flag = self%owns_data ; self%owns_data = other%owns_data ; other%owns_data = flag
@@ -1772,11 +1844,23 @@ contains
         end select
     end subroutine dense_swap_rdp
 
+    subroutine dense_free_rdp(self)
+        implicit none(type, external)
+        !! Deallocates the underlying array so that its memory is returned immediately, rather
+        !! than when the object itself goes out of scope. Idempotent; `init_like` reallocates.
+        !! An allocatable component can never alias another vector, so `owns_data` plays no role.
+        class(dense_vector_rdp), intent(inout) :: self
+        if (allocated(self%data)) deallocate(self%data)
+        self%n = 0
+        self%is_initialized = .false.
+    end subroutine dense_free_rdp
+
     function initialize_dense_vector_from_array_csp(x) result(vec)
         implicit none(type, external)
         complex(sp), intent(in) :: x(:)
         type(dense_vector_csp) :: vec
         vec%n = size(x) ; vec%data = x
+        vec%is_initialized = .true.
     end function initialize_dense_vector_from_array_csp
 
     subroutine dense_zero_csp(self)
@@ -1798,10 +1882,22 @@ contains
         integer :: iostat
         character(len=100) :: errmsg
         real(sp), allocatable :: y(:, :)
+
+        ! Make sure the storage exists (same convention as `dense_zero`).
+        if (.not. allocated(self%data)) then
+            allocate(self%data(self%n), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_rand_csp")
+        endif
+
+        ! Fill with random entries.
         allocate(y(size(self%data), 2), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "dense_rand_csp")
         call random_number(y)
-        self%data%re = y(:, 1) ; self%data%im = y(:, 2)
+        self%data%re = 2.0_sp*y(:, 1) - 1.0_sp ; self%data%im = 2.0_sp*y(:, 2) - 1.0_sp
+        deallocate(y)
+
+        ! Normalize if requested.
+        if (optval(ifnorm, .false.)) call self%scal(one_csp / self%norm())
     end subroutine dense_rand_csp
 
     subroutine dense_scal_csp(self, alpha)
@@ -1824,9 +1920,10 @@ contains
         if(.not. allocated(self%data)) then
             allocate(self%data(m), source=zero_csp, stat=iostat, errmsg=errmsg)
             call check_allocation(iostat, errmsg, this_module, "dense_axpby_csp")
+            self%n = m ; self%is_initialized = .true.
         endif
         n = self%get_size()
-        if (m /= n) call stop_error("Inconsistent size between the two vectors.")
+        if (m /= n) call stop_error("Inconsistent size between the two vectors.", this_module, 'dense_axpby_csp')
 
         select type (vec)
         type is(dense_vector_csp)
@@ -1860,7 +1957,11 @@ contains
         implicit none(type, external)
         class(dense_vector_csp), intent(in) :: self
         integer :: n
-        n = size(self%data)
+        if (.not. allocated(self%data)) then
+            n = 0
+        else
+            n = size(self%data)
+        end if
     end function dense_get_size_csp
 
     subroutine dense_init_like_csp(self, mold)
@@ -1924,6 +2025,7 @@ contains
             call move_alloc(self%data, tmp)
             call move_alloc(other%data, self%data)
             call move_alloc(tmp, other%data)
+            ! `tmp` is unallocated after the last `move_alloc`: nothing to release.
             n = self%n ; self%n = other%n ; other%n = n
             flag = self%is_initialized ; self%is_initialized = other%is_initialized ; other%is_initialized = flag
             flag = self%owns_data ; self%owns_data = other%owns_data ; other%owns_data = flag
@@ -1933,11 +2035,23 @@ contains
         end select
     end subroutine dense_swap_csp
 
+    subroutine dense_free_csp(self)
+        implicit none(type, external)
+        !! Deallocates the underlying array so that its memory is returned immediately, rather
+        !! than when the object itself goes out of scope. Idempotent; `init_like` reallocates.
+        !! An allocatable component can never alias another vector, so `owns_data` plays no role.
+        class(dense_vector_csp), intent(inout) :: self
+        if (allocated(self%data)) deallocate(self%data)
+        self%n = 0
+        self%is_initialized = .false.
+    end subroutine dense_free_csp
+
     function initialize_dense_vector_from_array_cdp(x) result(vec)
         implicit none(type, external)
         complex(dp), intent(in) :: x(:)
         type(dense_vector_cdp) :: vec
         vec%n = size(x) ; vec%data = x
+        vec%is_initialized = .true.
     end function initialize_dense_vector_from_array_cdp
 
     subroutine dense_zero_cdp(self)
@@ -1959,10 +2073,22 @@ contains
         integer :: iostat
         character(len=100) :: errmsg
         real(dp), allocatable :: y(:, :)
+
+        ! Make sure the storage exists (same convention as `dense_zero`).
+        if (.not. allocated(self%data)) then
+            allocate(self%data(self%n), stat=iostat, errmsg=errmsg)
+            call check_allocation(iostat, errmsg, this_module, "dense_rand_cdp")
+        endif
+
+        ! Fill with random entries.
         allocate(y(size(self%data), 2), stat=iostat, errmsg=errmsg)
         call check_allocation(iostat, errmsg, this_module, "dense_rand_cdp")
         call random_number(y)
-        self%data%re = y(:, 1) ; self%data%im = y(:, 2)
+        self%data%re = 2.0_dp*y(:, 1) - 1.0_dp ; self%data%im = 2.0_dp*y(:, 2) - 1.0_dp
+        deallocate(y)
+
+        ! Normalize if requested.
+        if (optval(ifnorm, .false.)) call self%scal(one_cdp / self%norm())
     end subroutine dense_rand_cdp
 
     subroutine dense_scal_cdp(self, alpha)
@@ -1985,9 +2111,10 @@ contains
         if(.not. allocated(self%data)) then
             allocate(self%data(m), source=zero_cdp, stat=iostat, errmsg=errmsg)
             call check_allocation(iostat, errmsg, this_module, "dense_axpby_cdp")
+            self%n = m ; self%is_initialized = .true.
         endif
         n = self%get_size()
-        if (m /= n) call stop_error("Inconsistent size between the two vectors.")
+        if (m /= n) call stop_error("Inconsistent size between the two vectors.", this_module, 'dense_axpby_cdp')
 
         select type (vec)
         type is(dense_vector_cdp)
@@ -2021,7 +2148,11 @@ contains
         implicit none(type, external)
         class(dense_vector_cdp), intent(in) :: self
         integer :: n
-        n = size(self%data)
+        if (.not. allocated(self%data)) then
+            n = 0
+        else
+            n = size(self%data)
+        end if
     end function dense_get_size_cdp
 
     subroutine dense_init_like_cdp(self, mold)
@@ -2085,6 +2216,7 @@ contains
             call move_alloc(self%data, tmp)
             call move_alloc(other%data, self%data)
             call move_alloc(tmp, other%data)
+            ! `tmp` is unallocated after the last `move_alloc`: nothing to release.
             n = self%n ; self%n = other%n ; other%n = n
             flag = self%is_initialized ; self%is_initialized = other%is_initialized ; other%is_initialized = flag
             flag = self%owns_data ; self%owns_data = other%owns_data ; other%owns_data = flag
@@ -2093,6 +2225,17 @@ contains
                           & 'dense_swap_cdp')
         end select
     end subroutine dense_swap_cdp
+
+    subroutine dense_free_cdp(self)
+        implicit none(type, external)
+        !! Deallocates the underlying array so that its memory is returned immediately, rather
+        !! than when the object itself goes out of scope. Idempotent; `init_like` reallocates.
+        !! An allocatable component can never alias another vector, so `owns_data` plays no role.
+        class(dense_vector_cdp), intent(inout) :: self
+        if (allocated(self%data)) deallocate(self%data)
+        self%n = 0
+        self%is_initialized = .false.
+    end subroutine dense_free_cdp
 
 
     !--------------------------------------
@@ -2311,6 +2454,10 @@ contains
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
+        if (ntrials_ <= 0) then
+            write(msg, '(A,I0,A)') "Number of trials must be positive: ntrials = ", ntrials_, "."
+            call stop_error(msg, this_module, "verify_vector_axioms_rsp")
+        end if
         tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
 
         !> Run all tests to verify axioms.
@@ -2321,7 +2468,7 @@ contains
             !-----     VECTOR ADDITION     -----
             !-----------------------------------
 
-            addition_distributivity: block
+            addition_associativity: block
                 class(abstract_vector_rsp), allocatable :: u, v, w
                 class(abstract_vector_rsp), allocatable :: wrk1, wrk2
 
@@ -2348,13 +2495,14 @@ contains
                 !> Cleanup.
                 call wrk1%free() ; call wrk2%free()
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w, wrk1, wrk2)
 
                 !> Exit if the test fails.
                 if (.not. success) then
-                    failed_test = 'addition_distributivity'
+                    failed_test = 'addition_associativity'
                     exit verification
                 end if
-            end block addition_distributivity
+            end block addition_associativity
 
             addition_commutativity: block
                 class(abstract_vector_rsp), allocatable :: u, v, w
@@ -2376,6 +2524,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -2402,6 +2551,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call z%free()
+                deallocate(u, v, z)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -2422,6 +2572,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -2450,6 +2601,7 @@ contains
                 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
                 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -2480,6 +2632,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
                 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -2514,6 +2667,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -2544,6 +2698,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !>  Exit if the test fails.
                 if (.not. success) then
@@ -2580,6 +2735,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -2608,6 +2764,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call u0%free() ; call v0%free()
+                deallocate(u, v, u0, v0)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -2634,6 +2791,7 @@ contains
 
                 ! Cleanup.
                 call u%free()
+                deallocate(u)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -2863,6 +3021,10 @@ contains
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
+        if (ntrials_ <= 0) then
+            write(msg, '(A,I0,A)') "Number of trials must be positive: ntrials = ", ntrials_, "."
+            call stop_error(msg, this_module, "verify_vector_axioms_rdp")
+        end if
         tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
 
         !> Run all tests to verify axioms.
@@ -2873,7 +3035,7 @@ contains
             !-----     VECTOR ADDITION     -----
             !-----------------------------------
 
-            addition_distributivity: block
+            addition_associativity: block
                 class(abstract_vector_rdp), allocatable :: u, v, w
                 class(abstract_vector_rdp), allocatable :: wrk1, wrk2
 
@@ -2900,13 +3062,14 @@ contains
                 !> Cleanup.
                 call wrk1%free() ; call wrk2%free()
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w, wrk1, wrk2)
 
                 !> Exit if the test fails.
                 if (.not. success) then
-                    failed_test = 'addition_distributivity'
+                    failed_test = 'addition_associativity'
                     exit verification
                 end if
-            end block addition_distributivity
+            end block addition_associativity
 
             addition_commutativity: block
                 class(abstract_vector_rdp), allocatable :: u, v, w
@@ -2928,6 +3091,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -2954,6 +3118,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call z%free()
+                deallocate(u, v, z)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -2974,6 +3139,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3002,6 +3168,7 @@ contains
                 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
                 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3032,6 +3199,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
                 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3066,6 +3234,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3096,6 +3265,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !>  Exit if the test fails.
                 if (.not. success) then
@@ -3132,6 +3302,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3160,6 +3331,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call u0%free() ; call v0%free()
+                deallocate(u, v, u0, v0)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3186,6 +3358,7 @@ contains
 
                 ! Cleanup.
                 call u%free()
+                deallocate(u)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3288,7 +3461,7 @@ contains
         do i = 1, size(X)
             do j = i, size(X)
                 G(i, j) = X(i)%dot(X(j))
-                G(j, i) = G(i, j)
+                G(j, i) = conjg(G(i, j))
             enddo
         enddo
     end function gram_matrix_csp
@@ -3415,6 +3588,10 @@ contains
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
+        if (ntrials_ <= 0) then
+            write(msg, '(A,I0,A)') "Number of trials must be positive: ntrials = ", ntrials_, "."
+            call stop_error(msg, this_module, "verify_vector_axioms_csp")
+        end if
         tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
 
         !> Run all tests to verify axioms.
@@ -3425,7 +3602,7 @@ contains
             !-----     VECTOR ADDITION     -----
             !-----------------------------------
 
-            addition_distributivity: block
+            addition_associativity: block
                 class(abstract_vector_csp), allocatable :: u, v, w
                 class(abstract_vector_csp), allocatable :: wrk1, wrk2
 
@@ -3452,13 +3629,14 @@ contains
                 !> Cleanup.
                 call wrk1%free() ; call wrk2%free()
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w, wrk1, wrk2)
 
                 !> Exit if the test fails.
                 if (.not. success) then
-                    failed_test = 'addition_distributivity'
+                    failed_test = 'addition_associativity'
                     exit verification
                 end if
-            end block addition_distributivity
+            end block addition_associativity
 
             addition_commutativity: block
                 class(abstract_vector_csp), allocatable :: u, v, w
@@ -3480,6 +3658,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3506,6 +3685,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call z%free()
+                deallocate(u, v, z)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3526,6 +3706,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3554,6 +3735,7 @@ contains
                 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
                 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3587,6 +3769,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
                 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3623,6 +3806,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3656,6 +3840,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !>  Exit if the test fails.
                 if (.not. success) then
@@ -3692,6 +3877,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3720,6 +3906,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call u0%free() ; call v0%free()
+                deallocate(u, v, u0, v0)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3746,6 +3933,7 @@ contains
 
                 ! Cleanup.
                 call u%free()
+                deallocate(u)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -3848,7 +4036,7 @@ contains
         do i = 1, size(X)
             do j = i, size(X)
                 G(i, j) = X(i)%dot(X(j))
-                G(j, i) = G(i, j)
+                G(j, i) = conjg(G(i, j))
             enddo
         enddo
     end function gram_matrix_cdp
@@ -3975,6 +4163,10 @@ contains
 
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
+        if (ntrials_ <= 0) then
+            write(msg, '(A,I0,A)') "Number of trials must be positive: ntrials = ", ntrials_, "."
+            call stop_error(msg, this_module, "verify_vector_axioms_cdp")
+        end if
         tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
 
         !> Run all tests to verify axioms.
@@ -3985,7 +4177,7 @@ contains
             !-----     VECTOR ADDITION     -----
             !-----------------------------------
 
-            addition_distributivity: block
+            addition_associativity: block
                 class(abstract_vector_cdp), allocatable :: u, v, w
                 class(abstract_vector_cdp), allocatable :: wrk1, wrk2
 
@@ -4012,13 +4204,14 @@ contains
                 !> Cleanup.
                 call wrk1%free() ; call wrk2%free()
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w, wrk1, wrk2)
 
                 !> Exit if the test fails.
                 if (.not. success) then
-                    failed_test = 'addition_distributivity'
+                    failed_test = 'addition_associativity'
                     exit verification
                 end if
-            end block addition_distributivity
+            end block addition_associativity
 
             addition_commutativity: block
                 class(abstract_vector_cdp), allocatable :: u, v, w
@@ -4040,6 +4233,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -4066,6 +4260,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call z%free()
+                deallocate(u, v, z)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -4086,6 +4281,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -4114,6 +4310,7 @@ contains
                 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
                 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -4147,6 +4344,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
                 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -4183,6 +4381,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call w%free()
+                deallocate(u, v, w)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -4216,6 +4415,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !>  Exit if the test fails.
                 if (.not. success) then
@@ -4252,6 +4452,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free()
+                deallocate(u, v)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -4280,6 +4481,7 @@ contains
 
                 !> Cleanup.
                 call u%free() ; call v%free() ; call u0%free() ; call v0%free()
+                deallocate(u, v, u0, v0)
 
                 !> Exit if the test fails.
                 if (.not. success) then
@@ -4306,6 +4508,7 @@ contains
 
                 ! Cleanup.
                 call u%free()
+                deallocate(u)
 
                 !> Exit if the test fails.
                 if (.not. success) then
