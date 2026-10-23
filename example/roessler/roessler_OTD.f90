@@ -9,6 +9,7 @@ module Roessler_OTD
    ! LightKrylov for linear algebra.
    use LightKrylov
    use LightKrylov_Constants
+   use LightKrylov_Logger, only: stop_error, type_error
    use LightKrylov_AbstractVectors
    ! Roessler
    use Roessler
@@ -239,12 +240,14 @@ contains
       type(rks54_class)         :: OTD_roessler
       integer                   :: idx(1)
       real(dp)                  :: time, t_complete, t1, t2, tvec(2)
-      ! logical                   :: if_GS
+      logical                   :: if_rst_
       integer                   :: i, j, p_cnt
       real(dp), dimension(r)    :: FTLE_in, FTLE_out
       real(dp), dimension(npts) :: bf_bkp
 
       integer, parameter :: ndof = npts*(r + 1) + r
+
+      if_rst_ = optval(if_rst, .false.)
 
       ! Initialize integrator.
       call OTD_roessler%initialize(n=ndof, f=OTD_rhs, report=OTD_report_file, report_rate=20)
@@ -271,7 +274,7 @@ contains
                p_cnt = p_cnt + 1
                call report_LE(FTLE_out, time, t_FTLE, p_cnt)
                FTLE_in = 0.0_dp                                   ! reset FTLE computation
-               if (if_rst) call set_pos(bf_bkp, bf)               ! reset orbit to avoid orbit drift
+               if (if_rst_) call set_pos(bf_bkp, bf)               ! reset orbit to avoid orbit drift
             end if
             call copy(vec_in, vec_out)
          end do
@@ -284,7 +287,7 @@ contains
             p_cnt = p_cnt + 1
             call report_LE(FTLE_out, time, t_FTLE, p_cnt)
             FTLE_in = 0.0_dp                                      ! reset FTLE computation
-            if (if_rst) call set_pos(bf_bkp, bf)                  ! reset orbit to avoid orbit drift
+            if (if_rst_) call set_pos(bf_bkp, bf)                  ! reset orbit to avoid orbit drift
          end if
          call copy(vec_in, vec_out)
       end do
@@ -412,12 +415,12 @@ contains
       if_overwrite = optval(overwrite, .true.)
       inquire (file=report_file_OTD, exist=file_exists)
       if (file_exists) then
-          if (if_overwrite) then
-              open (newunit=iunit, file=report_file_OTD, status='replace', action='write')
-          else
-              write (*, '(A)') 'File "'//trim(report_file_OTD)//'" exists and overwrite=.false.: Abort.'
-              call logger%log_error(msg, this_module, this_procedure)
-          end if
+         if (if_overwrite) then
+            open (newunit=iunit, file=report_file_OTD, status='replace', action='write')
+         else
+            msg = 'File "'//trim(report_file_OTD)//'" exists and overwrite=.false.: Abort.'
+            call stop_error(msg, this_module, this_procedure)
+         end if
       else
           open (newunit=iunit, file=report_file_OTD, status='new', action='write')
       end if
@@ -430,7 +433,7 @@ contains
       ! instantaneous numerical abscissa of the reduced operator
       write (iunit, '(A2,1X,A16,1X)', ADVANCE='NO') 'cc', 'sigma_1'
       ! instantaneous direction of largest possible growth
-      write (iunit, '(*(A13,I1,A2,1X))', ADVANCE='NO') 'us', i, '_x', 'us', i, '_y', 'us', i, '_z'
+      write (iunit, '(*(A16,1X))', ADVANCE='NO') 'us_x', 'us_y', 'us_z'
       ! instantaneous eigenvalues of the reduced operator
       do i = 1, r
          write (iunit, '(A15,I1,1X)', ADVANCE='NO') 'l_', i
@@ -468,8 +471,8 @@ contains
           if (if_overwrite) then
               open (newunit=iunit, file=report_file_OTD_LE, status='replace', action='write')
           else
-              write (*, '(A)') 'File "'//trim(report_file_OTD)//'" exists and overwrite=.false.: Abort.'
-              call logger%log_error(msg, this_module, this_procedure)
+              msg = 'File "'//trim(report_file_OTD_LE)//'" exists and overwrite=.false.: Abort.'
+              call stop_error(msg, this_module, this_procedure)
           end if
       else
           open (newunit=iunit, file=report_file_OTD_LE, status='new', action='write')

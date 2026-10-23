@@ -2,7 +2,7 @@ module LightKrylov_Timer_Utils
    use stdlib_optval, only: optval
    use stdlib_ascii, only: to_lower
    use LightKrylov_Constants, only: dp
-   use LightKrylov_Logger
+   use LightKrylov_Logger, only: log_message, log_information, log_debug, stop_error, logger_add_unit, logger_remove_unit
    implicit none(type, external)
    private
    character(len=*), parameter :: this_module = 'LK_TmrUtils'
@@ -495,18 +495,19 @@ contains
       integer, optional, intent(out) :: count
       ! internal
       character(len=*), parameter :: this_procedure = 'add_group'
-      character(len=128) :: msg, gname
+      character(len=128) :: msg, gname, infomsg
       logical :: ignore_error_
       ignore_error_ = optval(ignore_error, .true.)
       ! Sanity checks
-      if (istart < 1 .or. iend < 1) then
-         call stop_error('Inconsistent input for istart, iend.', this_module, this_procedure)
-      else if (istart > iend) then
-         call stop_error('istart > iend.', this_module, this_procedure)
-      else if (iend > self%timer_count) then
-         call stop_error('iend > timer_count.', this_module, this_procedure)
-      end if
       gname = to_lower(name)
+      infomsg = 'Timer group "'//trim(gname)//'"'
+      if (istart < 1 .or. iend < 1) then
+         call stop_error(trim(infomsg)//': Inconsistent input for istart, iend.', this_module, this_procedure)
+      else if (istart > iend) then
+         call stop_error(trim(infomsg)//': istart > iend.', this_module, this_procedure)
+      else if (iend > self%timer_count) then
+         call stop_error(trim(infomsg)//': iend > timer_count.', this_module, this_procedure)
+      end if
       if (self%group_count == 0) then
          allocate (self%groups(1))
          self%groups(1) = lightkrylov_timer_group(name=gname, istart=istart, iend=iend)
@@ -517,7 +518,7 @@ contains
          else
             self%groups = [self%groups, lightkrylov_timer_group(name=gname, istart=istart, iend=iend)]
             self%group_count = self%group_count + 1
-            write (msg, '(A,I0)') 'Timer group "'//trim(gname)//'" added: group_count: ', self%group_count
+            write (msg, '(A,I0)') trim(infomsg)//' added: group_count: ', self%group_count
             call log_debug(msg, this_module)
          end if
       end if
@@ -818,7 +819,7 @@ contains
          call log_information(msg, this_module, self%name)
          do i = 1, self%group_count
             count = self%groups(i)%iend - self%groups(i)%istart + 1
-            write (msg, '(3X,A20," : ",I3," timers.")') self%groups(i)%name, count
+            write (msg, '(3X,A30," : ",I3," timers.")') self%groups(i)%name, count
             call log_information(msg, this_module, self%name)
          end do
          self%is_initialized = .true.
@@ -850,7 +851,7 @@ contains
       to_file = optval(write_to_file, .true.)
       if (to_file) then
          write (logfile_tmr, '(A,A)') trim(to_lower(self%name)), '.log'
-         call logger%add_log_file(logfile_tmr, tmr_unit, status='replace', action='write')
+         call logger_add_unit(logfile_tmr, tmr_unit, status='replace', action='write')
       end if
       icalled = 0
       allocate (ic(self%group_count))
@@ -890,8 +891,8 @@ contains
             call print_summary(self%timers(i))
          end do
       end if
-      call logger%log_message('#########   Global timer summary   ##########', this_module)
-      if (to_file) call logger%remove_log_unit(tmr_unit, close_unit=.true.)
+      call log_message('#########   Global timer summary   ##########', this_module)
+      if (to_file) call logger_remove_unit(tmr_unit, close_unit=.true.)
    end subroutine finalize
 
    !--------------------------------------------------------------
