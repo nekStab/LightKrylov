@@ -41,7 +41,6 @@ module LightKrylov_IterativeSolvers
 
     character(len=*), parameter :: this_module      = 'LK_Solvers'
     character(len=*), parameter :: this_module_long = 'LightKrylov_IterativeSolvers'
-    character(len=*), parameter :: eigs_output      = 'eigs_output.txt'
 
     #:for kind, type in RC_KINDS_TYPES
     public :: abstract_linear_solver_${type[0]}$${kind}$
@@ -867,10 +866,33 @@ module LightKrylov_IterativeSolvers
         !!  - `transpose` (*optional*)  :   `logical` flag determining whether the eigenvalues of \(A\)
         !!                                  or \(A^H\) need to be computed. It is an optional `intent(in)`
         !!                                  argument.
-        #:for kind, type in RC_KINDS_TYPES
-        module procedure eigs_${type[0]}$${kind}$
-        #:endfor
-    end interface
+      #:for kind, type in RC_KINDS_TYPES
+      module subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
+         implicit none(type, external)
+         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
+         !! Linear operator whose leading eigenpairs need to be computed.
+         class(abstract_vector_${type[0]}$${kind}$), intent(inout) :: X(:)
+         !! Leading eigenvectors of \(\mathbf{A}\).
+         complex(${kind}$), allocatable, intent(out) :: eigvals(:)
+         !! Leading eigenvalues of \(\mathbf{A}\).
+         real(${kind}$), allocatable, intent(out) :: residuals(:)
+         !! Residuals associated to each Ritz eigenpair.
+         integer, intent(out) :: info
+         !! Information flag.
+         class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: x0
+         !! Optional starting vector for generating the Krylov subspace.
+         integer, optional, intent(in) :: kdim
+         !! Maximum dimension of the Krylov subspace (optional).
+         real(${kind}$), optional, intent(in) :: tolerance
+         !! Tolerance.
+         logical, optional, intent(in) :: transpose
+         !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
+         logical, optional, intent(in) :: write_intermediate
+         !! Write intermediate eigenvalues to file during iteration?
+      end subroutine eigs_${type[0]}$${kind}$
+
+      #:endfor
+   end interface
 
 contains
 
@@ -927,20 +949,6 @@ contains
     #:endfor
 
     #:for kind, type in RC_KINDS_TYPES
-    elemental pure function compute_residual_${type[0]}$${kind}$(beta, x) result(residual)
-        !! Computes the residual associated with a Ritz eigenpair.
-        ${type}$, intent(in) :: beta
-        !! Norm of the residual Krylov vector.
-        ${type}$, intent(in) :: x
-        !! Last entry of the low-dimensional Ritz eigenvector.
-        real(${kind}$) :: residual
-        !! Residual associated to the corresponding Ritz eigenpair.
-        residual = abs(beta*x)
-    end function compute_residual_${type[0]}$${kind}$
-
-    #:endfor
-
-    #:for kind, type in RC_KINDS_TYPES
     subroutine save_eigenspectrum_${type[0]}$${kind}$(lambda, residuals, fname)
         !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
         implicit none(type, external)
@@ -961,186 +969,6 @@ contains
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
     end subroutine save_eigenspectrum_${type[0]}$${kind}$
-
-    #:endfor
-
-    !---------------------------------------------------
-    !-----     GENERAL EIGENVALUE COMPUTATIONS     -----
-    !---------------------------------------------------
-
-    #:for kind, type in RC_KINDS_TYPES
-    subroutine eigs_${type[0]}$${kind}$(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
-        implicit none(type, external)
-        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
-        !! Linear operator whose leading eigenpairs need to be computed.
-        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: X(:)
-        !! Leading eigenvectors of \(\mathbf{A}\).
-        complex(${kind}$), allocatable, intent(out) :: eigvals(:)
-        !! Leading eigenvalues of \(\mathbf{A}\).
-        real(${kind}$), allocatable, intent(out) :: residuals(:)
-        !! Residuals associated to each Ritz eigenpair.
-        integer, intent(out) :: info
-        !! Information flag.
-        class(abstract_vector_${type[0]}$${kind}$), optional, intent(in) :: x0
-        !! Optional starting vector for generating the Krylov subspace.
-        integer, optional, intent(in) :: kdim
-        !! Maximum dimension of the Krylov subspace (optional).
-        real(${kind}$), optional, intent(in) :: tolerance
-        !! Tolerance.
-        logical, optional, intent(in) :: transpose
-        !! Determine whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
-        logical, optional, intent(in) :: write_intermediate
-        !! Write intermediate eigenvalues to file during iteration?
-
-        !--------------------------------------
-        !-----     Internal variables     -----
-        !--------------------------------------
-
-        ! Krylov subspace and Krylov subspace dimension.
-        class(abstract_vector_${type[0]}$${kind}$), allocatable :: Xwrk(:)
-        integer :: kdim_, kstart
-        ! Hessenberg matrix.
-        ${type}$, allocatable :: H(:, :)
-        ! Working arrays for the eigenvectors and eigenvalues.
-        ${type}$, allocatable :: eigvecs_wrk(:, :)
-        complex(${kind}$), allocatable :: eigvals_wrk(:)
-        real(${kind}$), allocatable :: residuals_wrk(:)
-        ! Miscellaneous.
-        character(len=*), parameter :: this_procedure = 'eigs_${type[0]}$${kind}$'
-        integer :: nev, conv
-        integer :: i, j, k, niter, krst, iostat
-        real(${kind}$) :: tol, x0_norm
-        ${type}$ :: beta
-        #:if type[0] == "r"
-        ${type}$ :: alpha
-        #:endif
-        logical :: outpost
-        character(len=256) :: msg
-
-        if (time_lightkrylov()) call timer%start(this_procedure)
-        ! Deals with optional parameters.
-        nev = size(X)
-        kdim_   = optval(kdim, 4*nev)
-        tol     = optval(tolerance, rtol_${kind}$)
-        outpost = optval(write_intermediate, .true.)
-
-        ! Allocate eigenvalues.
-        allocate(eigvals(nev), source=zero_c${kind}$, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-
-        ! Allocate working variables.
-        allocate(Xwrk(kdim_+1), source=X(1), stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        call zero_basis(Xwrk)
-
-        if (present(x0)) then
-            call copy(Xwrk(1), x0)
-            x0_norm = x0%norm(); call Xwrk(1)%scal(one_${type[0]}$${kind}$/x0_norm)
-        else
-            call Xwrk(1)%rand(.true.)
-        endif
-        allocate(H(kdim_+1, kdim_), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(eigvecs_wrk(kdim_, kdim_), source=zero_${type[0]}$${kind}$, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(eigvals_wrk(kdim_), source=zero_c${kind}$, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-        allocate(residuals_wrk(kdim_), source=zero_r${kind}$, stat=iostat, errmsg=msg)
-        call check_allocation(iostat, msg, this_module, this_procedure)
-
-        ! Ritz eigenpairs computation.
-        H = 0.0_${kind}$
-
-        kstart = 1 ; conv = 0 ; niter = 0 ; krst = 1
-        krylovschur: do while (conv < nev)
-
-           arnoldi_factorization: do k = kstart, kdim_
-                ! Arnoldi step.
-                call arnoldi(A, Xwrk, H, info, kstart=k, kend=k, transpose=transpose)
-                call check_info(info, 'arnoldi', this_module, this_procedure)
-
-                ! Spectral decomposition of the k x k Hessenberg matrix.
-                eigvals_wrk = 0.0_${kind}$ ; eigvecs_wrk = 0.0_${kind}$
-                if (time_lightkrylov()) call timer%start('eig')
-                call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
-                if (time_lightkrylov()) call timer%stop('eig')
-
-                ! Compute residuals.
-                beta = H(k+1, k)
-                #:if type[0] == "c"
-                residuals_wrk(:k) = compute_residual_${type[0]}$${kind}$(beta, eigvecs_wrk(k,:k))
-                #:else
-                do i = 1, k
-                    if (eigvals_wrk(i)%im > 0) then
-                        alpha = abs(cmplx(eigvecs_wrk(k, i), eigvecs_wrk(k, i+1), kind=${kind}$))
-                    else if (eigvals_wrk(i)%im < 0) then
-                        alpha = abs(cmplx(eigvecs_wrk(k, i-1), eigvecs_wrk(k, i), kind=${kind}$))
-                    else
-                        alpha = abs(eigvecs_wrk(k, i))
-                    endif
-                    residuals_wrk(i) = compute_residual_${type[0]}$${kind}$(beta, alpha)
-                enddo
-                #:endif
-
-                ! Check convergence.
-                niter = niter + 1
-                conv = count(residuals_wrk(:k) < tol)
-                write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', niter, &
-                            & ' steps of the Arnoldi process.'
-                call log_information(msg, this_module, this_procedure)
-                if (outpost) call write_results_c${kind}$(eigs_output, eigvals_wrk(:k), residuals_wrk(:k), tol)
-                if (conv >= nev) exit arnoldi_factorization
-            enddo arnoldi_factorization
-
-            write(msg,'(I0,A,I0,A,I0,A)') conv, '/', nev, ' eigenvalues converged after ', krst, &
-                            & ' Krylov-Schur restarts of the Arnoldi process.'
-            call log_information(msg, this_module, this_procedure)
-            ! Krylov-Schur restarting procedure.
-            krst  = krst + 1
-            call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
-
-        end do krylovschur
-
-        !--------------------------------
-        !-----     POST-PROCESS     -----
-        !--------------------------------
-
-        block
-        integer :: indices(kdim_)
-        real(${kind}$) :: abs_eigvals(kdim_)
-
-        ! Re-compute eigenvalues and eigenvectors.
-        k = min(k, kdim_)
-        if (time_lightkrylov()) call timer%start('eig')
-        call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
-        if (time_lightkrylov()) call timer%stop('eig')
-        ! Sort eigenvalues.
-        abs_eigvals = abs(eigvals_wrk) ; call sort_index(abs_eigvals, indices, reverse=.true.)
-        eigvals_wrk = eigvals_wrk(indices) ; eigvecs_wrk = eigvecs_wrk(:, indices)
-        residuals_wrk = residuals_wrk(indices)
-
-        ! Store converged eigenvalues.
-        eigvals = eigvals_wrk(:nev) ; residuals = residuals_wrk(:nev)
-        end block
-
-        ! Construct eigenvectors.
-        do i = 1, nev
-            call X(i)%zero()
-            do j = 1, k
-                call X(i)%axpby(eigvecs_wrk(j, i), Xwrk(j), one_${type[0]}$${kind}$)
-            enddo
-        enddo
-
-        info = niter
-        if (time_lightkrylov()) call timer%stop(this_procedure)
-    contains
-        function median_selector(lambda) result(selected)
-            implicit none(type, external)
-            complex(${kind}$), intent(in) :: lambda(:)
-            logical, allocatable :: selected(:)
-            selected = abs(lambda) > median(abs(lambda))
-        end function median_selector
-    end subroutine eigs_${type[0]}$${kind}$
 
     #:endfor
 
