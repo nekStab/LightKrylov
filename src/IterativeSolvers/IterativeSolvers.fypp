@@ -22,7 +22,6 @@ module LightKrylov_IterativeSolvers
     use stdlib_sorting, only: sort_index
     use stdlib_optval, only: optval
     use stdlib_io_npy, only: save_npy
-    use stdlib_stats, only: median
 
     !-------------------------------
     !-----     LightKrylov     -----
