@@ -13,7 +13,7 @@ module LightKrylov_Utils
     !--------------------------------------------
     !-----     Standard Fortran Library     -----
     !--------------------------------------------
-    use iso_fortran_env, only: output_unit
+    use, intrinsic :: iso_fortran_env, only: output_unit
 
     !-------------------------------
     !-----     LightKrylov     -----
@@ -82,6 +82,7 @@ module LightKrylov_Utils
 
     interface
         module subroutine check_allocation(iostat, msg, module, procedure)
+            implicit none (type, external)
             integer, intent(in) :: iostat
             character(len=*), intent(in) :: msg, module, procedure
         end subroutine check_allocation
@@ -195,7 +196,7 @@ module LightKrylov_Utils
         !!
         !!  ### Arguments
         !!
-        !!  `A`: `real` or `complex` square array containing the coefficient matrix. It is an 
+        !!  `A`: `real` or `complex` square array containing the coefficient matrix. It is an
         !!  `intent(in)` argument.
         !!
         !!  `vecs`: Square array of the same size, type, and kind as `A` containing the eigenvectors
@@ -255,10 +256,10 @@ module LightKrylov_Utils
         !!
         !!  ### Arguments
         !!
-        !!  `T`: `real` or `complex` square array containing the Schur factorization of a matrix. 
-        !!  On exit, it is overwritten with its re-ordered counterpart. It is an `intent(inout)` 
+        !!  `T`: `real` or `complex` square array containing the Schur factorization of a matrix.
+        !!  On exit, it is overwritten with its re-ordered counterpart. It is an `intent(inout)`
         !!  argument.
-        !!  
+        !!
         !!  `Q`: Two-dimensional square array of the same size, type and kind as `A`. It contains
         !!  the original Schur basis on entry and the re-ordered one on exit.
         !!  It is an `intent(inout)` argument.
@@ -309,14 +310,14 @@ module LightKrylov_Utils
         !!  `call sqrtm(A, sqrtmA, info)`
         !!
         !!  ### Arguments
-        !!  
+        !!
         !!  `A`: Symmetric (hermitian) positive definite matrix whose non-negative square root
         !!  needs to be computed. It is an `intent(in)` argument.
         !!
         !!  `sqrtmA`: Non-negative square root of `A`. It has the same size, kind and type as `A`.
         !!  It is an `intent(out)` argument.
         !!
-        !!  `info`: Information flag. It is an `intent(out)` argument. 
+        !!  `info`: Information flag. It is an `intent(out)` argument.
         module subroutine sqrtm_rsp(A, sqrtA, info)
             implicit none(type, external)
             real(sp), intent(inout) :: A(:, :)

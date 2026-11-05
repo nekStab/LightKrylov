@@ -1,0 +1,44 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Kern
+  given-names: J. Simon
+  orcid: "https://orcid.org/0000-0002-2460-578X"
+- family-names: Frantz
+  given-names: Ricardo S.
+  orcid: "https://orcid.org/0000-0001-8219-3368"
+- family-names: Loiseau
+  given-names: Jean-Christophe
+  orcid: "https://orcid.org/0000-0002-7244-8416"
+contact:
+- family-names: Loiseau
+  given-names: Jean-Christophe
+  orcid: "https://orcid.org/0000-0002-7244-8416"
+doi: 10.5281/zenodo.18412137
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Kern
+    given-names: J. Simon
+    orcid: "https://orcid.org/0000-0002-2460-578X"
+  - family-names: Frantz
+    given-names: Ricardo S.
+    orcid: "https://orcid.org/0000-0001-8219-3368"
+  - family-names: Loiseau
+    given-names: Jean-Christophe
+    orcid: "https://orcid.org/0000-0002-7244-8416"
+  date-published: 2026-01-29
+  doi: 10.21105/joss.09623
+  issn: 2475-9066
+  issue: 117
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 9623
+  title: "LightKrylov: Lightweight implementation of Krylov subspace
+    techniques in modern Fortran"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.09623"
+  volume: 11
+title: "`LightKrylov`: Lightweight implementation of Krylov subspace
+  techniques in modern Fortran"

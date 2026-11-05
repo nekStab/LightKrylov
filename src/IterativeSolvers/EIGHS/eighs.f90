@@ -151,7 +151,7 @@ contains
         enddo
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure 
+    end procedure eighs_rsp
 
     module procedure eighs_rdp
         class(abstract_vector_rdp), allocatable :: Xwrk(:)
@@ -250,7 +250,7 @@ contains
         enddo
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure 
+    end procedure eighs_rdp
 
     module procedure eighs_csp
         class(abstract_vector_csp), allocatable :: Xwrk(:)
@@ -349,7 +349,7 @@ contains
         enddo
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure 
+    end procedure eighs_csp
 
     module procedure eighs_cdp
         class(abstract_vector_cdp), allocatable :: Xwrk(:)
@@ -448,7 +448,6 @@ contains
         enddo
         info = k
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure 
+    end procedure eighs_cdp
 
-end submodule
-
+end submodule hermitian_eigensolvers

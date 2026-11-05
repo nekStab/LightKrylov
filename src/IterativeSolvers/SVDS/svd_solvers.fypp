@@ -118,8 +118,8 @@ contains
             enddo
         enddo
         if (time_lightkrylov()) call timer%stop(this_procedure)
-    end procedure
+    end procedure svds_${type[0]}$${kind}$
+
 
     #:endfor
-end submodule
-
+end submodule svds_solver

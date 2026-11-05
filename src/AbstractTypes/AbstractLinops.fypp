@@ -4,7 +4,7 @@ module LightKrylov_AbstractLinops
     !!  This module provides the base classes `abtract_linop_rsp`, `abstract_linop_rdp`,
     !!  `abstract_linop_csp` and `abstract_linop_cdp` which can be used to define your own
     !!  linear operators. To do so, you simply need to provide two type-bound procedures:
-    !!  
+    !!
     !!  - `matvec(self, vec_in, vec_out)`   :   Computes the matrix-vector product.
     !!  - `rmatvec(self, vec_in, vec_out)   :   Computes the transpose matrix-vector product.
     !!
@@ -23,6 +23,8 @@ module LightKrylov_AbstractLinops
 
     character(len=*), parameter :: this_module      = 'LK_Linops'
     character(len=*), parameter :: this_module_long = 'Lightkrylov_AbstractLinops'
+
+    public :: verify_linop_axioms
 
     type, abstract, public :: abstract_linop
         !!  Base type to define an abstract linear operator. All other operator types defined
@@ -47,6 +49,9 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: finalize_timer => finalize_linop_timer
         !! Finalize timers and print complete history_info
     end type abstract_linop
+
+    type, abstract, extends(abstract_linop), public :: abstract_sym_linop
+    end type abstract_sym_linop
 
     #:for kind, type in RC_KINDS_TYPES
     !------------------------------------------------------------------------------
@@ -100,8 +105,8 @@ module LightKrylov_AbstractLinops
     !-----     Definition of an abstract ${type}$ exponential propagator with kind=${kind}$     -----
     !--------------------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_exptA_linop_${type[0]}$${kind}$
-        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
-        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian
         !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
         !!
         !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
@@ -198,18 +203,59 @@ module LightKrylov_AbstractLinops
     !----------------------------------------------------------------
     !-----     Definition of an abstract symmetric operator     -----
     !----------------------------------------------------------------
-    type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_sym_linop_${type[0]}$${kind}$
+    type, abstract, extends(abstract_sym_linop), public :: abstract_sym_linop_${type[0]}$${kind}$
         !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
+        private
+        ! User defined procedures
+        procedure(abstract_sym_matvec_${type[0]}$${kind}$), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_sym_matvec_${type[0]}$${kind}$
+        !! Wrapper for matvec including the counter increment
     end type abstract_sym_linop_${type[0]}$${kind}$
+    abstract interface
+        subroutine abstract_sym_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_sym_linop_${type[0]}$${kind}$
+            implicit none(type, external)
+            class(abstract_sym_linop_${type[0]}$${kind}$) , intent(inout)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_${type[0]}$${kind}$), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_sym_matvec_${type[0]}$${kind}$
+    end interface
     #:else
     !----------------------------------------------------------------------------------
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
-    type, abstract, extends(abstract_linop_${type[0]}$${kind}$), public :: abstract_hermitian_linop_${type[0]}$${kind}$
+    type, abstract, extends(abstract_sym_linop), public :: abstract_hermitian_linop_${type[0]}$${kind}$
         !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
+        ! User defined procedures
+        procedure(abstract_herm_matvec_${type[0]}$${kind}$), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_herm_matvec_${type[0]}$${kind}$
+        !! Wrapper for matvec including the counter increment
     end type abstract_hermitian_linop_${type[0]}$${kind}$
+    abstract interface
+        subroutine abstract_herm_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_hermitian_linop_${type[0]}$${kind}$
+            implicit none(type, external)
+            class(abstract_hermitian_linop_${type[0]}$${kind}$) , intent(inout)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_${type[0]}$${kind}$), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_herm_matvec_${type[0]}$${kind}$
+    end interface
     #:endif
     #:endfor
 
@@ -232,7 +278,13 @@ module LightKrylov_AbstractLinops
         #:endfor
     end interface
     public :: dense_linop
-   
+
+    interface verify_linop_axioms
+        #:for kind, type in RC_KINDS_TYPES
+        module procedure verify_linop_axioms_${type[0]}$${kind}$
+        #:endfor
+    end interface
+
 contains
 
     !--------------------------------------------------------------
@@ -270,7 +322,7 @@ contains
       !! optional flag to choose whether to fully reset the timer (default: .false.)
       ! internals
       integer :: counter_, count_old
-      logical :: reset_timer_ 
+      logical :: reset_timer_
       character(len=128) :: msg
       counter_ = optval(counter, 0)
       count_old = self%get_counter(trans)
@@ -367,7 +419,7 @@ contains
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: self
         class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
         class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
@@ -378,6 +430,45 @@ contains
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
     end subroutine apply_rmatvec_${type[0]}$${kind}$
+
+    #:if type.startswith("real")
+    subroutine apply_sym_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
+        class(abstract_sym_linop_${type[0]}$${kind}$), intent(inout) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+        ! internal
+        character(len=128) :: msg
+        self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call log_debug(msg, this_module, 'matvec')
+        call self%matvec_timer%start()
+        call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call log_debug(msg, this_module, 'matvec')
+        return
+    end subroutine apply_sym_matvec_${type[0]}$${kind}$
+    #:else
+    subroutine apply_herm_matvec_${type[0]}$${kind}$(self, vec_in, vec_out)
+        implicit none(type, external)
+        class(abstract_hermitian_linop_${type[0]}$${kind}$), intent(inout) :: self
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: vec_in
+        class(abstract_vector_${type[0]}$${kind}$), intent(out) :: vec_out
+        ! internal
+        character(len=128) :: msg
+        self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call log_debug(msg, this_module, 'matvec')
+        call self%matvec_timer%start()
+        call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call log_debug(msg, this_module, 'matvec')
+        return
+    end subroutine apply_herm_matvec_${type[0]}$${kind}$
+
+    #:endif
     #:endfor
 
     !------------------------------------------------------------------------------
@@ -577,7 +668,7 @@ contains
     end subroutine dense_rmatvec_${type[0]}$${kind}$
 
     #:endfor
-    
+
     #:for kind, type in RC_KINDS_TYPES
     function initialize_dense_linop_from_array_${type[0]}$${kind}$(A) result(linop)
         implicit none(type, external)
@@ -586,5 +677,174 @@ contains
         linop%data = A
     end function initialize_dense_linop_from_array_${type[0]}$${kind}$
     #:endfor
+    
+    !--------------------------------------
+    !-----      UTILITY FUNCTIONS     -----
+    !--------------------------------------
 
+    #:for kind, type in RC_KINDS_TYPES
+    logical function verify_linop_axioms_${type[0]}$${kind}$(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
+        implicit none(type, external)
+        class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
+        !! Linear operator whose implementation needs to be tested.
+        class(abstract_vector_${type[0]}$${kind}$), intent(in) :: x
+        !! Mold vector from the operator's domain (used to generate random inputs).
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(${kind}$), optional, intent(in) :: tolerance
+        !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_zero_map
+        !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
+        logical, optional, intent(in) :: test_adjoint
+        !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+
+        integer :: ntrials_, i
+        logical :: test_zero_map_, test_adjoint_
+        real(${kind}$) :: tol, error_norm, scale
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+
+        character(len=*), parameter :: this_procedure = 'verify_linop_axioms_${type[0]}$${kind}$'
+
+        !> Deals with optional arguments.
+        ntrials_ = optval(ntrials, 10)
+        tol = optval(tolerance, 10.0_${kind}$**(-(precision(1.0_${kind}$)-1)))
+        test_zero_map_ = optval(test_zero_map, .true.)
+        test_adjoint_ = optval(test_adjoint, .true.)
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-------------------------------------------
+            !-----     LINEARITY : ADDITIVITY      -----
+            !-------------------------------------------
+            additivity: block
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, Au, Av, Auv
+                allocate(u, v, Au, Av, Auv, source=x)
+
+                !> Generate random vectors.
+                call u%rand()
+                call v%rand()
+
+                !> Check additivity.
+                call A%apply_matvec(u, Au)
+                call A%apply_matvec(v, Av)
+                scale = Au%norm() + Av%norm()
+                call Au%add(Av)                 ! Au <- A(u) + A(v)
+
+                call u%add(v)
+                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+
+                call Auv%sub(Au)
+                error_norm = Auv%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_r${kind}$))
+                if (.not. success) then
+                    failed_test = 'additivity'
+                    exit verification
+                end if
+            end block additivity
+
+            !-------------------------------------------
+            !-----     LINEARITY : HOMOGENEITY     -----
+            !-------------------------------------------
+            homogeneity: block
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, Au, Aau
+                ${type}$ :: alpha
+
+                !> Generate random vectors.
+                allocate(u, Au, Aau, source=x)
+                call u%rand()
+                !> generate the identical non-trivial alpha on all ranks
+                #:if type[0] == "c"
+                alpha = cmplx(1.0_${kind}$ + real(i,${kind}$), -0.5_${kind}$*real(i,${kind}$), ${kind}$)
+                #:else
+                alpha = (-1.0_${kind}$)**i * (1.0_${kind}$ + real(i,${kind}$))
+                #:endif
+
+                !> Check homogeneity.
+                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                scale = Au%norm()
+
+                call u%scal(alpha)
+                call A%apply_matvec(u, Aau)
+
+                call Aau%sub(Au)
+                error_norm = Aau%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_r${kind}$))
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'homogeneity'
+                    exit verification
+                end if
+            end block homogeneity
+
+            !-------------------------------------------
+            !-----     ZERO MAPS TO ZERO           -----
+            !-------------------------------------------
+            if (test_zero_map_) then
+                zero_to_zero: block
+                    class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, Au
+
+                    !> Check that the zero vector is mapped to the zero vector.
+                    allocate(u, Au, source=x)
+                    call u%zero()
+                    call A%apply_matvec(u, Au)
+                    error_norm = Au%norm()
+                    success = merge(.true., .false., error_norm <= tol)
+
+                    !> Exit if the test fails.
+                    if (.not. success) then
+                        failed_test = 'zero_to_zero'
+                        exit verification
+                    end if
+                end block zero_to_zero
+            end if
+
+            !-------------------------------------------
+            !-----     ADJOINT CONSISTENCY         -----
+            !-----     <A u, v> = <u, A^H v>        -----
+            !-------------------------------------------
+            if (test_adjoint_) then
+                adjoint_consistency: block
+                    class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, Au, Av
+                    ${type}$ :: lhs, rhs
+
+                    !> Generate random vectors.
+                    allocate(u, v, Au, Av, source=x)
+                    call u%rand()
+                    call v%rand()
+    
+                    !> Check adjoint consistency.
+                    call A%apply_matvec(u, Au)      ! A u
+                    call A%apply_rmatvec(v, Av)     ! A^H v
+                    scale = Au%norm()*v%norm()
+                    lhs = Au%dot(v)                 ! <A u, v>
+                    rhs = u%dot(Av)                 ! <u, A^H v>
+                    error_norm = abs(lhs - rhs)
+                    success = merge(.true., .false., error_norm <= tol * max(scale, one_r${kind}$))
+    
+                    if (.not. success) then
+                        failed_test = 'adjoint_consistency'
+                        exit verification
+                    end if
+                end block adjoint_consistency
+                end if
+
+        enddo verification
+
+        if (success) then
+            write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
+
+    end function verify_linop_axioms_${type[0]}$${kind}$
+
+    #:endfor
 end module LightKrylov_AbstractLinops
