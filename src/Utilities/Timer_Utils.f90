@@ -495,18 +495,19 @@ contains
       integer, optional, intent(out) :: count
       ! internal
       character(len=*), parameter :: this_procedure = 'add_group'
-      character(len=128) :: msg, gname
+      character(len=128) :: msg, gname, infomsg
       logical :: ignore_error_
       ignore_error_ = optval(ignore_error, .true.)
       ! Sanity checks
-      if (istart < 1 .or. iend < 1) then
-         call stop_error('Inconsistent input for istart, iend.', this_module, this_procedure)
-      else if (istart > iend) then
-         call stop_error('istart > iend.', this_module, this_procedure)
-      else if (iend > self%timer_count) then
-         call stop_error('iend > timer_count.', this_module, this_procedure)
-      end if
       gname = to_lower(name)
+      infomsg = 'Timer group "'//trim(gname)//'"'
+      if (istart < 1 .or. iend < 1) then
+         call stop_error(trim(infomsg)//': Inconsistent input for istart, iend.', this_module, this_procedure)
+      else if (istart > iend) then
+         call stop_error(trim(infomsg)//': istart > iend.', this_module, this_procedure)
+      else if (iend > self%timer_count) then
+         call stop_error(trim(infomsg)//': iend > timer_count.', this_module, this_procedure)
+      end if
       if (self%group_count == 0) then
          allocate (self%groups(1))
          self%groups(1) = lightkrylov_timer_group(name=gname, istart=istart, iend=iend)
@@ -517,7 +518,7 @@ contains
          else
             self%groups = [self%groups, lightkrylov_timer_group(name=gname, istart=istart, iend=iend)]
             self%group_count = self%group_count + 1
-            write (msg, '(A,I0)') 'Timer group "'//trim(gname)//'" added: group_count: ', self%group_count
+            write (msg, '(A,I0)') trim(infomsg)//' added: group_count: ', self%group_count
             call log_debug(msg, this_module)
          end if
       end if
@@ -818,7 +819,7 @@ contains
          call log_information(msg, this_module, self%name)
          do i = 1, self%group_count
             count = self%groups(i)%iend - self%groups(i)%istart + 1
-            write (msg, '(3X,A20," : ",I3," timers.")') self%groups(i)%name, count
+            write (msg, '(3X,A30," : ",I3," timers.")') self%groups(i)%name, count
             call log_information(msg, this_module, self%name)
          end do
          self%is_initialized = .true.
