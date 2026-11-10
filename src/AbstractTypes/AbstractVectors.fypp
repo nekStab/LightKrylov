@@ -605,7 +605,7 @@ module LightKrylov_AbstractVectors
         procedure, pass(self), public :: get_size => dense_get_size_${type[0]}$${kind}$
         !! Return size of specific abstract vector
         procedure, pass(self), public :: init_like => dense_init_like_${type[0]}$${kind}$
-        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant, 
+        !! Initialize `self` like `mold`: allocate if unallocated, no-op if already conformant,
         !! release and reallocate if the shape differs.
         procedure, pass(self), public :: assign => dense_assign_${type[0]}$${kind}$
         !! Copy assignment through a direct array copy.
