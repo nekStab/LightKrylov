@@ -25,10 +25,10 @@ contains
             write(msg,'(14X,A15)') 'Residual'
             call log_message(msg, this_module, this_procedure)
             call log_message('Residual history:', this_module, this_procedure)
-            write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
+            write(msg,'(A14,ES15.8)') '   INIT:', self%res(1)
             call log_message(msg, this_module, this_procedure)
             do i = 2, self%n_iter+1
-               write(msg,'(A,I4,A,E15.8)') '   Step ', i-1, ': ', self%res(i)
+               write(msg,'(A,I4,A,ES15.8)') '   Step ', i-1, ': ', self%res(i)
                call log_message(msg, this_module, this_procedure)
             end do
         else

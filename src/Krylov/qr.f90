@@ -124,7 +124,7 @@ contains
                         beta = Q(i)%norm() ; call Q(i)%scal(one_rsp / beta)
                     enddo
                     info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. |beta|= ', abs(alpha)
+                    write(msg,'(A,I0,A,ES15.8)') 'Breakdown after ', j, ' steps. |beta|= ', abs(alpha)
                     call log_information(msg, this_module, this_procedure)
                     exit qr_step
                 endif
@@ -205,7 +205,7 @@ contains
                         beta = Q(i)%norm() ; call Q(i)%scal(one_rdp / beta)
                     enddo
                     info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. |beta|= ', abs(alpha)
+                    write(msg,'(A,I0,A,ES15.8)') 'Breakdown after ', j, ' steps. |beta|= ', abs(alpha)
                     call log_information(msg, this_module, this_procedure)
                     exit qr_step
                 endif
@@ -286,7 +286,7 @@ contains
                         beta = Q(i)%norm() ; call Q(i)%scal(one_csp / beta)
                     enddo
                     info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. |beta|= ', abs(alpha)
+                    write(msg,'(A,I0,A,ES15.8)') 'Breakdown after ', j, ' steps. |beta|= ', abs(alpha)
                     call log_information(msg, this_module, this_procedure)
                     exit qr_step
                 endif
@@ -367,7 +367,7 @@ contains
                         beta = Q(i)%norm() ; call Q(i)%scal(one_cdp / beta)
                     enddo
                     info = j
-                    write(msg,'(A,I0,A,E15.8)') 'Breakdown after ', j, ' steps. |beta|= ', abs(alpha)
+                    write(msg,'(A,I0,A,ES15.8)') 'Breakdown after ', j, ' steps. |beta|= ', abs(alpha)
                     call log_information(msg, this_module, this_procedure)
                     exit qr_step
                 endif
@@ -439,7 +439,7 @@ contains
                     if (.not.flag) then
                         flag = .true.
                         info = j
-                        write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
+                        write(msg,'(A,I0,A,ES15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
                         call log_information(msg, this_module, this_procedure)
                     end if
                     R(j, j) = zero_rsp
@@ -504,7 +504,7 @@ contains
                     if (.not.flag) then
                         flag = .true.
                         info = j
-                        write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
+                        write(msg,'(A,I0,A,ES15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
                         call log_information(msg, this_module, this_procedure)
                     end if
                     R(j, j) = zero_rdp
@@ -569,7 +569,7 @@ contains
                     if (.not.flag) then
                         flag = .true.
                         info = j
-                        write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
+                        write(msg,'(A,I0,A,ES15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
                         call log_information(msg, this_module, this_procedure)
                     end if
                     R(j, j) = zero_rsp
@@ -634,7 +634,7 @@ contains
                     if (.not.flag) then
                         flag = .true.
                         info = j
-                        write(msg,'(A,I0,A,E15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
+                        write(msg,'(A,I0,A,ES15.8)') 'Colinear column detected after ', j, ' steps. beta= ', beta
                         call log_information(msg, this_module, this_procedure)
                     end if
                     R(j, j) = zero_rdp

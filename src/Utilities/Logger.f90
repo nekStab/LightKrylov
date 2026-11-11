@@ -4,7 +4,7 @@ module LightKrylov_Logger
 #endif
    ! Fortran Standard Library
    use stdlib_optval, only: optval
-   use stdlib_logger, only: logger => global_logger
+   use stdlib_logger, only: logger => global_logger, debug_level, information_level, warning_level, error_level
    use stdlib_ascii, only: to_lower
    use stdlib_strings, only: chomp, replace_all
    ! LightKrylov
@@ -18,6 +18,8 @@ module LightKrylov_Logger
    logical, parameter, private :: exit_on_error = .true.
    logical, parameter, private :: exit_on_test_error = .true.
    logical :: logger_is_active = .false.
+   integer, parameter, private :: inactive_log_level = information_level
+   !! Log level used when logger_setup has not been called
 
    public :: stop_error
    public :: type_error
@@ -130,7 +132,7 @@ contains
             if (flush_) call flush_log_units()
          end if
       else
-         print '(A)', msg
+         if (inactive_log_level <= information_level) print '(A)', msg
       end if
    end subroutine log_message
 
@@ -152,7 +154,7 @@ contains
             if (flush_) call flush_log_units()
          end if
       else
-         print '("INFO: ",A)', msg
+         if (inactive_log_level <= information_level) print '("INFO: ",A)', msg
       end if
    end subroutine log_information
 
@@ -169,7 +171,7 @@ contains
             call flush_log_units()
          end if
       else
-         print '("WARN: ",A)', msg
+         if (inactive_log_level <= warning_level) print '("WARN: ",A)', msg
       end if
    end subroutine log_warning
 
@@ -192,6 +194,7 @@ contains
          end if
       else
          print '(A,": ",A)', msg, errmsg
+         call error_handler(-1)
       end if
    end subroutine log_error
 
@@ -208,7 +211,7 @@ contains
             call flush_log_units()
          end if
       else
-         print '("DEBUG: ",A)', msg
+         if (inactive_log_level <= debug_level) print '("DEBUG: ",A)', msg
       end if
    end subroutine log_debug
 

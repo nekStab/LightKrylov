@@ -1636,7 +1636,7 @@ contains
         integer :: i, k, idx, iostat
         integer, allocatable :: indices(:)
         character(len=100) :: errmsg
-        character(len=*), parameter :: fmt = '(I6,2(2X,E16.9),2X,L4)'
+        character(len=*), parameter :: fmt = '(I6,2(2X,ES16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only IO rank writes
             allocate(indices(k), stat=iostat, errmsg=errmsg)
@@ -1667,7 +1667,7 @@ contains
         integer :: i, k, idx, iostat
         integer, allocatable :: indices(:)
         character(len=100) :: errmsg
-        character(len=*), parameter :: fmt = '(I6,2(2X,E16.9),2X,L4)'
+        character(len=*), parameter :: fmt = '(I6,2(2X,ES16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only IO rank writes
             allocate(indices(k), stat=iostat, errmsg=errmsg)
@@ -1699,7 +1699,7 @@ contains
         integer, allocatable :: indices(:)
         character(len=100) :: errmsg
         real(sp) :: modulus
-        character(len=*), parameter :: fmt = '(I6,4(2X,E16.9),2X,L4)'
+        character(len=*), parameter :: fmt = '(I6,4(2X,ES16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only IO rank writes
             allocate(indices(k), stat=iostat, errmsg=errmsg)
@@ -1732,7 +1732,7 @@ contains
         integer, allocatable :: indices(:)
         character(len=100) :: errmsg
         real(dp) :: modulus
-        character(len=*), parameter :: fmt = '(I6,4(2X,E16.9),2X,L4)'
+        character(len=*), parameter :: fmt = '(I6,4(2X,ES16.9),2X,L4)'
         k = size(vals)
         if (io_rank()) then ! only IO rank writes
             allocate(indices(k), stat=iostat, errmsg=errmsg)
