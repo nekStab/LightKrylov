@@ -1464,15 +1464,19 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rsp
 
-    logical function verify_vector_axioms_rsp(x, ntrials, tolerance) result(success)
+    logical function verify_vector_axioms_rsp(x, ntrials, tolerance, verbose) result(success)
         implicit none(type, external)
         class(abstract_vector_rsp), intent(in) :: x
         !! Derived-type whose implementation needs to be tested.
         integer, optional, intent(in) :: ntrials
         !! Number of random samples generated for the tests.
         real(sp), optional, intent(in) :: tolerance
+        !! Tolerance for the tests.
+        logical, optional, intent(in) :: verbose
+        !! Write out info about each test? (default=.false.).
 
         integer :: ntrials_, i
+        logical :: verb
         real(sp) :: tol, error_norm
         character(len=128) :: failed_test
         character(len=256) :: msg
@@ -1482,10 +1486,15 @@ contains
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
         tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+        verb = optval(verbose, .false.)
 
-        !> Run all tests to verify axioms.
-        success = .false.
-        verification: do i = 1, ntrials_
+        !> Run each test ntrials_ times before moving on to the next one.
+        success = .true.
+        failed_test = ''
+        error_norm = 0.0_sp
+        i = 0
+
+        tests: block
 
             !-----------------------------------
             !-----     VECTOR ADDITION     -----
@@ -1493,96 +1502,128 @@ contains
             addition_distributivity: block
                 class(abstract_vector_rsp), allocatable :: u, v, w
                 class(abstract_vector_rsp), allocatable :: wrk1, wrk2
+                character(len=*), parameter :: this_test = "addition distributivity"
 
                 !> Generate random vectors.
                 allocate(u, v, w, wrk1, wrk2, source=x)
-                call u%rand()
-                call v%rand()
-                call w%rand()
+                if (verb) call log_test_header(this_test)
 
-                !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
-                call wrk1%add(w)    ! v + w
-                call wrk2%add(u)    ! u + v
+                do i = 1, ntrials_
+                  call u%rand()
+                  call v%rand()
+                  call w%rand()
 
-                call u%add(wrk1)    ! u + (v + w)
-                call w%add(wrk2)    ! (u + v) + w
+                  !> Check distributivity.
+                  wrk1 = v
+                  wrk2 = v
+                  call wrk1%add(w)    ! v + w
+                  call wrk2%add(u)    ! u + v
 
-                call u%sub(w)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                  call u%add(wrk1)    ! u + (v + w)
+                  call w%add(wrk2)    ! (u + v) + w
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'addition_distributivity'
-                    exit verification
-                end if
+                  call u%sub(w)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                enddo
             end block addition_distributivity
 
             addition_commutativity: block
                 class(abstract_vector_rsp), allocatable :: u, v, w
+                character(len=*), parameter :: this_test = "addition commutativity"
 
                 !> Generate random vectors.
                 allocate(u, v, source=x)
-                call u%rand()
-                call v%rand()
-                w = v
+                if (verb) call log_test_header(this_test)
 
-                !> Check commutativity.
-                call v%add(u)
-                call u%add(w)
+                do i = 1, ntrials_
+                  call u%rand()
+                  call v%rand()
+                  w = v
 
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                  !> Check commutativity.
+                  call v%add(u)
+                  call u%add(w)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'addition_commutativity'
-                    exit verification
-                end if
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+               enddo
             end block addition_commutativity
 
             addition_zero: block
                 class(abstract_vector_rsp), allocatable :: u, v, z
+                character(len=*), parameter :: this_test = "additive zero"
 
                 !> Generate random vector.
                 allocate(u, v, z, source=x)
-                v = u
-                call z%zero()
+                if (verb) call log_test_header(this_test)
 
-                !> Check zero element.
-                call u%add(z)
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                do i = 1, ntrials_
+                  v = u
+                  call z%zero()
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'additive_zero'
-                    exit verification
-                end if
+                  !> Check zero element.
+                  call u%add(z)
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                enddo
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_rsp), allocatable :: u, v
+                character(len=*), parameter :: this_test = "additive inverse"
 
                 !> Generate random vector.
                 allocate(u, source=x)
-                call u%rand()
-                v = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check additive inverse.
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                do i = 1, ntrials_
+                  call u%rand()
+                  v = u
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'additive_inverse'
-                    exit verification
-                end if
+                  !> Check additive inverse.
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                enddo
             end block additive_inverse
 
             !-----------------------------------------
@@ -1591,107 +1632,139 @@ contains
             scaling_identity: block
                 class(abstract_vector_rsp), allocatable :: u, v
                 real(sp), parameter :: one = 1.0_sp
+                character(len=*), parameter :: this_test = "scaling identity"
 
                 !> Generate random vector.
                 allocate(u, v, source=x)
-                call u%rand()
-                v = u
-                !> Check identity.
-                call v%scal(one)
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                if (verb) call log_test_header(this_test)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_identity'
-                    exit verification
-                end if
+                do i = 1, ntrials_
+                  call u%rand()
+                  v = u
+                  !> Check identity.
+                  call v%scal(one)
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_identity
 
             scaling_compatibility: block
                 class(abstract_vector_rsp), allocatable :: u, v
                 real(sp) :: a, b
+                character(len=*), parameter :: this_test = "scaling compatibility"
                 call random_number(a)
                 call random_number(b)
 
                 !> Generate random vectors.
                 allocate(u, v, source=x)
-                call u%rand(ifnorm=.true.)
-                v = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check associativity.
-                call v%scal(b)
-                call v%scal(a)
-                call u%scal(a*b)
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                do i = 1, ntrials_
+                  call u%rand(ifnorm=.true.)
+                  v = u
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_compatibility'
-                    exit verification
-                end if
+                  !> Check associativity.
+                  call v%scal(b)
+                  call v%scal(a)
+                  call u%scal(a*b)
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_compatibility
 
             scaling_distributivity: block
                 class(abstract_vector_rsp), allocatable :: u, v, w
                 real(sp) :: a
+                character(len=*), parameter :: this_test = "scaling distributivity 1"
                 call random_number(a)
 
                 !> Generate random vectors.
                 allocate(u, v, w, source=x)
-                call u%rand()
-                call v%rand()
-                w = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check distributivity.
-                call w%add(v)
-                call w%scal(a)
+                do i = 1, ntrials_
+                  call u%rand()
+                  call v%rand()
+                  w = u
 
-                call u%scal(a)
-                call v%scal(a)
-                call v%add(u)
+                  !> Check distributivity.
+                  call w%add(v)
+                  call w%scal(a)
 
-                call v%sub(w)
-                error_norm = v%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                  call u%scal(a)
+                  call v%scal(a)
+                  call v%add(u)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_distributivity'
-                    exit verification
-                end if
+                  call v%sub(w)
+                  error_norm = v%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_distributivity
 
             scaling_distributivity_bis: block
                 class(abstract_vector_rsp), allocatable :: u, v
                 real(sp) :: a, b
+                character(len=*), parameter :: this_test = "scaling distributivity 2"
                 call random_number(a)
                 call random_number(b)
 
                 !> Generate random vector.
                 allocate(u, source=x)
-                call u%rand()
-                v = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check distributivity.
-                call v%axpby(a, u, b)
-                call u%scal(a+b)
+                do i = 1, ntrials_
+                  call u%rand()
+                  v = u
 
-                call v%sub(u)
-                error_norm = v%norm()
-                success = merge(.true., .false., error_norm <= tol)
-                
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_distributivity_bis'
-                    exit verification
-                end if
+                  !> Check distributivity.
+                  call v%axpby(a, u, b)
+                  call u%scal(a+b)
+
+                  call v%sub(u)
+                  error_norm = v%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+                  
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_distributivity_bis
 
-        enddo verification
+        end block tests
 
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
@@ -1702,6 +1775,25 @@ contains
             write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
+
+    contains
+
+        subroutine log_test_header(test_name)
+            !! Prints the test name and tolerance, followed by the column header.
+            character(len=*), intent(in) :: test_name
+            write(msg, '(A,A25,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
+            call log_message(msg)
+            write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
+            call log_message(msg)
+        end subroutine log_test_header
+
+        subroutine log_trial(trial, err)
+            !! Prints the error norm for a single trial.
+            integer, intent(in) :: trial
+            real(sp), intent(in) :: err
+            write(msg, '(3X,I5,A,ES12.5)') trial, ': ', err
+            call log_message(msg)
+        end subroutine log_trial
 
     end function verify_vector_axioms_rsp
 
@@ -1866,15 +1958,19 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_rdp
 
-    logical function verify_vector_axioms_rdp(x, ntrials, tolerance) result(success)
+    logical function verify_vector_axioms_rdp(x, ntrials, tolerance, verbose) result(success)
         implicit none(type, external)
         class(abstract_vector_rdp), intent(in) :: x
         !! Derived-type whose implementation needs to be tested.
         integer, optional, intent(in) :: ntrials
         !! Number of random samples generated for the tests.
         real(dp), optional, intent(in) :: tolerance
+        !! Tolerance for the tests.
+        logical, optional, intent(in) :: verbose
+        !! Write out info about each test? (default=.false.).
 
         integer :: ntrials_, i
+        logical :: verb
         real(dp) :: tol, error_norm
         character(len=128) :: failed_test
         character(len=256) :: msg
@@ -1884,10 +1980,15 @@ contains
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
         tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+        verb = optval(verbose, .false.)
 
-        !> Run all tests to verify axioms.
-        success = .false.
-        verification: do i = 1, ntrials_
+        !> Run each test ntrials_ times before moving on to the next one.
+        success = .true.
+        failed_test = ''
+        error_norm = 0.0_dp
+        i = 0
+
+        tests: block
 
             !-----------------------------------
             !-----     VECTOR ADDITION     -----
@@ -1895,96 +1996,128 @@ contains
             addition_distributivity: block
                 class(abstract_vector_rdp), allocatable :: u, v, w
                 class(abstract_vector_rdp), allocatable :: wrk1, wrk2
+                character(len=*), parameter :: this_test = "addition distributivity"
 
                 !> Generate random vectors.
                 allocate(u, v, w, wrk1, wrk2, source=x)
-                call u%rand()
-                call v%rand()
-                call w%rand()
+                if (verb) call log_test_header(this_test)
 
-                !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
-                call wrk1%add(w)    ! v + w
-                call wrk2%add(u)    ! u + v
+                do i = 1, ntrials_
+                  call u%rand()
+                  call v%rand()
+                  call w%rand()
 
-                call u%add(wrk1)    ! u + (v + w)
-                call w%add(wrk2)    ! (u + v) + w
+                  !> Check distributivity.
+                  wrk1 = v
+                  wrk2 = v
+                  call wrk1%add(w)    ! v + w
+                  call wrk2%add(u)    ! u + v
 
-                call u%sub(w)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                  call u%add(wrk1)    ! u + (v + w)
+                  call w%add(wrk2)    ! (u + v) + w
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'addition_distributivity'
-                    exit verification
-                end if
+                  call u%sub(w)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                enddo
             end block addition_distributivity
 
             addition_commutativity: block
                 class(abstract_vector_rdp), allocatable :: u, v, w
+                character(len=*), parameter :: this_test = "addition commutativity"
 
                 !> Generate random vectors.
                 allocate(u, v, source=x)
-                call u%rand()
-                call v%rand()
-                w = v
+                if (verb) call log_test_header(this_test)
 
-                !> Check commutativity.
-                call v%add(u)
-                call u%add(w)
+                do i = 1, ntrials_
+                  call u%rand()
+                  call v%rand()
+                  w = v
 
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                  !> Check commutativity.
+                  call v%add(u)
+                  call u%add(w)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'addition_commutativity'
-                    exit verification
-                end if
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+               enddo
             end block addition_commutativity
 
             addition_zero: block
                 class(abstract_vector_rdp), allocatable :: u, v, z
+                character(len=*), parameter :: this_test = "additive zero"
 
                 !> Generate random vector.
                 allocate(u, v, z, source=x)
-                v = u
-                call z%zero()
+                if (verb) call log_test_header(this_test)
 
-                !> Check zero element.
-                call u%add(z)
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                do i = 1, ntrials_
+                  v = u
+                  call z%zero()
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'additive_zero'
-                    exit verification
-                end if
+                  !> Check zero element.
+                  call u%add(z)
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                enddo
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_rdp), allocatable :: u, v
+                character(len=*), parameter :: this_test = "additive inverse"
 
                 !> Generate random vector.
                 allocate(u, source=x)
-                call u%rand()
-                v = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check additive inverse.
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                do i = 1, ntrials_
+                  call u%rand()
+                  v = u
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'additive_inverse'
-                    exit verification
-                end if
+                  !> Check additive inverse.
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                enddo
             end block additive_inverse
 
             !-----------------------------------------
@@ -1993,107 +2126,139 @@ contains
             scaling_identity: block
                 class(abstract_vector_rdp), allocatable :: u, v
                 real(dp), parameter :: one = 1.0_dp
+                character(len=*), parameter :: this_test = "scaling identity"
 
                 !> Generate random vector.
                 allocate(u, v, source=x)
-                call u%rand()
-                v = u
-                !> Check identity.
-                call v%scal(one)
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                if (verb) call log_test_header(this_test)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_identity'
-                    exit verification
-                end if
+                do i = 1, ntrials_
+                  call u%rand()
+                  v = u
+                  !> Check identity.
+                  call v%scal(one)
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_identity
 
             scaling_compatibility: block
                 class(abstract_vector_rdp), allocatable :: u, v
                 real(dp) :: a, b
+                character(len=*), parameter :: this_test = "scaling compatibility"
                 call random_number(a)
                 call random_number(b)
 
                 !> Generate random vectors.
                 allocate(u, v, source=x)
-                call u%rand(ifnorm=.true.)
-                v = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check associativity.
-                call v%scal(b)
-                call v%scal(a)
-                call u%scal(a*b)
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                do i = 1, ntrials_
+                  call u%rand(ifnorm=.true.)
+                  v = u
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_compatibility'
-                    exit verification
-                end if
+                  !> Check associativity.
+                  call v%scal(b)
+                  call v%scal(a)
+                  call u%scal(a*b)
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_compatibility
 
             scaling_distributivity: block
                 class(abstract_vector_rdp), allocatable :: u, v, w
                 real(dp) :: a
+                character(len=*), parameter :: this_test = "scaling distributivity 1"
                 call random_number(a)
 
                 !> Generate random vectors.
                 allocate(u, v, w, source=x)
-                call u%rand()
-                call v%rand()
-                w = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check distributivity.
-                call w%add(v)
-                call w%scal(a)
+                do i = 1, ntrials_
+                  call u%rand()
+                  call v%rand()
+                  w = u
 
-                call u%scal(a)
-                call v%scal(a)
-                call v%add(u)
+                  !> Check distributivity.
+                  call w%add(v)
+                  call w%scal(a)
 
-                call v%sub(w)
-                error_norm = v%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                  call u%scal(a)
+                  call v%scal(a)
+                  call v%add(u)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_distributivity'
-                    exit verification
-                end if
+                  call v%sub(w)
+                  error_norm = v%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_distributivity
 
             scaling_distributivity_bis: block
                 class(abstract_vector_rdp), allocatable :: u, v
                 real(dp) :: a, b
+                character(len=*), parameter :: this_test = "scaling distributivity 2"
                 call random_number(a)
                 call random_number(b)
 
                 !> Generate random vector.
                 allocate(u, source=x)
-                call u%rand()
-                v = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check distributivity.
-                call v%axpby(a, u, b)
-                call u%scal(a+b)
+                do i = 1, ntrials_
+                  call u%rand()
+                  v = u
 
-                call v%sub(u)
-                error_norm = v%norm()
-                success = merge(.true., .false., error_norm <= tol)
-                
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_distributivity_bis'
-                    exit verification
-                end if
+                  !> Check distributivity.
+                  call v%axpby(a, u, b)
+                  call u%scal(a+b)
+
+                  call v%sub(u)
+                  error_norm = v%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+                  
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_distributivity_bis
 
-        enddo verification
+        end block tests
 
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
@@ -2104,6 +2269,25 @@ contains
             write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
+
+    contains
+
+        subroutine log_test_header(test_name)
+            !! Prints the test name and tolerance, followed by the column header.
+            character(len=*), intent(in) :: test_name
+            write(msg, '(A,A25,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
+            call log_message(msg)
+            write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
+            call log_message(msg)
+        end subroutine log_test_header
+
+        subroutine log_trial(trial, err)
+            !! Prints the error norm for a single trial.
+            integer, intent(in) :: trial
+            real(dp), intent(in) :: err
+            write(msg, '(3X,I5,A,ES12.5)') trial, ': ', err
+            call log_message(msg)
+        end subroutine log_trial
 
     end function verify_vector_axioms_rdp
 
@@ -2268,15 +2452,19 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_csp
 
-    logical function verify_vector_axioms_csp(x, ntrials, tolerance) result(success)
+    logical function verify_vector_axioms_csp(x, ntrials, tolerance, verbose) result(success)
         implicit none(type, external)
         class(abstract_vector_csp), intent(in) :: x
         !! Derived-type whose implementation needs to be tested.
         integer, optional, intent(in) :: ntrials
         !! Number of random samples generated for the tests.
         real(sp), optional, intent(in) :: tolerance
+        !! Tolerance for the tests.
+        logical, optional, intent(in) :: verbose
+        !! Write out info about each test? (default=.false.).
 
         integer :: ntrials_, i
+        logical :: verb
         real(sp) :: tol, error_norm
         character(len=128) :: failed_test
         character(len=256) :: msg
@@ -2286,10 +2474,15 @@ contains
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
         tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+        verb = optval(verbose, .false.)
 
-        !> Run all tests to verify axioms.
-        success = .false.
-        verification: do i = 1, ntrials_
+        !> Run each test ntrials_ times before moving on to the next one.
+        success = .true.
+        failed_test = ''
+        error_norm = 0.0_sp
+        i = 0
+
+        tests: block
 
             !-----------------------------------
             !-----     VECTOR ADDITION     -----
@@ -2297,96 +2490,128 @@ contains
             addition_distributivity: block
                 class(abstract_vector_csp), allocatable :: u, v, w
                 class(abstract_vector_csp), allocatable :: wrk1, wrk2
+                character(len=*), parameter :: this_test = "addition distributivity"
 
                 !> Generate random vectors.
                 allocate(u, v, w, wrk1, wrk2, source=x)
-                call u%rand()
-                call v%rand()
-                call w%rand()
+                if (verb) call log_test_header(this_test)
 
-                !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
-                call wrk1%add(w)    ! v + w
-                call wrk2%add(u)    ! u + v
+                do i = 1, ntrials_
+                  call u%rand()
+                  call v%rand()
+                  call w%rand()
 
-                call u%add(wrk1)    ! u + (v + w)
-                call w%add(wrk2)    ! (u + v) + w
+                  !> Check distributivity.
+                  wrk1 = v
+                  wrk2 = v
+                  call wrk1%add(w)    ! v + w
+                  call wrk2%add(u)    ! u + v
 
-                call u%sub(w)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                  call u%add(wrk1)    ! u + (v + w)
+                  call w%add(wrk2)    ! (u + v) + w
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'addition_distributivity'
-                    exit verification
-                end if
+                  call u%sub(w)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                enddo
             end block addition_distributivity
 
             addition_commutativity: block
                 class(abstract_vector_csp), allocatable :: u, v, w
+                character(len=*), parameter :: this_test = "addition commutativity"
 
                 !> Generate random vectors.
                 allocate(u, v, source=x)
-                call u%rand()
-                call v%rand()
-                w = v
+                if (verb) call log_test_header(this_test)
 
-                !> Check commutativity.
-                call v%add(u)
-                call u%add(w)
+                do i = 1, ntrials_
+                  call u%rand()
+                  call v%rand()
+                  w = v
 
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                  !> Check commutativity.
+                  call v%add(u)
+                  call u%add(w)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'addition_commutativity'
-                    exit verification
-                end if
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+               enddo
             end block addition_commutativity
 
             addition_zero: block
                 class(abstract_vector_csp), allocatable :: u, v, z
+                character(len=*), parameter :: this_test = "additive zero"
 
                 !> Generate random vector.
                 allocate(u, v, z, source=x)
-                v = u
-                call z%zero()
+                if (verb) call log_test_header(this_test)
 
-                !> Check zero element.
-                call u%add(z)
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                do i = 1, ntrials_
+                  v = u
+                  call z%zero()
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'additive_zero'
-                    exit verification
-                end if
+                  !> Check zero element.
+                  call u%add(z)
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                enddo
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_csp), allocatable :: u, v
+                character(len=*), parameter :: this_test = "additive inverse"
 
                 !> Generate random vector.
                 allocate(u, source=x)
-                call u%rand()
-                v = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check additive inverse.
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                do i = 1, ntrials_
+                  call u%rand()
+                  v = u
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'additive_inverse'
-                    exit verification
-                end if
+                  !> Check additive inverse.
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                enddo
             end block additive_inverse
 
             !-----------------------------------------
@@ -2395,27 +2620,36 @@ contains
             scaling_identity: block
                 class(abstract_vector_csp), allocatable :: u, v
                 complex(sp), parameter :: one = 1.0_sp
+                character(len=*), parameter :: this_test = "scaling identity"
 
                 !> Generate random vector.
                 allocate(u, v, source=x)
-                call u%rand()
-                v = u
-                !> Check identity.
-                call v%scal(one)
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                if (verb) call log_test_header(this_test)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_identity'
-                    exit verification
-                end if
+                do i = 1, ntrials_
+                  call u%rand()
+                  v = u
+                  !> Check identity.
+                  call v%scal(one)
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_identity
 
             scaling_compatibility: block
                 class(abstract_vector_csp), allocatable :: u, v
                 complex(sp) :: a, b
+                character(len=*), parameter :: this_test = "scaling compatibility"
                 real(sp) :: c(2)
                 call random_number(c)
                 a = cmplx(c(1), c(2), kind=sp)
@@ -2424,59 +2658,75 @@ contains
 
                 !> Generate random vectors.
                 allocate(u, v, source=x)
-                call u%rand(ifnorm=.true.)
-                v = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check associativity.
-                call v%scal(b)
-                call v%scal(a)
-                call u%scal(a*b)
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                do i = 1, ntrials_
+                  call u%rand(ifnorm=.true.)
+                  v = u
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_compatibility'
-                    exit verification
-                end if
+                  !> Check associativity.
+                  call v%scal(b)
+                  call v%scal(a)
+                  call u%scal(a*b)
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_compatibility
 
             scaling_distributivity: block
                 class(abstract_vector_csp), allocatable :: u, v, w
                 complex(sp) :: a
+                character(len=*), parameter :: this_test = "scaling distributivity 1"
                 real(sp) :: b(2)
                 call random_number(b)
                 a = cmplx(b(1), b(2), kind=sp)
 
                 !> Generate random vectors.
                 allocate(u, v, w, source=x)
-                call u%rand()
-                call v%rand()
-                w = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check distributivity.
-                call w%add(v)
-                call w%scal(a)
+                do i = 1, ntrials_
+                  call u%rand()
+                  call v%rand()
+                  w = u
 
-                call u%scal(a)
-                call v%scal(a)
-                call v%add(u)
+                  !> Check distributivity.
+                  call w%add(v)
+                  call w%scal(a)
 
-                call v%sub(w)
-                error_norm = v%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                  call u%scal(a)
+                  call v%scal(a)
+                  call v%add(u)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_distributivity'
-                    exit verification
-                end if
+                  call v%sub(w)
+                  error_norm = v%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_distributivity
 
             scaling_distributivity_bis: block
                 class(abstract_vector_csp), allocatable :: u, v
                 complex(sp) :: a, b
+                character(len=*), parameter :: this_test = "scaling distributivity 2"
                 real(sp) :: c(2)
                 call random_number(c)
                 a = cmplx(c(1), c(2), kind=sp)
@@ -2485,25 +2735,32 @@ contains
 
                 !> Generate random vector.
                 allocate(u, source=x)
-                call u%rand()
-                v = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check distributivity.
-                call v%axpby(a, u, b)
-                call u%scal(a+b)
+                do i = 1, ntrials_
+                  call u%rand()
+                  v = u
 
-                call v%sub(u)
-                error_norm = v%norm()
-                success = merge(.true., .false., error_norm <= tol)
-                
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_distributivity_bis'
-                    exit verification
-                end if
+                  !> Check distributivity.
+                  call v%axpby(a, u, b)
+                  call u%scal(a+b)
+
+                  call v%sub(u)
+                  error_norm = v%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+                  
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_distributivity_bis
 
-        enddo verification
+        end block tests
 
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
@@ -2514,6 +2771,25 @@ contains
             write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
+
+    contains
+
+        subroutine log_test_header(test_name)
+            !! Prints the test name and tolerance, followed by the column header.
+            character(len=*), intent(in) :: test_name
+            write(msg, '(A,A25,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
+            call log_message(msg)
+            write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
+            call log_message(msg)
+        end subroutine log_test_header
+
+        subroutine log_trial(trial, err)
+            !! Prints the error norm for a single trial.
+            integer, intent(in) :: trial
+            real(sp), intent(in) :: err
+            write(msg, '(3X,I5,A,ES12.5)') trial, ': ', err
+            call log_message(msg)
+        end subroutine log_trial
 
     end function verify_vector_axioms_csp
 
@@ -2678,15 +2954,19 @@ contains
         call X%rand(ifnorm=ifnorm)
     end subroutine rand_basis_cdp
 
-    logical function verify_vector_axioms_cdp(x, ntrials, tolerance) result(success)
+    logical function verify_vector_axioms_cdp(x, ntrials, tolerance, verbose) result(success)
         implicit none(type, external)
         class(abstract_vector_cdp), intent(in) :: x
         !! Derived-type whose implementation needs to be tested.
         integer, optional, intent(in) :: ntrials
         !! Number of random samples generated for the tests.
         real(dp), optional, intent(in) :: tolerance
+        !! Tolerance for the tests.
+        logical, optional, intent(in) :: verbose
+        !! Write out info about each test? (default=.false.).
 
         integer :: ntrials_, i
+        logical :: verb
         real(dp) :: tol, error_norm
         character(len=128) :: failed_test
         character(len=256) :: msg
@@ -2696,10 +2976,15 @@ contains
         !> Deals with optional argument.
         ntrials_ = optval(ntrials, 100)
         tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+        verb = optval(verbose, .false.)
 
-        !> Run all tests to verify axioms.
-        success = .false.
-        verification: do i = 1, ntrials_
+        !> Run each test ntrials_ times before moving on to the next one.
+        success = .true.
+        failed_test = ''
+        error_norm = 0.0_dp
+        i = 0
+
+        tests: block
 
             !-----------------------------------
             !-----     VECTOR ADDITION     -----
@@ -2707,96 +2992,128 @@ contains
             addition_distributivity: block
                 class(abstract_vector_cdp), allocatable :: u, v, w
                 class(abstract_vector_cdp), allocatable :: wrk1, wrk2
+                character(len=*), parameter :: this_test = "addition distributivity"
 
                 !> Generate random vectors.
                 allocate(u, v, w, wrk1, wrk2, source=x)
-                call u%rand()
-                call v%rand()
-                call w%rand()
+                if (verb) call log_test_header(this_test)
 
-                !> Check distributivity.
-                wrk1 = v
-                wrk2 = v
-                call wrk1%add(w)    ! v + w
-                call wrk2%add(u)    ! u + v
+                do i = 1, ntrials_
+                  call u%rand()
+                  call v%rand()
+                  call w%rand()
 
-                call u%add(wrk1)    ! u + (v + w)
-                call w%add(wrk2)    ! (u + v) + w
+                  !> Check distributivity.
+                  wrk1 = v
+                  wrk2 = v
+                  call wrk1%add(w)    ! v + w
+                  call wrk2%add(u)    ! u + v
 
-                call u%sub(w)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                  call u%add(wrk1)    ! u + (v + w)
+                  call w%add(wrk2)    ! (u + v) + w
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'addition_distributivity'
-                    exit verification
-                end if
+                  call u%sub(w)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                enddo
             end block addition_distributivity
 
             addition_commutativity: block
                 class(abstract_vector_cdp), allocatable :: u, v, w
+                character(len=*), parameter :: this_test = "addition commutativity"
 
                 !> Generate random vectors.
                 allocate(u, v, source=x)
-                call u%rand()
-                call v%rand()
-                w = v
+                if (verb) call log_test_header(this_test)
 
-                !> Check commutativity.
-                call v%add(u)
-                call u%add(w)
+                do i = 1, ntrials_
+                  call u%rand()
+                  call v%rand()
+                  w = v
 
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                  !> Check commutativity.
+                  call v%add(u)
+                  call u%add(w)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'addition_commutativity'
-                    exit verification
-                end if
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+               enddo
             end block addition_commutativity
 
             addition_zero: block
                 class(abstract_vector_cdp), allocatable :: u, v, z
+                character(len=*), parameter :: this_test = "additive zero"
 
                 !> Generate random vector.
                 allocate(u, v, z, source=x)
-                v = u
-                call z%zero()
+                if (verb) call log_test_header(this_test)
 
-                !> Check zero element.
-                call u%add(z)
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                do i = 1, ntrials_
+                  v = u
+                  call z%zero()
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'additive_zero'
-                    exit verification
-                end if
+                  !> Check zero element.
+                  call u%add(z)
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                enddo
             end block addition_zero
 
             additive_inverse: block
                 class(abstract_vector_cdp), allocatable :: u, v
+                character(len=*), parameter :: this_test = "additive inverse"
 
                 !> Generate random vector.
                 allocate(u, source=x)
-                call u%rand()
-                v = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check additive inverse.
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                do i = 1, ntrials_
+                  call u%rand()
+                  v = u
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'additive_inverse'
-                    exit verification
-                end if
+                  !> Check additive inverse.
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                enddo
             end block additive_inverse
 
             !-----------------------------------------
@@ -2805,27 +3122,36 @@ contains
             scaling_identity: block
                 class(abstract_vector_cdp), allocatable :: u, v
                 complex(dp), parameter :: one = 1.0_dp
+                character(len=*), parameter :: this_test = "scaling identity"
 
                 !> Generate random vector.
                 allocate(u, v, source=x)
-                call u%rand()
-                v = u
-                !> Check identity.
-                call v%scal(one)
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                if (verb) call log_test_header(this_test)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_identity'
-                    exit verification
-                end if
+                do i = 1, ntrials_
+                  call u%rand()
+                  v = u
+                  !> Check identity.
+                  call v%scal(one)
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_identity
 
             scaling_compatibility: block
                 class(abstract_vector_cdp), allocatable :: u, v
                 complex(dp) :: a, b
+                character(len=*), parameter :: this_test = "scaling compatibility"
                 real(dp) :: c(2)
                 call random_number(c)
                 a = cmplx(c(1), c(2), kind=dp)
@@ -2834,59 +3160,75 @@ contains
 
                 !> Generate random vectors.
                 allocate(u, v, source=x)
-                call u%rand(ifnorm=.true.)
-                v = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check associativity.
-                call v%scal(b)
-                call v%scal(a)
-                call u%scal(a*b)
-                call u%sub(v)
-                error_norm = u%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                do i = 1, ntrials_
+                  call u%rand(ifnorm=.true.)
+                  v = u
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_compatibility'
-                    exit verification
-                end if
+                  !> Check associativity.
+                  call v%scal(b)
+                  call v%scal(a)
+                  call u%scal(a*b)
+                  call u%sub(v)
+                  error_norm = u%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_compatibility
 
             scaling_distributivity: block
                 class(abstract_vector_cdp), allocatable :: u, v, w
                 complex(dp) :: a
+                character(len=*), parameter :: this_test = "scaling distributivity 1"
                 real(dp) :: b(2)
                 call random_number(b)
                 a = cmplx(b(1), b(2), kind=dp)
 
                 !> Generate random vectors.
                 allocate(u, v, w, source=x)
-                call u%rand()
-                call v%rand()
-                w = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check distributivity.
-                call w%add(v)
-                call w%scal(a)
+                do i = 1, ntrials_
+                  call u%rand()
+                  call v%rand()
+                  w = u
 
-                call u%scal(a)
-                call v%scal(a)
-                call v%add(u)
+                  !> Check distributivity.
+                  call w%add(v)
+                  call w%scal(a)
 
-                call v%sub(w)
-                error_norm = v%norm()
-                success = merge(.true., .false., error_norm <= tol)
+                  call u%scal(a)
+                  call v%scal(a)
+                  call v%add(u)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_distributivity'
-                    exit verification
-                end if
+                  call v%sub(w)
+                  error_norm = v%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_distributivity
 
             scaling_distributivity_bis: block
                 class(abstract_vector_cdp), allocatable :: u, v
                 complex(dp) :: a, b
+                character(len=*), parameter :: this_test = "scaling distributivity 2"
                 real(dp) :: c(2)
                 call random_number(c)
                 a = cmplx(c(1), c(2), kind=dp)
@@ -2895,25 +3237,32 @@ contains
 
                 !> Generate random vector.
                 allocate(u, source=x)
-                call u%rand()
-                v = u
+                if (verb) call log_test_header(this_test)
 
-                !> Check distributivity.
-                call v%axpby(a, u, b)
-                call u%scal(a+b)
+                do i = 1, ntrials_
+                  call u%rand()
+                  v = u
 
-                call v%sub(u)
-                error_norm = v%norm()
-                success = merge(.true., .false., error_norm <= tol)
-                
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'scaling_distributivity_bis'
-                    exit verification
-                end if
+                  !> Check distributivity.
+                  call v%axpby(a, u, b)
+                  call u%scal(a+b)
+
+                  call v%sub(u)
+                  error_norm = v%norm()
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  !> log information if verbose.
+                  if (verb) call log_trial(i, error_norm)
+                  
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
             end block scaling_distributivity_bis
 
-        enddo verification
+        end block tests
 
         if (success) then
             write(msg, '(A,I0,A)') 'All vector axioms verified (', ntrials_, ' trials).'
@@ -2924,6 +3273,25 @@ contains
             write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
+
+    contains
+
+        subroutine log_test_header(test_name)
+            !! Prints the test name and tolerance, followed by the column header.
+            character(len=*), intent(in) :: test_name
+            write(msg, '(A,A25,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
+            call log_message(msg)
+            write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
+            call log_message(msg)
+        end subroutine log_test_header
+
+        subroutine log_trial(trial, err)
+            !! Prints the error norm for a single trial.
+            integer, intent(in) :: trial
+            real(dp), intent(in) :: err
+            write(msg, '(3X,I5,A,ES12.5)') trial, ': ', err
+            call log_message(msg)
+        end subroutine log_trial
 
     end function verify_vector_axioms_cdp
 

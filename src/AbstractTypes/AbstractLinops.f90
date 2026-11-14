@@ -656,7 +656,7 @@ contains
 
     pure integer function get_counter(self, trans) result(count)
       !! Getter function for the number of matvec calls
-        implicit none(type, external)
+      implicit none(type, external)
       class(abstract_linop), intent(in) :: self
       logical, intent(in) :: trans
       !! matvec or rmatvec?
@@ -669,7 +669,7 @@ contains
 
     subroutine reset_counter(self, trans, procedure, counter, reset_timer, soft_reset, clean_timer)
       !! Setter routine to reset the matvec counter and reset timers
-        implicit none(type, external)
+      implicit none(type, external)
       class(abstract_linop), intent(inout) :: self
       logical, intent(in) :: trans
       !! matvec or rmatvec?
@@ -707,7 +707,7 @@ contains
     subroutine print_timer_info(self, trans)
       !! Getter routine to print the current timing information for matvec/rmatvec
       !! Note: Wrapper of the corresponding routine from lightkrylov_timer
-        implicit none(type, external)
+      implicit none(type, external)
       class(abstract_linop), intent(inout) :: self
       logical, optional, intent(in) :: trans
       !! matvec or rmatvec?
@@ -724,7 +724,7 @@ contains
     subroutine reset_linop_timer(self, trans, soft, clean)
       !! Setter routine to reset the matvec/rmatvec timers
       !! Note: Wrapper of the corresponding routine from lightkrylov_timer
-        implicit none(type, external)
+      implicit none(type, external)
       class(abstract_linop), intent(inout) :: self
       logical, optional, intent(in) :: trans
       !! matvec or rmatvec?
@@ -748,7 +748,7 @@ contains
     subroutine finalize_linop_timer(self)
       !! Finalize the matvec/rmatvec timers
       !! Note: Wrapper of the corresponding routine from lightkrylov_timer
-        implicit none(type, external)
+      implicit none(type, external)
       class(abstract_linop), intent(inout) :: self
       call self%matvec_timer%finalize()
       call self%rmatvec_timer%finalize()
@@ -1683,7 +1683,7 @@ contains
     !-----      UTILITY FUNCTIONS     -----
     !--------------------------------------
 
-    logical function verify_linop_axioms_rsp(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
+    logical function verify_linop_axioms_rsp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, verbose) result(success)
         implicit none(type, external)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -1697,9 +1697,11 @@ contains
         !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
         !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+        logical, optional, intent(in) :: verbose
+        !! Print information about each test? (Default: .false.)
 
         integer :: ntrials_, i
-        logical :: test_zero_map_, test_adjoint_
+        logical :: test_zero_map_, test_adjoint_, verb
         real(sp) :: tol, error_norm, scale
         character(len=128) :: failed_test
         character(len=256) :: msg
@@ -1711,38 +1713,54 @@ contains
         tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
+        verb = optval(verbose, .false.)
 
-        !> Run all tests to verify axioms.
-        success = .false.
-        verification: do i = 1, ntrials_
+        !> Run each test ntrials_ times before moving on to the next one.
+        success = .true.
+        failed_test = ''
+        error_norm = 0.0_sp
+        i = 0
+
+        tests: block
 
             !-------------------------------------------
             !-----     LINEARITY : ADDITIVITY      -----
             !-------------------------------------------
             additivity: block
                 class(abstract_vector_rsp), allocatable :: u, v, Au, Av, Auv
+                character(len=*), parameter :: this_test = 'additivity'
+
                 allocate(u, v, Au, Av, Auv, source=x)
+                if (verb) call log_test_header(this_test)
 
-                !> Generate random vectors.
-                call u%rand()
-                call v%rand()
+                do i = 1, ntrials_
+                  !> Generate random vectors.
+                  call u%rand()
+                  call v%rand()
 
-                !> Check additivity.
-                call A%apply_matvec(u, Au)
-                call A%apply_matvec(v, Av)
-                scale = Au%norm() + Av%norm()
-                call Au%add(Av)                 ! Au <- A(u) + A(v)
+                  !> Check additivity.
+                  call A%apply_matvec(u, Au)
+                  call A%apply_matvec(v, Av)
+                  scale = Au%norm() + Av%norm()
+                  call Au%add(Av)                 ! Au <- A(u) + A(v)
 
-                call u%add(v)
-                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+                  call u%add(v)
+                  call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
 
-                call Auv%sub(Au)
-                error_norm = Auv%norm()
-                success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
-                if (.not. success) then
-                    failed_test = 'additivity'
-                    exit verification
-                end if
+                  call Auv%sub(Au)
+                  error_norm = Auv%norm() / max(scale, one_rsp)
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
+                !> Clean up.
+                deallocate(u, v, Au, Av, Auv)
             end block additivity
 
             !-------------------------------------------
@@ -1751,29 +1769,38 @@ contains
             homogeneity: block
                 class(abstract_vector_rsp), allocatable :: u, Au, Aau
                 real(sp) :: alpha
+                character(len=*), parameter :: this_test = 'homogeneity'
 
-                !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
-                call u%rand()
-                !> generate the identical non-trivial alpha on all ranks
-                alpha = (-1.0_sp)**i * (1.0_sp + real(i,sp))
+                if (verb) call log_test_header(this_test)
 
-                !> Check homogeneity.
-                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
-                scale = Au%norm()
+                do i = 1, ntrials_
+                  !> Generate random vectors.
+                  call u%rand()
+                  !> generate the identical non-trivial alpha on all ranks
+                  alpha = (-1.0_sp)**i * (1.0_sp + real(i,sp))
 
-                call u%scal(alpha)
-                call A%apply_matvec(u, Aau)
+                  !> Check homogeneity.
+                  call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                  scale = Au%norm()
 
-                call Aau%sub(Au)
-                error_norm = Aau%norm()
-                success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+                  call u%scal(alpha)
+                  call A%apply_matvec(u, Aau)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'homogeneity'
-                    exit verification
-                end if
+                  call Aau%sub(Au)
+                  error_norm = Aau%norm() / max(scale, one_rsp)
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
+                !> Clean up.
+                deallocate(u, Au, Aau)
             end block homogeneity
 
             !-------------------------------------------
@@ -1781,20 +1808,28 @@ contains
             !-------------------------------------------
             if (test_zero_map_) then
                 zero_to_zero: block
-                    class(abstract_vector_rsp), allocatable :: u, Au
+                  class(abstract_vector_rsp), allocatable :: u, Au
+                  character(len=*), parameter :: this_test = 'zero -> zero'
 
-                    !> Check that the zero vector is mapped to the zero vector.
-                    allocate(u, Au, source=x)
-                    call u%zero()
-                    call A%apply_matvec(u, Au)
-                    error_norm = Au%norm()
-                    success = merge(.true., .false., error_norm <= tol)
+                  allocate(u, Au, source=x)
+                  if (verb) call log_test_header(this_test)
 
-                    !> Exit if the test fails.
-                    if (.not. success) then
-                        failed_test = 'zero_to_zero'
-                        exit verification
-                    end if
+                  do i = 1, ntrials_
+                     call u%zero()
+                     call A%apply_matvec(u, Au)
+                     error_norm = Au%norm()
+                     success = merge(.true., .false., error_norm <= tol)
+
+                     if (verb) call log_trial(i, error_norm)
+
+                     !> Exit if the test fails.
+                     if (.not. success) then
+                        failed_test = this_test
+                        exit tests
+                     end if
+                  end do
+                  !> Clean up.
+                  deallocate(u, Au)
                 end block zero_to_zero
             end if
 
@@ -1804,31 +1839,46 @@ contains
             !-------------------------------------------
             if (test_adjoint_) then
                 adjoint_consistency: block
-                    class(abstract_vector_rsp), allocatable :: u, v, Au, Av
-                    real(sp) :: lhs, rhs
+                  class(abstract_vector_rsp), allocatable :: u, v, Au, Av
+                  real(sp) :: lhs, rhs
+                  character(len=*), parameter :: this_test = 'adjoint consistency'
 
-                    !> Generate random vectors.
-                    allocate(u, v, Au, Av, source=x)
-                    call u%rand()
-                    call v%rand()
-    
-                    !> Check adjoint consistency.
-                    call A%apply_matvec(u, Au)      ! A u
-                    call A%apply_rmatvec(v, Av)     ! A^H v
-                    scale = Au%norm()*v%norm()
-                    lhs = Au%dot(v)                 ! <A u, v>
-                    rhs = u%dot(Av)                 ! <u, A^H v>
-                    error_norm = abs(lhs - rhs)
-                    success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
-    
-                    if (.not. success) then
-                        failed_test = 'adjoint_consistency'
-                        exit verification
-                    end if
+                  !> Generate random vectors.
+                  allocate(u, v, Au, Av, source=x)
+                  if (verb) call log_test_header(this_test)
+
+                  do i = 1, ntrials_
+                     call u%rand()                   ! u'
+                     call v%rand()                   ! v'
+
+                     !> Ensure that the BCs are imposed by applying the operator
+                     !> (the rand function may not enforce (all) BCs).
+                     call A%apply_matvec(u, Au)
+                     call A%apply_matvec(v, Av)
+      
+                     !> Check adjoint consistency.
+                     call A%apply_matvec(Au, u)      ! A A u
+                     call A%apply_rmatvec(Av, v)     ! A^H A v
+                     scale = Au%norm()*v%norm()
+                     lhs = Au%dot(v)                 ! < A A u,     A v>
+                     rhs = u%dot(Av)                 ! <   A u, A^H A v >
+                     error_norm = abs(lhs - rhs) / max(scale, one_rsp)
+                     success = merge(.true., .false., error_norm <= tol)
+
+                     if (verb) call log_trial(i, error_norm)
+      
+                     !> Exit if the test fails.
+                     if (.not. success) then
+                        failed_test = this_test
+                        exit tests
+                     end if
+                  end do
+                  !> Clean up.
+                  deallocate(u, v, Au, Av)
                 end block adjoint_consistency
-                end if
+            end if
 
-        enddo verification
+        end block tests
 
         if (success) then
             write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
@@ -1840,9 +1890,28 @@ contains
             call log_message(msg, this_module, this_procedure)
         end if
 
+    contains
+
+      subroutine log_test_header(test_name)
+         !! Prints the test name and tolerance, followed by the column header.
+         character(len=*), intent(in) :: test_name
+         write(msg, '(A,A,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
+         call log_message(msg)
+         write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
+         call log_message(msg)
+      end subroutine log_test_header
+
+      subroutine log_trial(trial, err)
+         !! Prints the error norm for a single trial.
+         integer, intent(in) :: trial
+         real(sp), intent(in) :: err
+         write(msg, '(3X,I5,A,ES12.5)') trial, ': ', err
+         call log_message(msg)
+      end subroutine log_trial
+
     end function verify_linop_axioms_rsp
 
-    logical function verify_linop_axioms_rdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
+    logical function verify_linop_axioms_rdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, verbose) result(success)
         implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -1856,9 +1925,11 @@ contains
         !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
         !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+        logical, optional, intent(in) :: verbose
+        !! Print information about each test? (Default: .false.)
 
         integer :: ntrials_, i
-        logical :: test_zero_map_, test_adjoint_
+        logical :: test_zero_map_, test_adjoint_, verb
         real(dp) :: tol, error_norm, scale
         character(len=128) :: failed_test
         character(len=256) :: msg
@@ -1870,38 +1941,54 @@ contains
         tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
+        verb = optval(verbose, .false.)
 
-        !> Run all tests to verify axioms.
-        success = .false.
-        verification: do i = 1, ntrials_
+        !> Run each test ntrials_ times before moving on to the next one.
+        success = .true.
+        failed_test = ''
+        error_norm = 0.0_dp
+        i = 0
+
+        tests: block
 
             !-------------------------------------------
             !-----     LINEARITY : ADDITIVITY      -----
             !-------------------------------------------
             additivity: block
                 class(abstract_vector_rdp), allocatable :: u, v, Au, Av, Auv
+                character(len=*), parameter :: this_test = 'additivity'
+
                 allocate(u, v, Au, Av, Auv, source=x)
+                if (verb) call log_test_header(this_test)
 
-                !> Generate random vectors.
-                call u%rand()
-                call v%rand()
+                do i = 1, ntrials_
+                  !> Generate random vectors.
+                  call u%rand()
+                  call v%rand()
 
-                !> Check additivity.
-                call A%apply_matvec(u, Au)
-                call A%apply_matvec(v, Av)
-                scale = Au%norm() + Av%norm()
-                call Au%add(Av)                 ! Au <- A(u) + A(v)
+                  !> Check additivity.
+                  call A%apply_matvec(u, Au)
+                  call A%apply_matvec(v, Av)
+                  scale = Au%norm() + Av%norm()
+                  call Au%add(Av)                 ! Au <- A(u) + A(v)
 
-                call u%add(v)
-                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+                  call u%add(v)
+                  call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
 
-                call Auv%sub(Au)
-                error_norm = Auv%norm()
-                success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
-                if (.not. success) then
-                    failed_test = 'additivity'
-                    exit verification
-                end if
+                  call Auv%sub(Au)
+                  error_norm = Auv%norm() / max(scale, one_rdp)
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
+                !> Clean up.
+                deallocate(u, v, Au, Av, Auv)
             end block additivity
 
             !-------------------------------------------
@@ -1910,29 +1997,38 @@ contains
             homogeneity: block
                 class(abstract_vector_rdp), allocatable :: u, Au, Aau
                 real(dp) :: alpha
+                character(len=*), parameter :: this_test = 'homogeneity'
 
-                !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
-                call u%rand()
-                !> generate the identical non-trivial alpha on all ranks
-                alpha = (-1.0_dp)**i * (1.0_dp + real(i,dp))
+                if (verb) call log_test_header(this_test)
 
-                !> Check homogeneity.
-                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
-                scale = Au%norm()
+                do i = 1, ntrials_
+                  !> Generate random vectors.
+                  call u%rand()
+                  !> generate the identical non-trivial alpha on all ranks
+                  alpha = (-1.0_dp)**i * (1.0_dp + real(i,dp))
 
-                call u%scal(alpha)
-                call A%apply_matvec(u, Aau)
+                  !> Check homogeneity.
+                  call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                  scale = Au%norm()
 
-                call Aau%sub(Au)
-                error_norm = Aau%norm()
-                success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+                  call u%scal(alpha)
+                  call A%apply_matvec(u, Aau)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'homogeneity'
-                    exit verification
-                end if
+                  call Aau%sub(Au)
+                  error_norm = Aau%norm() / max(scale, one_rdp)
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
+                !> Clean up.
+                deallocate(u, Au, Aau)
             end block homogeneity
 
             !-------------------------------------------
@@ -1940,20 +2036,28 @@ contains
             !-------------------------------------------
             if (test_zero_map_) then
                 zero_to_zero: block
-                    class(abstract_vector_rdp), allocatable :: u, Au
+                  class(abstract_vector_rdp), allocatable :: u, Au
+                  character(len=*), parameter :: this_test = 'zero -> zero'
 
-                    !> Check that the zero vector is mapped to the zero vector.
-                    allocate(u, Au, source=x)
-                    call u%zero()
-                    call A%apply_matvec(u, Au)
-                    error_norm = Au%norm()
-                    success = merge(.true., .false., error_norm <= tol)
+                  allocate(u, Au, source=x)
+                  if (verb) call log_test_header(this_test)
 
-                    !> Exit if the test fails.
-                    if (.not. success) then
-                        failed_test = 'zero_to_zero'
-                        exit verification
-                    end if
+                  do i = 1, ntrials_
+                     call u%zero()
+                     call A%apply_matvec(u, Au)
+                     error_norm = Au%norm()
+                     success = merge(.true., .false., error_norm <= tol)
+
+                     if (verb) call log_trial(i, error_norm)
+
+                     !> Exit if the test fails.
+                     if (.not. success) then
+                        failed_test = this_test
+                        exit tests
+                     end if
+                  end do
+                  !> Clean up.
+                  deallocate(u, Au)
                 end block zero_to_zero
             end if
 
@@ -1963,31 +2067,46 @@ contains
             !-------------------------------------------
             if (test_adjoint_) then
                 adjoint_consistency: block
-                    class(abstract_vector_rdp), allocatable :: u, v, Au, Av
-                    real(dp) :: lhs, rhs
+                  class(abstract_vector_rdp), allocatable :: u, v, Au, Av
+                  real(dp) :: lhs, rhs
+                  character(len=*), parameter :: this_test = 'adjoint consistency'
 
-                    !> Generate random vectors.
-                    allocate(u, v, Au, Av, source=x)
-                    call u%rand()
-                    call v%rand()
-    
-                    !> Check adjoint consistency.
-                    call A%apply_matvec(u, Au)      ! A u
-                    call A%apply_rmatvec(v, Av)     ! A^H v
-                    scale = Au%norm()*v%norm()
-                    lhs = Au%dot(v)                 ! <A u, v>
-                    rhs = u%dot(Av)                 ! <u, A^H v>
-                    error_norm = abs(lhs - rhs)
-                    success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
-    
-                    if (.not. success) then
-                        failed_test = 'adjoint_consistency'
-                        exit verification
-                    end if
+                  !> Generate random vectors.
+                  allocate(u, v, Au, Av, source=x)
+                  if (verb) call log_test_header(this_test)
+
+                  do i = 1, ntrials_
+                     call u%rand()                   ! u'
+                     call v%rand()                   ! v'
+
+                     !> Ensure that the BCs are imposed by applying the operator
+                     !> (the rand function may not enforce (all) BCs).
+                     call A%apply_matvec(u, Au)
+                     call A%apply_matvec(v, Av)
+      
+                     !> Check adjoint consistency.
+                     call A%apply_matvec(Au, u)      ! A A u
+                     call A%apply_rmatvec(Av, v)     ! A^H A v
+                     scale = Au%norm()*v%norm()
+                     lhs = Au%dot(v)                 ! < A A u,     A v>
+                     rhs = u%dot(Av)                 ! <   A u, A^H A v >
+                     error_norm = abs(lhs - rhs) / max(scale, one_rdp)
+                     success = merge(.true., .false., error_norm <= tol)
+
+                     if (verb) call log_trial(i, error_norm)
+      
+                     !> Exit if the test fails.
+                     if (.not. success) then
+                        failed_test = this_test
+                        exit tests
+                     end if
+                  end do
+                  !> Clean up.
+                  deallocate(u, v, Au, Av)
                 end block adjoint_consistency
-                end if
+            end if
 
-        enddo verification
+        end block tests
 
         if (success) then
             write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
@@ -1999,9 +2118,28 @@ contains
             call log_message(msg, this_module, this_procedure)
         end if
 
+    contains
+
+      subroutine log_test_header(test_name)
+         !! Prints the test name and tolerance, followed by the column header.
+         character(len=*), intent(in) :: test_name
+         write(msg, '(A,A,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
+         call log_message(msg)
+         write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
+         call log_message(msg)
+      end subroutine log_test_header
+
+      subroutine log_trial(trial, err)
+         !! Prints the error norm for a single trial.
+         integer, intent(in) :: trial
+         real(dp), intent(in) :: err
+         write(msg, '(3X,I5,A,ES12.5)') trial, ': ', err
+         call log_message(msg)
+      end subroutine log_trial
+
     end function verify_linop_axioms_rdp
 
-    logical function verify_linop_axioms_csp(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
+    logical function verify_linop_axioms_csp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, verbose) result(success)
         implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -2015,9 +2153,11 @@ contains
         !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
         !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+        logical, optional, intent(in) :: verbose
+        !! Print information about each test? (Default: .false.)
 
         integer :: ntrials_, i
-        logical :: test_zero_map_, test_adjoint_
+        logical :: test_zero_map_, test_adjoint_, verb
         real(sp) :: tol, error_norm, scale
         character(len=128) :: failed_test
         character(len=256) :: msg
@@ -2029,38 +2169,54 @@ contains
         tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
+        verb = optval(verbose, .false.)
 
-        !> Run all tests to verify axioms.
-        success = .false.
-        verification: do i = 1, ntrials_
+        !> Run each test ntrials_ times before moving on to the next one.
+        success = .true.
+        failed_test = ''
+        error_norm = 0.0_sp
+        i = 0
+
+        tests: block
 
             !-------------------------------------------
             !-----     LINEARITY : ADDITIVITY      -----
             !-------------------------------------------
             additivity: block
                 class(abstract_vector_csp), allocatable :: u, v, Au, Av, Auv
+                character(len=*), parameter :: this_test = 'additivity'
+
                 allocate(u, v, Au, Av, Auv, source=x)
+                if (verb) call log_test_header(this_test)
 
-                !> Generate random vectors.
-                call u%rand()
-                call v%rand()
+                do i = 1, ntrials_
+                  !> Generate random vectors.
+                  call u%rand()
+                  call v%rand()
 
-                !> Check additivity.
-                call A%apply_matvec(u, Au)
-                call A%apply_matvec(v, Av)
-                scale = Au%norm() + Av%norm()
-                call Au%add(Av)                 ! Au <- A(u) + A(v)
+                  !> Check additivity.
+                  call A%apply_matvec(u, Au)
+                  call A%apply_matvec(v, Av)
+                  scale = Au%norm() + Av%norm()
+                  call Au%add(Av)                 ! Au <- A(u) + A(v)
 
-                call u%add(v)
-                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+                  call u%add(v)
+                  call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
 
-                call Auv%sub(Au)
-                error_norm = Auv%norm()
-                success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
-                if (.not. success) then
-                    failed_test = 'additivity'
-                    exit verification
-                end if
+                  call Auv%sub(Au)
+                  error_norm = Auv%norm() / max(scale, one_rsp)
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
+                !> Clean up.
+                deallocate(u, v, Au, Av, Auv)
             end block additivity
 
             !-------------------------------------------
@@ -2069,29 +2225,38 @@ contains
             homogeneity: block
                 class(abstract_vector_csp), allocatable :: u, Au, Aau
                 complex(sp) :: alpha
+                character(len=*), parameter :: this_test = 'homogeneity'
 
-                !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
-                call u%rand()
-                !> generate the identical non-trivial alpha on all ranks
-                alpha = cmplx(1.0_sp + real(i,sp), -0.5_sp*real(i,sp), sp)
+                if (verb) call log_test_header(this_test)
 
-                !> Check homogeneity.
-                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
-                scale = Au%norm()
+                do i = 1, ntrials_
+                  !> Generate random vectors.
+                  call u%rand()
+                  !> generate the identical non-trivial alpha on all ranks
+                  alpha = cmplx(1.0_sp + real(i,sp), -0.5_sp*real(i,sp), sp)
 
-                call u%scal(alpha)
-                call A%apply_matvec(u, Aau)
+                  !> Check homogeneity.
+                  call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                  scale = Au%norm()
 
-                call Aau%sub(Au)
-                error_norm = Aau%norm()
-                success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+                  call u%scal(alpha)
+                  call A%apply_matvec(u, Aau)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'homogeneity'
-                    exit verification
-                end if
+                  call Aau%sub(Au)
+                  error_norm = Aau%norm() / max(scale, one_rsp)
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
+                !> Clean up.
+                deallocate(u, Au, Aau)
             end block homogeneity
 
             !-------------------------------------------
@@ -2099,20 +2264,28 @@ contains
             !-------------------------------------------
             if (test_zero_map_) then
                 zero_to_zero: block
-                    class(abstract_vector_csp), allocatable :: u, Au
+                  class(abstract_vector_csp), allocatable :: u, Au
+                  character(len=*), parameter :: this_test = 'zero -> zero'
 
-                    !> Check that the zero vector is mapped to the zero vector.
-                    allocate(u, Au, source=x)
-                    call u%zero()
-                    call A%apply_matvec(u, Au)
-                    error_norm = Au%norm()
-                    success = merge(.true., .false., error_norm <= tol)
+                  allocate(u, Au, source=x)
+                  if (verb) call log_test_header(this_test)
 
-                    !> Exit if the test fails.
-                    if (.not. success) then
-                        failed_test = 'zero_to_zero'
-                        exit verification
-                    end if
+                  do i = 1, ntrials_
+                     call u%zero()
+                     call A%apply_matvec(u, Au)
+                     error_norm = Au%norm()
+                     success = merge(.true., .false., error_norm <= tol)
+
+                     if (verb) call log_trial(i, error_norm)
+
+                     !> Exit if the test fails.
+                     if (.not. success) then
+                        failed_test = this_test
+                        exit tests
+                     end if
+                  end do
+                  !> Clean up.
+                  deallocate(u, Au)
                 end block zero_to_zero
             end if
 
@@ -2122,31 +2295,46 @@ contains
             !-------------------------------------------
             if (test_adjoint_) then
                 adjoint_consistency: block
-                    class(abstract_vector_csp), allocatable :: u, v, Au, Av
-                    complex(sp) :: lhs, rhs
+                  class(abstract_vector_csp), allocatable :: u, v, Au, Av
+                  complex(sp) :: lhs, rhs
+                  character(len=*), parameter :: this_test = 'adjoint consistency'
 
-                    !> Generate random vectors.
-                    allocate(u, v, Au, Av, source=x)
-                    call u%rand()
-                    call v%rand()
-    
-                    !> Check adjoint consistency.
-                    call A%apply_matvec(u, Au)      ! A u
-                    call A%apply_rmatvec(v, Av)     ! A^H v
-                    scale = Au%norm()*v%norm()
-                    lhs = Au%dot(v)                 ! <A u, v>
-                    rhs = u%dot(Av)                 ! <u, A^H v>
-                    error_norm = abs(lhs - rhs)
-                    success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
-    
-                    if (.not. success) then
-                        failed_test = 'adjoint_consistency'
-                        exit verification
-                    end if
+                  !> Generate random vectors.
+                  allocate(u, v, Au, Av, source=x)
+                  if (verb) call log_test_header(this_test)
+
+                  do i = 1, ntrials_
+                     call u%rand()                   ! u'
+                     call v%rand()                   ! v'
+
+                     !> Ensure that the BCs are imposed by applying the operator
+                     !> (the rand function may not enforce (all) BCs).
+                     call A%apply_matvec(u, Au)
+                     call A%apply_matvec(v, Av)
+      
+                     !> Check adjoint consistency.
+                     call A%apply_matvec(Au, u)      ! A A u
+                     call A%apply_rmatvec(Av, v)     ! A^H A v
+                     scale = Au%norm()*v%norm()
+                     lhs = Au%dot(v)                 ! < A A u,     A v>
+                     rhs = u%dot(Av)                 ! <   A u, A^H A v >
+                     error_norm = abs(lhs - rhs) / max(scale, one_rsp)
+                     success = merge(.true., .false., error_norm <= tol)
+
+                     if (verb) call log_trial(i, error_norm)
+      
+                     !> Exit if the test fails.
+                     if (.not. success) then
+                        failed_test = this_test
+                        exit tests
+                     end if
+                  end do
+                  !> Clean up.
+                  deallocate(u, v, Au, Av)
                 end block adjoint_consistency
-                end if
+            end if
 
-        enddo verification
+        end block tests
 
         if (success) then
             write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
@@ -2158,9 +2346,28 @@ contains
             call log_message(msg, this_module, this_procedure)
         end if
 
+    contains
+
+      subroutine log_test_header(test_name)
+         !! Prints the test name and tolerance, followed by the column header.
+         character(len=*), intent(in) :: test_name
+         write(msg, '(A,A,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
+         call log_message(msg)
+         write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
+         call log_message(msg)
+      end subroutine log_test_header
+
+      subroutine log_trial(trial, err)
+         !! Prints the error norm for a single trial.
+         integer, intent(in) :: trial
+         real(sp), intent(in) :: err
+         write(msg, '(3X,I5,A,ES12.5)') trial, ': ', err
+         call log_message(msg)
+      end subroutine log_trial
+
     end function verify_linop_axioms_csp
 
-    logical function verify_linop_axioms_cdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
+    logical function verify_linop_axioms_cdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, verbose) result(success)
         implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -2174,9 +2381,11 @@ contains
         !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
         !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+        logical, optional, intent(in) :: verbose
+        !! Print information about each test? (Default: .false.)
 
         integer :: ntrials_, i
-        logical :: test_zero_map_, test_adjoint_
+        logical :: test_zero_map_, test_adjoint_, verb
         real(dp) :: tol, error_norm, scale
         character(len=128) :: failed_test
         character(len=256) :: msg
@@ -2188,38 +2397,54 @@ contains
         tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
+        verb = optval(verbose, .false.)
 
-        !> Run all tests to verify axioms.
-        success = .false.
-        verification: do i = 1, ntrials_
+        !> Run each test ntrials_ times before moving on to the next one.
+        success = .true.
+        failed_test = ''
+        error_norm = 0.0_dp
+        i = 0
+
+        tests: block
 
             !-------------------------------------------
             !-----     LINEARITY : ADDITIVITY      -----
             !-------------------------------------------
             additivity: block
                 class(abstract_vector_cdp), allocatable :: u, v, Au, Av, Auv
+                character(len=*), parameter :: this_test = 'additivity'
+
                 allocate(u, v, Au, Av, Auv, source=x)
+                if (verb) call log_test_header(this_test)
 
-                !> Generate random vectors.
-                call u%rand()
-                call v%rand()
+                do i = 1, ntrials_
+                  !> Generate random vectors.
+                  call u%rand()
+                  call v%rand()
 
-                !> Check additivity.
-                call A%apply_matvec(u, Au)
-                call A%apply_matvec(v, Av)
-                scale = Au%norm() + Av%norm()
-                call Au%add(Av)                 ! Au <- A(u) + A(v)
+                  !> Check additivity.
+                  call A%apply_matvec(u, Au)
+                  call A%apply_matvec(v, Av)
+                  scale = Au%norm() + Av%norm()
+                  call Au%add(Av)                 ! Au <- A(u) + A(v)
 
-                call u%add(v)
-                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+                  call u%add(v)
+                  call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
 
-                call Auv%sub(Au)
-                error_norm = Auv%norm()
-                success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
-                if (.not. success) then
-                    failed_test = 'additivity'
-                    exit verification
-                end if
+                  call Auv%sub(Au)
+                  error_norm = Auv%norm() / max(scale, one_rdp)
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
+                !> Clean up.
+                deallocate(u, v, Au, Av, Auv)
             end block additivity
 
             !-------------------------------------------
@@ -2228,29 +2453,38 @@ contains
             homogeneity: block
                 class(abstract_vector_cdp), allocatable :: u, Au, Aau
                 complex(dp) :: alpha
+                character(len=*), parameter :: this_test = 'homogeneity'
 
-                !> Generate random vectors.
                 allocate(u, Au, Aau, source=x)
-                call u%rand()
-                !> generate the identical non-trivial alpha on all ranks
-                alpha = cmplx(1.0_dp + real(i,dp), -0.5_dp*real(i,dp), dp)
+                if (verb) call log_test_header(this_test)
 
-                !> Check homogeneity.
-                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
-                scale = Au%norm()
+                do i = 1, ntrials_
+                  !> Generate random vectors.
+                  call u%rand()
+                  !> generate the identical non-trivial alpha on all ranks
+                  alpha = cmplx(1.0_dp + real(i,dp), -0.5_dp*real(i,dp), dp)
 
-                call u%scal(alpha)
-                call A%apply_matvec(u, Aau)
+                  !> Check homogeneity.
+                  call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                  scale = Au%norm()
 
-                call Aau%sub(Au)
-                error_norm = Aau%norm()
-                success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+                  call u%scal(alpha)
+                  call A%apply_matvec(u, Aau)
 
-                !> Exit if the test fails.
-                if (.not. success) then
-                    failed_test = 'homogeneity'
-                    exit verification
-                end if
+                  call Aau%sub(Au)
+                  error_norm = Aau%norm() / max(scale, one_rdp)
+                  success = merge(.true., .false., error_norm <= tol)
+
+                  if (verb) call log_trial(i, error_norm)
+
+                  !> Exit if the test fails.
+                  if (.not. success) then
+                     failed_test = this_test
+                     exit tests
+                  end if
+                end do
+                !> Clean up.
+                deallocate(u, Au, Aau)
             end block homogeneity
 
             !-------------------------------------------
@@ -2258,20 +2492,28 @@ contains
             !-------------------------------------------
             if (test_zero_map_) then
                 zero_to_zero: block
-                    class(abstract_vector_cdp), allocatable :: u, Au
+                  class(abstract_vector_cdp), allocatable :: u, Au
+                  character(len=*), parameter :: this_test = 'zero -> zero'
 
-                    !> Check that the zero vector is mapped to the zero vector.
-                    allocate(u, Au, source=x)
-                    call u%zero()
-                    call A%apply_matvec(u, Au)
-                    error_norm = Au%norm()
-                    success = merge(.true., .false., error_norm <= tol)
+                  allocate(u, Au, source=x)
+                  if (verb) call log_test_header(this_test)
 
-                    !> Exit if the test fails.
-                    if (.not. success) then
-                        failed_test = 'zero_to_zero'
-                        exit verification
-                    end if
+                  do i = 1, ntrials_
+                     call u%zero()
+                     call A%apply_matvec(u, Au)
+                     error_norm = Au%norm()
+                     success = merge(.true., .false., error_norm <= tol)
+
+                     if (verb) call log_trial(i, error_norm)
+
+                     !> Exit if the test fails.
+                     if (.not. success) then
+                        failed_test = this_test
+                        exit tests
+                     end if
+                  end do
+                  !> Clean up.
+                  deallocate(u, Au)
                 end block zero_to_zero
             end if
 
@@ -2281,31 +2523,46 @@ contains
             !-------------------------------------------
             if (test_adjoint_) then
                 adjoint_consistency: block
-                    class(abstract_vector_cdp), allocatable :: u, v, Au, Av
-                    complex(dp) :: lhs, rhs
+                  class(abstract_vector_cdp), allocatable :: u, v, Au, Av
+                  complex(dp) :: lhs, rhs
+                  character(len=*), parameter :: this_test = 'adjoint consistency'
 
-                    !> Generate random vectors.
-                    allocate(u, v, Au, Av, source=x)
-                    call u%rand()
-                    call v%rand()
-    
-                    !> Check adjoint consistency.
-                    call A%apply_matvec(u, Au)      ! A u
-                    call A%apply_rmatvec(v, Av)     ! A^H v
-                    scale = Au%norm()*v%norm()
-                    lhs = Au%dot(v)                 ! <A u, v>
-                    rhs = u%dot(Av)                 ! <u, A^H v>
-                    error_norm = abs(lhs - rhs)
-                    success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
-    
-                    if (.not. success) then
-                        failed_test = 'adjoint_consistency'
-                        exit verification
-                    end if
+                  !> Generate random vectors.
+                  allocate(u, v, Au, Av, source=x)
+                  if (verb) call log_test_header(this_test)
+
+                  do i = 1, ntrials_
+                     call u%rand()                   ! u'
+                     call v%rand()                   ! v'
+
+                     !> Ensure that the BCs are imposed by applying the operator
+                     !> (the rand function may not enforce (all) BCs).
+                     call A%apply_matvec(u, Au)
+                     call A%apply_matvec(v, Av)
+      
+                     !> Check adjoint consistency.
+                     call A%apply_matvec(Au, u)      ! A A u
+                     call A%apply_rmatvec(Av, v)     ! A^H A v
+                     scale = Au%norm()*v%norm()
+                     lhs = Au%dot(v)                 ! < A A u,     A v>
+                     rhs = u%dot(Av)                 ! <   A u, A^H A v >
+                     error_norm = abs(lhs - rhs) / max(scale, one_rdp)
+                     success = merge(.true., .false., error_norm <= tol)
+
+                     if (verb) call log_trial(i, error_norm)
+      
+                     !> Exit if the test fails.
+                     if (.not. success) then
+                        failed_test = this_test
+                        exit tests
+                     end if
+                  end do
+                  !> Clean up.
+                  deallocate(u, v, Au, Av)
                 end block adjoint_consistency
-                end if
+            end if
 
-        enddo verification
+        end block tests
 
         if (success) then
             write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
@@ -2316,6 +2573,25 @@ contains
             write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
+
+    contains
+
+      subroutine log_test_header(test_name)
+         !! Prints the test name and tolerance, followed by the column header.
+         character(len=*), intent(in) :: test_name
+         write(msg, '(A,A,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
+         call log_message(msg)
+         write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
+         call log_message(msg)
+      end subroutine log_test_header
+
+      subroutine log_trial(trial, err)
+         !! Prints the error norm for a single trial.
+         integer, intent(in) :: trial
+         real(dp), intent(in) :: err
+         write(msg, '(3X,I5,A,ES12.5)') trial, ': ', err
+         call log_message(msg)
+      end subroutine log_trial
 
     end function verify_linop_axioms_cdp
 
