@@ -1839,26 +1839,26 @@ contains
             !-------------------------------------------
             if (test_adjoint_) then
                 adjoint_consistency: block
-                  class(abstract_vector_rsp), allocatable :: u, v, Au, Av
+                  class(abstract_vector_rsp), allocatable :: wrk, u, v, Au, Av
                   real(sp) :: lhs, rhs
                   character(len=*), parameter :: this_test = 'adjoint consistency'
 
                   !> Generate random vectors.
-                  allocate(u, v, Au, Av, source=x)
+                  allocate(wrk, u, v, Au, Av, source=x)
                   if (verb) call log_test_header(this_test)
 
                   do i = 1, ntrials_
-                     call u%rand()                   ! u'
-                     call v%rand()                   ! v'
-
+                     !> Generate random vectors.
                      !> Ensure that the BCs are imposed by applying the operator
                      !> (the rand function may not enforce (all) BCs).
-                     call A%apply_matvec(u, Au)
-                     call A%apply_matvec(v, Av)
+                     call wrk%rand()
+                     call A%apply_matvec(wrk, u)
+                     call wrk%rand()
+                     call A%apply_matvec(wrk, v)
       
                      !> Check adjoint consistency.
-                     call A%apply_matvec(Au, u)      ! A A u
-                     call A%apply_rmatvec(Av, v)     ! A^H A v
+                     call A%apply_matvec(u, Au)      ! A A u
+                     call A%apply_rmatvec(v, Av)     ! A^H A v
                      scale = Au%norm()*v%norm()
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
@@ -1874,7 +1874,7 @@ contains
                      end if
                   end do
                   !> Clean up.
-                  deallocate(u, v, Au, Av)
+                  deallocate(wrk, u, v, Au, Av)
                 end block adjoint_consistency
             end if
 
@@ -2067,26 +2067,26 @@ contains
             !-------------------------------------------
             if (test_adjoint_) then
                 adjoint_consistency: block
-                  class(abstract_vector_rdp), allocatable :: u, v, Au, Av
+                  class(abstract_vector_rdp), allocatable :: wrk, u, v, Au, Av
                   real(dp) :: lhs, rhs
                   character(len=*), parameter :: this_test = 'adjoint consistency'
 
                   !> Generate random vectors.
-                  allocate(u, v, Au, Av, source=x)
+                  allocate(wrk, u, v, Au, Av, source=x)
                   if (verb) call log_test_header(this_test)
 
                   do i = 1, ntrials_
-                     call u%rand()                   ! u'
-                     call v%rand()                   ! v'
-
+                     !> Generate random vectors.
                      !> Ensure that the BCs are imposed by applying the operator
                      !> (the rand function may not enforce (all) BCs).
-                     call A%apply_matvec(u, Au)
-                     call A%apply_matvec(v, Av)
+                     call wrk%rand()
+                     call A%apply_matvec(wrk, u)
+                     call wrk%rand()
+                     call A%apply_matvec(wrk, v)
       
                      !> Check adjoint consistency.
-                     call A%apply_matvec(Au, u)      ! A A u
-                     call A%apply_rmatvec(Av, v)     ! A^H A v
+                     call A%apply_matvec(u, Au)      ! A A u
+                     call A%apply_rmatvec(v, Av)     ! A^H A v
                      scale = Au%norm()*v%norm()
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
@@ -2102,7 +2102,7 @@ contains
                      end if
                   end do
                   !> Clean up.
-                  deallocate(u, v, Au, Av)
+                  deallocate(wrk, u, v, Au, Av)
                 end block adjoint_consistency
             end if
 
@@ -2295,26 +2295,26 @@ contains
             !-------------------------------------------
             if (test_adjoint_) then
                 adjoint_consistency: block
-                  class(abstract_vector_csp), allocatable :: u, v, Au, Av
+                  class(abstract_vector_csp), allocatable :: wrk, u, v, Au, Av
                   complex(sp) :: lhs, rhs
                   character(len=*), parameter :: this_test = 'adjoint consistency'
 
                   !> Generate random vectors.
-                  allocate(u, v, Au, Av, source=x)
+                  allocate(wrk, u, v, Au, Av, source=x)
                   if (verb) call log_test_header(this_test)
 
                   do i = 1, ntrials_
-                     call u%rand()                   ! u'
-                     call v%rand()                   ! v'
-
+                     !> Generate random vectors.
                      !> Ensure that the BCs are imposed by applying the operator
                      !> (the rand function may not enforce (all) BCs).
-                     call A%apply_matvec(u, Au)
-                     call A%apply_matvec(v, Av)
+                     call wrk%rand()
+                     call A%apply_matvec(wrk, u)
+                     call wrk%rand()
+                     call A%apply_matvec(wrk, v)
       
                      !> Check adjoint consistency.
-                     call A%apply_matvec(Au, u)      ! A A u
-                     call A%apply_rmatvec(Av, v)     ! A^H A v
+                     call A%apply_matvec(u, Au)      ! A A u
+                     call A%apply_rmatvec(v, Av)     ! A^H A v
                      scale = Au%norm()*v%norm()
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
@@ -2330,7 +2330,7 @@ contains
                      end if
                   end do
                   !> Clean up.
-                  deallocate(u, v, Au, Av)
+                  deallocate(wrk, u, v, Au, Av)
                 end block adjoint_consistency
             end if
 
@@ -2523,26 +2523,26 @@ contains
             !-------------------------------------------
             if (test_adjoint_) then
                 adjoint_consistency: block
-                  class(abstract_vector_cdp), allocatable :: u, v, Au, Av
+                  class(abstract_vector_cdp), allocatable :: wrk, u, v, Au, Av
                   complex(dp) :: lhs, rhs
                   character(len=*), parameter :: this_test = 'adjoint consistency'
 
                   !> Generate random vectors.
-                  allocate(u, v, Au, Av, source=x)
+                  allocate(wrk, u, v, Au, Av, source=x)
                   if (verb) call log_test_header(this_test)
 
                   do i = 1, ntrials_
-                     call u%rand()                   ! u'
-                     call v%rand()                   ! v'
-
+                     !> Generate random vectors.
                      !> Ensure that the BCs are imposed by applying the operator
                      !> (the rand function may not enforce (all) BCs).
-                     call A%apply_matvec(u, Au)
-                     call A%apply_matvec(v, Av)
+                     call wrk%rand()
+                     call A%apply_matvec(wrk, u)
+                     call wrk%rand()
+                     call A%apply_matvec(wrk, v)
       
                      !> Check adjoint consistency.
-                     call A%apply_matvec(Au, u)      ! A A u
-                     call A%apply_rmatvec(Av, v)     ! A^H A v
+                     call A%apply_matvec(u, Au)      ! A A u
+                     call A%apply_rmatvec(v, Av)     ! A^H A v
                      scale = Au%norm()*v%norm()
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
@@ -2558,7 +2558,7 @@ contains
                      end if
                   end do
                   !> Clean up.
-                  deallocate(u, v, Au, Av)
+                  deallocate(wrk, u, v, Au, Av)
                 end block adjoint_consistency
             end if
 

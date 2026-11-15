@@ -1722,7 +1722,7 @@ contains
 
     subroutine get_state_csp(state, X, Y, Z)
         class(abstract_vector_csp),   intent(in)  :: state
-        real(sp),                 intent(out) :: X, Y, z
+        complex(sp),                  intent(out) :: X, Y, z
 
         select type (state)
         type is (state_vector_csp)
@@ -1739,7 +1739,7 @@ contains
         class(abstract_vector_csp), intent(in)  :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
 
-        real(sp) :: X, Y, Z
+        complex(sp) :: X, Y, Z
 
         call get_state_csp(self%X, X, Y, Z)
 
@@ -1765,7 +1765,7 @@ contains
         class(abstract_vector_csp), intent(in)  :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
 
-        real(sp) :: X, Y, Z
+        complex(sp) :: X, Y, Z
 
         call get_state_csp(self%X, X, Y, Z)
 
@@ -1774,9 +1774,9 @@ contains
             select type(vec_out)
             type is(state_vector_csp)
 
-                vec_out%x =  vec_in%y + one_im_csp*vec_in%z*Z
+                vec_out%x =  vec_in%y + conjg(Z)*vec_in%z*Z
                 vec_out%y = -vec_in%x + a_sp*vec_in%y
-                vec_out%z = -vec_in%x + vec_in%z*(X - c_sp)
+                vec_out%z = one_im_csp*vec_in%x + conjg(X - c_sp)*vec_in%z
 
             class default
                 call type_error('vec_out','state_vector_csp','OUT',this_module,'adj_lin_roessler_csp')
@@ -1827,7 +1827,7 @@ contains
 
     subroutine get_state_cdp(state, X, Y, Z)
         class(abstract_vector_cdp),   intent(in)  :: state
-        real(dp),                 intent(out) :: X, Y, z
+        complex(dp),                  intent(out) :: X, Y, z
 
         select type (state)
         type is (state_vector_cdp)
@@ -1844,7 +1844,7 @@ contains
         class(abstract_vector_cdp), intent(in)  :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
 
-        real(dp) :: X, Y, Z
+        complex(dp) :: X, Y, Z
 
         call get_state_cdp(self%X, X, Y, Z)
 
@@ -1870,7 +1870,7 @@ contains
         class(abstract_vector_cdp), intent(in)  :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
 
-        real(dp) :: X, Y, Z
+        complex(dp) :: X, Y, Z
 
         call get_state_cdp(self%X, X, Y, Z)
 
@@ -1879,9 +1879,9 @@ contains
             select type(vec_out)
             type is(state_vector_cdp)
 
-                vec_out%x =  vec_in%y + one_im_cdp*vec_in%z*Z
+                vec_out%x =  vec_in%y + conjg(Z)*vec_in%z*Z
                 vec_out%y = -vec_in%x + a_dp*vec_in%y
-                vec_out%z = -vec_in%x + vec_in%z*(X - c_dp)
+                vec_out%z = one_im_cdp*vec_in%x + conjg(X - c_dp)*vec_in%z
 
             class default
                 call type_error('vec_out','state_vector_cdp','OUT',this_module,'adj_lin_roessler_cdp')
