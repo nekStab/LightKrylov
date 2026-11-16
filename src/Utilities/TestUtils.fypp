@@ -787,7 +787,7 @@ contains
 
     subroutine get_state_c${kind}$(state, X, Y, Z)
         class(abstract_vector_c${kind}$),   intent(in)  :: state
-        real(${kind}$),                 intent(out) :: X, Y, z
+        complex(${kind}$),                  intent(out) :: X, Y, z
 
         select type (state)
         type is (state_vector_c${kind}$)
@@ -804,7 +804,7 @@ contains
         class(abstract_vector_c${kind}$), intent(in)  :: vec_in
         class(abstract_vector_c${kind}$), intent(out) :: vec_out
 
-        real(${kind}$) :: X, Y, Z
+        complex(${kind}$) :: X, Y, Z
 
         call get_state_c${kind}$(self%X, X, Y, Z)
 
@@ -815,7 +815,7 @@ contains
 
                 vec_out%x = -vec_in%y - one_im_c${kind}$*vec_in%z
                 vec_out%y =  vec_in%x + a_${kind}$*vec_in%y
-                vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_${kind}$)
+                vec_out%z =  vec_in%x*Z + (X - c_${kind}$)*vec_in%z
 
             class default
                 call type_error('vec_out','state_vector_c${kind}$','OUT',this_module,'lin_roessler_c${kind}$')
@@ -830,7 +830,7 @@ contains
         class(abstract_vector_c${kind}$), intent(in)  :: vec_in
         class(abstract_vector_c${kind}$), intent(out) :: vec_out
 
-        real(${kind}$) :: X, Y, Z
+        complex(${kind}$) :: X, Y, Z
 
         call get_state_c${kind}$(self%X, X, Y, Z)
 
@@ -839,9 +839,9 @@ contains
             select type(vec_out)
             type is(state_vector_c${kind}$)
 
-                vec_out%x =  vec_in%y + one_im_c${kind}$*vec_in%z*Z
+                vec_out%x =  vec_in%y + conjg(Z)*vec_in%z
                 vec_out%y = -vec_in%x + a_${kind}$*vec_in%y
-                vec_out%z = -vec_in%x + vec_in%z*(X - c_${kind}$)
+                vec_out%z = one_im_c${kind}$*vec_in%x + conjg(X - c_${kind}$)*vec_in%z
 
             class default
                 call type_error('vec_out','state_vector_c${kind}$','OUT',this_module,'adj_lin_roessler_c${kind}$')

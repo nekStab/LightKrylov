@@ -13,6 +13,8 @@ module LightKrylov_AbstractSystems
     character(len=*), parameter :: this_module      = 'LK_Systems'
     character(len=*), parameter :: this_module_long = 'LK_AbstractSystems'
 
+    public :: verify_system_linearization
+
     ! Base type for abstract systems.
     type, abstract, public :: abstract_system
         !!  Base type to define an abstract system. All other system types defined
@@ -217,6 +219,14 @@ module LightKrylov_AbstractSystems
         end subroutine abstract_eval_cdp
     end interface
 
+
+    !! Taylor test of the system linearization around the state x.
+    interface verify_system_linearization
+        module procedure taylor_test_system_linearization_rsp
+        module procedure taylor_test_system_linearization_rdp
+        module procedure taylor_test_system_linearization_csp
+        module procedure taylor_test_system_linearization_cdp
+    end interface verify_system_linearization
 contains
 
     !---------------------------------------------------------------
@@ -362,5 +372,442 @@ contains
         call log_debug(msg, this_module, 'response')
         return
     end subroutine eval_cdp
+
+    !--------------------------------------
+    !-----      UTILITY FUNCTIONS     -----
+    !--------------------------------------
+
+    subroutine taylor_test_system_linearization_rsp(sys, nsteps, eps0, stepratio, tolerance, orders)
+        !! Taylor test of the system linearization around the state sys%jacobian%x.
+        !!
+        !! For a perturbation direction d and decreasing steps h, prints
+        !!   ||F(x + alpha delta) - F(x)||                    ~ O(|alpha|)    for any F,
+        !!   ||F(x + alpha delta) - F(x) - alpha J(x) delta|| ~ O(|alpha|^2)  if J is the correct linearization,
+        !! together with the observed convergence order of the remainder.
+        !! NOTE: The test assumes that the system is allocated, the jacobian and the baseflow are set and initialized
+        class(abstract_system_rsp), intent(inout)  :: sys
+        !! System whose linearization is to be tested
+        integer, optional,          intent(in)  :: nsteps
+        !! number of steps to use in the Taylor test (default: 5)
+        real(sp), optional,         intent(in)  :: eps0
+        !! initial step size for the Taylor test (default: 1.0e-2)
+        real(sp), optional,         intent(in)  :: stepratio
+        !! ratio between consecutive step sizes (default: 0.1)
+        real(sp), optional,         intent(in)  :: tolerance
+        !! tolerance for the system evaluation (default: 1.0e-8)
+        real(sp), optional, allocatable, intent(out) :: orders(:)
+        !! observed convergence orders of the remainder between consecutive steps (size nsteps-1)
+        ! internal
+        class(abstract_vector_rsp), allocatable :: X0, Fx, dF, alpha_x, delta, Jdelta, wrk
+        integer :: nsteps_, k, ipass, npass
+        real(sp) :: tol, xnorm, eps, eps0_, q, r0, r1, r1_prev, order
+        real(sp) :: alpha
+        character(len=256) :: msg
+        character(len=*), parameter :: this_procedure = 'verify_system_linearization_rsp'
+
+        if (.not. allocated(sys%jacobian)) then
+            call stop_error('System Jacobian is not allocated.', this_module, this_procedure)
+        end if
+        if (.not. allocated(sys%jacobian%X)) then
+            call stop_error('Jacobian base state X is not set.', this_module, this_procedure)
+        end if
+
+        !> Deals with optional arguments.
+        nsteps_  = optval(nsteps, 4)
+        q        = optval(stepratio, 0.1_sp)
+        eps0_    = optval(eps0, 5.0e-2_sp)
+        tol      = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+        npass    = 1
+        if (present(orders)) then
+            allocate(orders(max(nsteps_-1, 0)*npass))
+            orders = 0.0_sp
+        end if
+
+        !> Reference response.
+        allocate(X0, Fx, dF, alpha_x, delta, Jdelta, wrk, mold=sys%jacobian%X)
+        call X0%zero()
+        call X0%add(sys%jacobian%X) 
+        xnorm = X0%norm()
+        call sys%eval(X0, Fx, tol)
+
+        call log_message('Taylor test of the system linearization', this_module, this_procedure)
+        write(msg, '(3(A,ES12.5))') '   ||x|| = ', xnorm, ', ||F(x)|| = ', Fx%norm(), ', atol = ', tol
+        call log_message(msg, this_module, this_procedure)
+
+        !> Perturbation direction: delta = J u / ||J u|| (random vector, apply J to satisfy BCs).
+        call wrk%rand()
+        call sys%jacobian%apply_matvec(wrk, delta)
+        call delta%scal(one_rsp / delta%norm())
+
+        !> Linearized response J delta.
+        call sys%jacobian%apply_matvec(delta, Jdelta)
+
+        write(msg, '(A,ES12.5)') '   ||J delta|| = ', Jdelta%norm()
+        call log_message(msg, this_module, this_procedure)
+
+        do ipass = 1, npass
+            write(msg, '(3X,A12,2X,A16,2X,A16,2X,A6)') 'e', '||dF||', '||dF - e*Jd||', 'order'
+            call log_message(msg, this_module, this_procedure)
+
+            r1_prev = 0.0_sp
+            steps: do k = 1, nsteps_
+                eps = eps0_* q**(k-1)
+                alpha = eps
+                
+                !> Perturbed state x + alpha * delta.
+                call alpha_x%zero()
+                call alpha_x%add(X0)
+                call alpha_x%axpby(alpha, delta, one_rsp)
+
+                !> dF = F(x + alpha * delta) - F(x).
+                call sys%eval(alpha_x, dF, tol)
+                call dF%sub(Fx)
+                r0 = dF%norm()
+
+                !> Remainder dF - alpha * J * delta.
+                call dF%axpby(-alpha, Jdelta, one_rsp)
+                r1 = dF%norm()
+
+                !> Print results and convergence order.
+                if (k > 1 .and. r1 > 0.0_sp .and. r1_prev > 0.0_sp) then
+                    order = log(r1_prev / r1) / log(1.0_sp / q)
+                    if (present(orders)) orders((ipass-1)*(nsteps_-1) + k-1) = order
+                    write(msg, '(3X,ES12.5,2X,ES16.5,2X,ES16.5,2X,F6.3)') eps, r0, r1, order
+                else
+                    write(msg, '(3X,ES12.5,2X,ES16.5,2X,ES16.5,2X,A6)') eps, r0, r1, '-'
+                end if
+                call log_message(msg, this_module, this_procedure)
+
+                r1_prev = r1
+            end do steps
+        end do
+        deallocate(X0, Fx, dF, alpha_x, delta, Jdelta, wrk)
+    end subroutine taylor_test_system_linearization_rsp
+
+    subroutine taylor_test_system_linearization_rdp(sys, nsteps, eps0, stepratio, tolerance, orders)
+        !! Taylor test of the system linearization around the state sys%jacobian%x.
+        !!
+        !! For a perturbation direction d and decreasing steps h, prints
+        !!   ||F(x + alpha delta) - F(x)||                    ~ O(|alpha|)    for any F,
+        !!   ||F(x + alpha delta) - F(x) - alpha J(x) delta|| ~ O(|alpha|^2)  if J is the correct linearization,
+        !! together with the observed convergence order of the remainder.
+        !! NOTE: The test assumes that the system is allocated, the jacobian and the baseflow are set and initialized
+        class(abstract_system_rdp), intent(inout)  :: sys
+        !! System whose linearization is to be tested
+        integer, optional,          intent(in)  :: nsteps
+        !! number of steps to use in the Taylor test (default: 5)
+        real(dp), optional,         intent(in)  :: eps0
+        !! initial step size for the Taylor test (default: 1.0e-2)
+        real(dp), optional,         intent(in)  :: stepratio
+        !! ratio between consecutive step sizes (default: 0.1)
+        real(dp), optional,         intent(in)  :: tolerance
+        !! tolerance for the system evaluation (default: 1.0e-8)
+        real(dp), optional, allocatable, intent(out) :: orders(:)
+        !! observed convergence orders of the remainder between consecutive steps (size nsteps-1)
+        ! internal
+        class(abstract_vector_rdp), allocatable :: X0, Fx, dF, alpha_x, delta, Jdelta, wrk
+        integer :: nsteps_, k, ipass, npass
+        real(dp) :: tol, xnorm, eps, eps0_, q, r0, r1, r1_prev, order
+        real(dp) :: alpha
+        character(len=256) :: msg
+        character(len=*), parameter :: this_procedure = 'verify_system_linearization_rdp'
+
+        if (.not. allocated(sys%jacobian)) then
+            call stop_error('System Jacobian is not allocated.', this_module, this_procedure)
+        end if
+        if (.not. allocated(sys%jacobian%X)) then
+            call stop_error('Jacobian base state X is not set.', this_module, this_procedure)
+        end if
+
+        !> Deals with optional arguments.
+        nsteps_  = optval(nsteps, 4)
+        q        = optval(stepratio, 0.1_dp)
+        eps0_    = optval(eps0, 5.0e-2_dp)
+        tol      = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+        npass    = 1
+        if (present(orders)) then
+            allocate(orders(max(nsteps_-1, 0)*npass))
+            orders = 0.0_dp
+        end if
+
+        !> Reference response.
+        allocate(X0, Fx, dF, alpha_x, delta, Jdelta, wrk, mold=sys%jacobian%X)
+        call X0%zero()
+        call X0%add(sys%jacobian%X) 
+        xnorm = X0%norm()
+        call sys%eval(X0, Fx, tol)
+
+        call log_message('Taylor test of the system linearization', this_module, this_procedure)
+        write(msg, '(3(A,ES12.5))') '   ||x|| = ', xnorm, ', ||F(x)|| = ', Fx%norm(), ', atol = ', tol
+        call log_message(msg, this_module, this_procedure)
+
+        !> Perturbation direction: delta = J u / ||J u|| (random vector, apply J to satisfy BCs).
+        call wrk%rand()
+        call sys%jacobian%apply_matvec(wrk, delta)
+        call delta%scal(one_rdp / delta%norm())
+
+        !> Linearized response J delta.
+        call sys%jacobian%apply_matvec(delta, Jdelta)
+
+        write(msg, '(A,ES12.5)') '   ||J delta|| = ', Jdelta%norm()
+        call log_message(msg, this_module, this_procedure)
+
+        do ipass = 1, npass
+            write(msg, '(3X,A12,2X,A16,2X,A16,2X,A6)') 'e', '||dF||', '||dF - e*Jd||', 'order'
+            call log_message(msg, this_module, this_procedure)
+
+            r1_prev = 0.0_dp
+            steps: do k = 1, nsteps_
+                eps = eps0_* q**(k-1)
+                alpha = eps
+                
+                !> Perturbed state x + alpha * delta.
+                call alpha_x%zero()
+                call alpha_x%add(X0)
+                call alpha_x%axpby(alpha, delta, one_rdp)
+
+                !> dF = F(x + alpha * delta) - F(x).
+                call sys%eval(alpha_x, dF, tol)
+                call dF%sub(Fx)
+                r0 = dF%norm()
+
+                !> Remainder dF - alpha * J * delta.
+                call dF%axpby(-alpha, Jdelta, one_rdp)
+                r1 = dF%norm()
+
+                !> Print results and convergence order.
+                if (k > 1 .and. r1 > 0.0_dp .and. r1_prev > 0.0_dp) then
+                    order = log(r1_prev / r1) / log(1.0_dp / q)
+                    if (present(orders)) orders((ipass-1)*(nsteps_-1) + k-1) = order
+                    write(msg, '(3X,ES12.5,2X,ES16.5,2X,ES16.5,2X,F6.3)') eps, r0, r1, order
+                else
+                    write(msg, '(3X,ES12.5,2X,ES16.5,2X,ES16.5,2X,A6)') eps, r0, r1, '-'
+                end if
+                call log_message(msg, this_module, this_procedure)
+
+                r1_prev = r1
+            end do steps
+        end do
+        deallocate(X0, Fx, dF, alpha_x, delta, Jdelta, wrk)
+    end subroutine taylor_test_system_linearization_rdp
+
+    subroutine taylor_test_system_linearization_csp(sys, nsteps, eps0, stepratio, tolerance, orders)
+        !! Taylor test of the system linearization around the state sys%jacobian%x.
+        !!
+        !! For a perturbation direction d and decreasing steps h, prints
+        !!   ||F(x + alpha delta) - F(x)||                    ~ O(|alpha|)    for any F,
+        !!   ||F(x + alpha delta) - F(x) - alpha J(x) delta|| ~ O(|alpha|^2)  if J is the correct linearization,
+        !! together with the observed convergence order of the remainder.
+        !! NOTE: The test assumes that the system is allocated, the jacobian and the baseflow are set and initialized
+        class(abstract_system_csp), intent(inout)  :: sys
+        !! System whose linearization is to be tested
+        integer, optional,          intent(in)  :: nsteps
+        !! number of steps to use in the Taylor test (default: 5)
+        real(sp), optional,         intent(in)  :: eps0
+        !! initial step size for the Taylor test (default: 1.0e-2)
+        real(sp), optional,         intent(in)  :: stepratio
+        !! ratio between consecutive step sizes (default: 0.1)
+        real(sp), optional,         intent(in)  :: tolerance
+        !! tolerance for the system evaluation (default: 1.0e-8)
+        real(sp), optional, allocatable, intent(out) :: orders(:)
+        !! observed convergence orders of the remainder between consecutive steps (size nsteps-1)
+        ! internal
+        class(abstract_vector_csp), allocatable :: X0, Fx, dF, alpha_x, delta, Jdelta, wrk
+        integer :: nsteps_, k, ipass, npass
+        real(sp) :: tol, xnorm, eps, eps0_, q, r0, r1, r1_prev, order
+        complex(sp) :: alpha
+        character(len=256) :: msg
+        character(len=*), parameter :: this_procedure = 'verify_system_linearization_csp'
+
+        if (.not. allocated(sys%jacobian)) then
+            call stop_error('System Jacobian is not allocated.', this_module, this_procedure)
+        end if
+        if (.not. allocated(sys%jacobian%X)) then
+            call stop_error('Jacobian base state X is not set.', this_module, this_procedure)
+        end if
+
+        !> Deals with optional arguments.
+        nsteps_  = optval(nsteps, 4)
+        q        = optval(stepratio, 0.1_sp)
+        eps0_    = optval(eps0, 5.0e-2_sp)
+        tol      = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+        npass    = 2 ! real and imag perturbations run separately for complex systems.
+        if (present(orders)) then
+            allocate(orders(max(nsteps_-1, 0)*npass))
+            orders = 0.0_sp
+        end if
+
+        !> Reference response.
+        allocate(X0, Fx, dF, alpha_x, delta, Jdelta, wrk, mold=sys%jacobian%X)
+        call X0%zero()
+        call X0%add(sys%jacobian%X) 
+        xnorm = X0%norm()
+        call sys%eval(X0, Fx, tol)
+
+        call log_message('Taylor test of the system linearization', this_module, this_procedure)
+        write(msg, '(3(A,ES12.5))') '   ||x|| = ', xnorm, ', ||F(x)|| = ', Fx%norm(), ', atol = ', tol
+        call log_message(msg, this_module, this_procedure)
+
+        !> Perturbation direction: delta = J u / ||J u|| (random vector, apply J to satisfy BCs).
+        call wrk%rand()
+        call sys%jacobian%apply_matvec(wrk, delta)
+        call delta%scal(one_csp / delta%norm())
+
+        !> Linearized response J delta.
+        call sys%jacobian%apply_matvec(delta, Jdelta)
+
+        write(msg, '(A,ES12.5)') '   ||J delta|| = ', Jdelta%norm()
+        call log_message(msg, this_module, this_procedure)
+
+        do ipass = 1, npass
+            msg = merge('Pass 1: real perturbation', 'Pass 2: imag perturbation', ipass == 1)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(3X,A12,2X,A16,2X,A16,2X,A6)') 'e', '||dF||', '||dF - e*Jd||', 'order'
+            call log_message(msg, this_module, this_procedure)
+
+            r1_prev = 0.0_sp
+            steps: do k = 1, nsteps_
+                eps = eps0_* q**(k-1)
+                alpha = merge(eps*one_csp, eps*one_im_csp, ipass == 1)
+                
+                !> Perturbed state x + alpha * delta.
+                call alpha_x%zero()
+                call alpha_x%add(X0)
+                call alpha_x%axpby(alpha, delta, one_csp)
+
+                !> dF = F(x + alpha * delta) - F(x).
+                call sys%eval(alpha_x, dF, tol)
+                call dF%sub(Fx)
+                r0 = dF%norm()
+
+                !> Remainder dF - alpha * J * delta.
+                call dF%axpby(-alpha, Jdelta, one_csp)
+                r1 = dF%norm()
+
+                !> Print results and convergence order.
+                if (k > 1 .and. r1 > 0.0_sp .and. r1_prev > 0.0_sp) then
+                    order = log(r1_prev / r1) / log(1.0_sp / q)
+                    if (present(orders)) orders((ipass-1)*(nsteps_-1) + k-1) = order
+                    write(msg, '(3X,ES12.5,2X,ES16.5,2X,ES16.5,2X,F6.3)') eps, r0, r1, order
+                else
+                    write(msg, '(3X,ES12.5,2X,ES16.5,2X,ES16.5,2X,A6)') eps, r0, r1, '-'
+                end if
+                call log_message(msg, this_module, this_procedure)
+
+                r1_prev = r1
+            end do steps
+        end do
+        deallocate(X0, Fx, dF, alpha_x, delta, Jdelta, wrk)
+    end subroutine taylor_test_system_linearization_csp
+
+    subroutine taylor_test_system_linearization_cdp(sys, nsteps, eps0, stepratio, tolerance, orders)
+        !! Taylor test of the system linearization around the state sys%jacobian%x.
+        !!
+        !! For a perturbation direction d and decreasing steps h, prints
+        !!   ||F(x + alpha delta) - F(x)||                    ~ O(|alpha|)    for any F,
+        !!   ||F(x + alpha delta) - F(x) - alpha J(x) delta|| ~ O(|alpha|^2)  if J is the correct linearization,
+        !! together with the observed convergence order of the remainder.
+        !! NOTE: The test assumes that the system is allocated, the jacobian and the baseflow are set and initialized
+        class(abstract_system_cdp), intent(inout)  :: sys
+        !! System whose linearization is to be tested
+        integer, optional,          intent(in)  :: nsteps
+        !! number of steps to use in the Taylor test (default: 5)
+        real(dp), optional,         intent(in)  :: eps0
+        !! initial step size for the Taylor test (default: 1.0e-2)
+        real(dp), optional,         intent(in)  :: stepratio
+        !! ratio between consecutive step sizes (default: 0.1)
+        real(dp), optional,         intent(in)  :: tolerance
+        !! tolerance for the system evaluation (default: 1.0e-8)
+        real(dp), optional, allocatable, intent(out) :: orders(:)
+        !! observed convergence orders of the remainder between consecutive steps (size nsteps-1)
+        ! internal
+        class(abstract_vector_cdp), allocatable :: X0, Fx, dF, alpha_x, delta, Jdelta, wrk
+        integer :: nsteps_, k, ipass, npass
+        real(dp) :: tol, xnorm, eps, eps0_, q, r0, r1, r1_prev, order
+        complex(dp) :: alpha
+        character(len=256) :: msg
+        character(len=*), parameter :: this_procedure = 'verify_system_linearization_cdp'
+
+        if (.not. allocated(sys%jacobian)) then
+            call stop_error('System Jacobian is not allocated.', this_module, this_procedure)
+        end if
+        if (.not. allocated(sys%jacobian%X)) then
+            call stop_error('Jacobian base state X is not set.', this_module, this_procedure)
+        end if
+
+        !> Deals with optional arguments.
+        nsteps_  = optval(nsteps, 4)
+        q        = optval(stepratio, 0.1_dp)
+        eps0_    = optval(eps0, 5.0e-2_dp)
+        tol      = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+        npass    = 2 ! real and imag perturbations run separately for complex systems.
+        if (present(orders)) then
+            allocate(orders(max(nsteps_-1, 0)*npass))
+            orders = 0.0_dp
+        end if
+
+        !> Reference response.
+        allocate(X0, Fx, dF, alpha_x, delta, Jdelta, wrk, mold=sys%jacobian%X)
+        call X0%zero()
+        call X0%add(sys%jacobian%X) 
+        xnorm = X0%norm()
+        call sys%eval(X0, Fx, tol)
+
+        call log_message('Taylor test of the system linearization', this_module, this_procedure)
+        write(msg, '(3(A,ES12.5))') '   ||x|| = ', xnorm, ', ||F(x)|| = ', Fx%norm(), ', atol = ', tol
+        call log_message(msg, this_module, this_procedure)
+
+        !> Perturbation direction: delta = J u / ||J u|| (random vector, apply J to satisfy BCs).
+        call wrk%rand()
+        call sys%jacobian%apply_matvec(wrk, delta)
+        call delta%scal(one_cdp / delta%norm())
+
+        !> Linearized response J delta.
+        call sys%jacobian%apply_matvec(delta, Jdelta)
+
+        write(msg, '(A,ES12.5)') '   ||J delta|| = ', Jdelta%norm()
+        call log_message(msg, this_module, this_procedure)
+
+        do ipass = 1, npass
+            msg = merge('Pass 1: real perturbation', 'Pass 2: imag perturbation', ipass == 1)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(3X,A12,2X,A16,2X,A16,2X,A6)') 'e', '||dF||', '||dF - e*Jd||', 'order'
+            call log_message(msg, this_module, this_procedure)
+
+            r1_prev = 0.0_dp
+            steps: do k = 1, nsteps_
+                eps = eps0_* q**(k-1)
+                alpha = merge(eps*one_cdp, eps*one_im_cdp, ipass == 1)
+                
+                !> Perturbed state x + alpha * delta.
+                call alpha_x%zero()
+                call alpha_x%add(X0)
+                call alpha_x%axpby(alpha, delta, one_cdp)
+
+                !> dF = F(x + alpha * delta) - F(x).
+                call sys%eval(alpha_x, dF, tol)
+                call dF%sub(Fx)
+                r0 = dF%norm()
+
+                !> Remainder dF - alpha * J * delta.
+                call dF%axpby(-alpha, Jdelta, one_cdp)
+                r1 = dF%norm()
+
+                !> Print results and convergence order.
+                if (k > 1 .and. r1 > 0.0_dp .and. r1_prev > 0.0_dp) then
+                    order = log(r1_prev / r1) / log(1.0_dp / q)
+                    if (present(orders)) orders((ipass-1)*(nsteps_-1) + k-1) = order
+                    write(msg, '(3X,ES12.5,2X,ES16.5,2X,ES16.5,2X,F6.3)') eps, r0, r1, order
+                else
+                    write(msg, '(3X,ES12.5,2X,ES16.5,2X,ES16.5,2X,A6)') eps, r0, r1, '-'
+                end if
+                call log_message(msg, this_module, this_procedure)
+
+                r1_prev = r1
+            end do steps
+        end do
+        deallocate(X0, Fx, dF, alpha_x, delta, Jdelta, wrk)
+    end subroutine taylor_test_system_linearization_cdp
+
 
 end module LightKrylov_AbstractSystems
