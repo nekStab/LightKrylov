@@ -1750,7 +1750,7 @@ contains
 
                 vec_out%x = -vec_in%y - one_im_csp*vec_in%z
                 vec_out%y =  vec_in%x + a_sp*vec_in%y
-                vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_sp)
+                vec_out%z =  vec_in%x*Z + (X - c_sp)*vec_in%z
 
             class default
                 call type_error('vec_out','state_vector_csp','OUT',this_module,'lin_roessler_csp')
@@ -1774,7 +1774,7 @@ contains
             select type(vec_out)
             type is(state_vector_csp)
 
-                vec_out%x =  vec_in%y + conjg(Z)*vec_in%z*Z
+                vec_out%x =  vec_in%y + conjg(Z)*vec_in%z
                 vec_out%y = -vec_in%x + a_sp*vec_in%y
                 vec_out%z = one_im_csp*vec_in%x + conjg(X - c_sp)*vec_in%z
 
@@ -1855,7 +1855,7 @@ contains
 
                 vec_out%x = -vec_in%y - one_im_cdp*vec_in%z
                 vec_out%y =  vec_in%x + a_dp*vec_in%y
-                vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_dp)
+                vec_out%z =  vec_in%x*Z + (X - c_dp)*vec_in%z
 
             class default
                 call type_error('vec_out','state_vector_cdp','OUT',this_module,'lin_roessler_cdp')
@@ -1879,7 +1879,7 @@ contains
             select type(vec_out)
             type is(state_vector_cdp)
 
-                vec_out%x =  vec_in%y + conjg(Z)*vec_in%z*Z
+                vec_out%x =  vec_in%y + conjg(Z)*vec_in%z
                 vec_out%y = -vec_in%x + a_dp*vec_in%y
                 vec_out%z = one_im_cdp*vec_in%x + conjg(X - c_dp)*vec_in%z
 

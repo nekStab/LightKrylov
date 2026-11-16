@@ -815,7 +815,7 @@ contains
 
                 vec_out%x = -vec_in%y - one_im_c${kind}$*vec_in%z
                 vec_out%y =  vec_in%x + a_${kind}$*vec_in%y
-                vec_out%z =  vec_in%x*Z + vec_in%z*(X - c_${kind}$)
+                vec_out%z =  vec_in%x*Z + (X - c_${kind}$)*vec_in%z
 
             class default
                 call type_error('vec_out','state_vector_c${kind}$','OUT',this_module,'lin_roessler_c${kind}$')
@@ -839,7 +839,7 @@ contains
             select type(vec_out)
             type is(state_vector_c${kind}$)
 
-                vec_out%x =  vec_in%y + conjg(Z)*vec_in%z*Z
+                vec_out%x =  vec_in%y + conjg(Z)*vec_in%z
                 vec_out%y = -vec_in%x + a_${kind}$*vec_in%y
                 vec_out%z = one_im_c${kind}$*vec_in%x + conjg(X - c_${kind}$)*vec_in%z
 
