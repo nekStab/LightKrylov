@@ -896,9 +896,9 @@ contains
         character(len=100) :: errmsg
         #:if type[0] == "c"
         real(${kind}$) :: modulus
-        character(len=*), parameter :: fmt = '(I6,4(2X,E16.9),2X,L4)'
+        character(len=*), parameter :: fmt = '(I6,4(2X,ES16.9),2X,L4)'
         #:else
-        character(len=*), parameter :: fmt = '(I6,2(2X,E16.9),2X,L4)'
+        character(len=*), parameter :: fmt = '(I6,2(2X,ES16.9),2X,L4)'
         #:endif
         k = size(vals)
         if (io_rank()) then ! only IO rank writes

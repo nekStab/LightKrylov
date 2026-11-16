@@ -1699,7 +1699,7 @@ contains
         else
             write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
             call log_message(msg, this_module, this_procedure)
-            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            write(msg, '(A,ES12.5,A,ES12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
 
@@ -2101,7 +2101,7 @@ contains
         else
             write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
             call log_message(msg, this_module, this_procedure)
-            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            write(msg, '(A,ES12.5,A,ES12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
 
@@ -2511,7 +2511,7 @@ contains
         else
             write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
             call log_message(msg, this_module, this_procedure)
-            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            write(msg, '(A,ES12.5,A,ES12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
 
@@ -2921,7 +2921,7 @@ contains
         else
             write(msg, '(A,I0,A)') 'Vector axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
             call log_message(msg, this_module, this_procedure)
-            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            write(msg, '(A,ES12.5,A,ES12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
             call log_message(msg, this_module, this_procedure)
         end if
 
