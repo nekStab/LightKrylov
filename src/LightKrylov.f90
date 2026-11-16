@@ -165,7 +165,14 @@ module LightKrylov
     public :: abstract_exptA_csp
     public :: abstract_exptA_cdp
     public :: kexpm
+    public :: kexpm_substep
     public :: krylov_exptA
+    public :: kexpm_sp_opts, kexpm_sp_metadata
+    public :: kexpm_dp_opts, kexpm_dp_metadata
+    public :: kexpm_workspace_rsp
+    public :: kexpm_workspace_rdp
+    public :: kexpm_workspace_csp
+    public :: kexpm_workspace_cdp
 
     ! Timer exports
     public :: lightkrylov_timer
