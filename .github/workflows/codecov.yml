@@ -14,30 +14,23 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4.2.2
       
-      - uses: fortran-lang/setup-fortran@main
+      - uses: fortran-lang/setup-fortran@v1.6.2
         id: setup-fortran
         with:
           compiler: ${{ matrix.toolchain.compiler }}
           version: ${{ matrix.toolchain.version }}
 
       - name: Setup Fortran Package Manager
-        uses: fortran-lang/setup-fpm@v7
+        uses: fortran-lang/setup-fpm@v9
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fpm-version: v0.12.0
 
       - name: Prepare for code coverage
         if: contains( matrix.os, 'ubuntu')
         run: |
           sudo apt-get install lcov
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-          sudo apt-get update
-          sudo apt-get install -y gcc-14 gfortran-14
-          sudo update-alternatives \
-             --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
-             --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-14 \
-             --slave /usr/bin/gcov gcov /usr/bin/gcov-14
 
       - name: Run tests
         run: |
@@ -49,14 +42,18 @@ jobs:
           fpm run --profile debug --flag "${{ join(matrix.toolchain.flags, ' ') }}" --example Ginzburg-Landau
 
       - name: Create coverage report
+        env:
+            COV_DIR: build/coverage
         run: |
           mkdir -p ${{ env.COV_DIR }}
           mv ./build/gfortran_*/*/* ${{ env.COV_DIR }}
-          lcov --capture --initial --base-directory . --directory ${{ env.COV_DIR }} --output-file ${{ env.COV_DIR }}/coverage.base
-          lcov --capture           --base-directory . --directory ${{ env.COV_DIR }} --output-file ${{ env.COV_DIR }}/coverage.capture
-          lcov --add-tracefile ${{ env.COV_DIR }}/coverage.base --add-tracefile ${{ env.COV_DIR }}/coverage.capture --output-file ${{ env.COV_DIR }}/coverage.info
-        env:
-            COV_DIR: build/coverage
+          lcov --capture --initial --base-directory . --directory ${{ env.COV_DIR }} --output-file ${{ env.COV_DIR }}/coverage.base --ignore-errors mismatch
+          lcov --capture           --base-directory . --directory ${{ env.COV_DIR }} --output-file ${{ env.COV_DIR }}/coverage.capture --ignore-errors mismatch
+          lcov --add-tracefile ${{ env.COV_DIR }}/coverage.base --add-tracefile ${{ env.COV_DIR }}/coverage.capture --output-file ${{ env.COV_DIR }}/coverage.info --ignore-errors mismatch
+          # Exclude example files from coverage: use both absolute-path pattern (*/example/*)
+          # and relative-path pattern (example/**) because lcov 2.x requires ** for recursive matching
+          # and the fpm build stores paths relative to the project root.
+          # lcov --remove ${{ env.COV_DIR }}/coverage.info '*/example/*' 'example/**' --output-file ${{ env.COV_DIR }}/coverage.info --ignore-errors unused,mismatch,inconsistent
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v4

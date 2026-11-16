@@ -66,7 +66,8 @@ module LightKrylov
     public :: zero_basis
     public :: copy
     public :: rand_basis
-    
+    public :: verify_vector_axioms
+
     ! AbstractLinops exports.
     public :: abstract_linop
     public :: abstract_linop_rsp
@@ -102,6 +103,7 @@ module LightKrylov
     public :: dense_linop_cdp
     public :: abstract_hermitian_linop_cdp
     public :: adjoint
+    public :: verify_linop_axioms
 
     ! AbstractSystems exports.
     public :: abstract_system_rsp
@@ -112,17 +114,21 @@ module LightKrylov
     public :: abstract_jacobian_linop_csp
     public :: abstract_system_cdp
     public :: abstract_jacobian_linop_cdp
-    
+
     ! BaseKrylov exports.
     public :: qr
     public :: permcols, invperm
     public :: arnoldi
     public :: initialize_krylov_subspace
+    public :: initialize_random_orthonormal_basis
     public :: orthogonalize_against_basis
     public :: orthonormalize_basis
+    public :: is_orthonormal
+    public :: biorthonormalize_bases
     public :: bidiagonalization
     public :: lanczos
     public :: krylov_schur
+    public :: ssy
 
     ! IterativeSolvers exports.
     public :: abstract_precond_rsp
@@ -158,7 +164,14 @@ module LightKrylov
     public :: abstract_exptA_csp
     public :: abstract_exptA_cdp
     public :: kexpm
+    public :: kexpm_substep
     public :: krylov_exptA
+    public :: kexpm_sp_opts, kexpm_sp_metadata
+    public :: kexpm_dp_opts, kexpm_dp_metadata
+    public :: kexpm_workspace_rsp
+    public :: kexpm_workspace_rdp
+    public :: kexpm_workspace_csp
+    public :: kexpm_workspace_cdp
 
     ! Timer exports
     public :: lightkrylov_timer

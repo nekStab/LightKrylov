@@ -3,11 +3,11 @@ module LightKrylov_IterativeSolvers
     !!  `LightKrylov`. These include:
     !!
     !!  - `eigs`    :   Compute the leading eigenpairs of a square linear operator \( A \).
-    !!  - `eighs`   :   Compute the leading eigenpairs of a symmetric positive definite 
+    !!  - `eighs`   :   Compute the leading eigenpairs of a symmetric positive definite
     !!                  operator \( A \).
     !!  - `svds`    :   Compute the leading singular triplets of a linear operator \( A \).
     !!  - `gmres`   :   Solve the linear system \( Ax = b \) using the *generalized minimum residual method*.
-    !!  - `cg`      :   Solve the linear system \( Ax = b \) where \( A \) is symmetric 
+    !!  - `cg`      :   Solve the linear system \( Ax = b \) where \( A \) is symmetric
     !!                  positive definite using the *Conjugate Gradient* method.
     !!
     !!  It also provides abstract interfaces to pass user-defined solvers and preconditioners
@@ -16,8 +16,7 @@ module LightKrylov_IterativeSolvers
     !--------------------------------------------
     !-----     Fortran Standard Library     -----
     !--------------------------------------------
-    use iso_fortran_env, only: output_unit
-    
+    use, intrinsic :: iso_fortran_env, only: output_unit
     use stdlib_sorting, only: sort_index
     use stdlib_optval, only: optval
     use stdlib_io_npy, only: save_npy
@@ -449,7 +448,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_rsp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
@@ -473,7 +472,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_rsp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
@@ -497,7 +496,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_rdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
@@ -521,7 +520,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_rdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
@@ -545,7 +544,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_csp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
@@ -569,7 +568,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_csp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
@@ -593,7 +592,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_cdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
@@ -617,7 +616,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_cdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
@@ -772,8 +771,8 @@ module LightKrylov_IterativeSolvers
         !!
         !!  - `atol` (optional) :   `real` absolute tolerance for the solver.
         !!
-        !!  - `preconditioner` (optional)   :   Right preconditioner used to solve the system. It needs to be 
-        !!                                      consistent with the `abstract_preconditioner` interface. 
+        !!  - `preconditioner` (optional)   :   Right preconditioner used to solve the system. It needs to be
+        !!                                      consistent with the `abstract_preconditioner` interface.
         !!                                      It is an optional `intent(in)` argument.
         !!
         !!  - `options` (optional)  :   Container for the gmres options given by the `gmres_opts` type.
@@ -798,7 +797,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_rsp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
@@ -822,13 +821,13 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_rsp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
         end subroutine dense_fgmres_rsp
-       
+
         module subroutine fgmres_rdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             implicit none(type, external)
             class(abstract_linop_rdp), intent(inout) :: A
@@ -846,7 +845,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_rdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
@@ -870,13 +869,13 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_rdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
         end subroutine dense_fgmres_rdp
-       
+
         module subroutine fgmres_csp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             implicit none(type, external)
             class(abstract_linop_csp), intent(inout) :: A
@@ -894,7 +893,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_csp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
@@ -918,13 +917,13 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_csp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
         end subroutine dense_fgmres_csp
-       
+
         module subroutine fgmres_cdp(A, b, x, info, rtol, atol, preconditioner, options, transpose, meta)
             implicit none(type, external)
             class(abstract_linop_cdp), intent(inout) :: A
@@ -942,7 +941,7 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_cdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
@@ -966,13 +965,13 @@ module LightKrylov_IterativeSolvers
             class(abstract_precond_cdp), optional, intent(inout) :: preconditioner
             !! Preconditioner (optional).
             class(abstract_opts), optional, intent(in) :: options
-            !! GMRES options.   
+            !! GMRES options.
             logical, optional, intent(in) :: transpose
             !! Whether \(\mathbf{A}\) or \(\mathbf{A}^H\) is being used.
             class(abstract_metadata), optional, intent(out) :: meta
             !! Metadata.
         end subroutine dense_fgmres_cdp
-       
+
     end interface
 
     !---------------------------------------------
@@ -1086,7 +1085,7 @@ module LightKrylov_IterativeSolvers
         !!
         !!  ### Arguments
         !!
-        !!  - `A`   :   Linear operator derived from one of the `abstract_sym_linop` or `abstract_hermitian_linop` 
+        !!  - `A`   :   Linear operator derived from one of the `abstract_sym_linop` or `abstract_hermitian_linop`
         !!              types provided by the `AbstractLinops` module. It is an `intent(inout)` argument.
         !!
         !!  - `b`   :   Right-hand side vector derived from one the `abstract_vector` types provided
@@ -1104,8 +1103,8 @@ module LightKrylov_IterativeSolvers
         !!
         !!  - `atol` (optional) :   `real` absolute tolerance for the solver.
         !!
-        !!  - `preconditioner` (optional)   :   Right preconditioner used to solve the system. It needs to be 
-        !!                                      consistent with the `abstract_preconditioner` interface. 
+        !!  - `preconditioner` (optional)   :   Right preconditioner used to solve the system. It needs to be
+        !!                                      consistent with the `abstract_preconditioner` interface.
         !!                                      It is an optional `intent(in)` argument.
         !!
         !!  - `options` (optional)  :   Container for the gmres options given by the `cg_opts` type.
@@ -1374,7 +1373,7 @@ module LightKrylov_IterativeSolvers
     interface eighs
         !!  ### Description
         !!
-        !!  Computes the leading eigenpairs of a symmetric operator \(A\) using the 
+        !!  Computes the leading eigenpairs of a symmetric operator \(A\) using the
         !!  Lanczos iterative process. Given a square linear operator \(A\), it finds
         !!  the leading eigvalues and eigvectors such that:
         !!
@@ -1541,50 +1540,10 @@ module LightKrylov_IterativeSolvers
         !!                      eigenvalues. It is an `intent(in)` argument.
         !!
         !!  `fname` : Name of the file to save the eigenspectrum. It is an `intent(in)` argument.
-        module subroutine save_eigenspectrum_rsp(lambda, residuals, fname)
-            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
-            implicit none(type, external)
-            real(sp), intent(in) :: lambda(:)
-            !! Eigenalues.
-            real(sp), intent(in) :: residuals(:)
-            !! Residual of the corresponding Ritz eigenpairs.
-            character(len=*), intent(in) :: fname
-            !! Name of the output file.
-        end subroutine save_eigenspectrum_rsp
-
-        module subroutine save_eigenspectrum_rdp(lambda, residuals, fname)
-            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
-            implicit none(type, external)
-            real(dp), intent(in) :: lambda(:)
-            !! Eigenalues.
-            real(dp), intent(in) :: residuals(:)
-            !! Residual of the corresponding Ritz eigenpairs.
-            character(len=*), intent(in) :: fname
-            !! Name of the output file.
-        end subroutine save_eigenspectrum_rdp
-
-        module subroutine save_eigenspectrum_csp(lambda, residuals, fname)
-            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
-            implicit none(type, external)
-            complex(sp), intent(in) :: lambda(:)
-            !! Eigenalues.
-            real(sp), intent(in) :: residuals(:)
-            !! Residual of the corresponding Ritz eigenpairs.
-            character(len=*), intent(in) :: fname
-            !! Name of the output file.
-        end subroutine save_eigenspectrum_csp
-
-        module subroutine save_eigenspectrum_cdp(lambda, residuals, fname)
-            !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
-            implicit none(type, external)
-            complex(dp), intent(in) :: lambda(:)
-            !! Eigenalues.
-            real(dp), intent(in) :: residuals(:)
-            !! Residual of the corresponding Ritz eigenpairs.
-            character(len=*), intent(in) :: fname
-            !! Name of the output file.
-        end subroutine save_eigenspectrum_cdp
-
+        module procedure save_eigenspectrum_rsp
+        module procedure save_eigenspectrum_rdp
+        module procedure save_eigenspectrum_csp
+        module procedure save_eigenspectrum_cdp
     end interface
 
     interface eigs
@@ -1648,7 +1607,7 @@ module LightKrylov_IterativeSolvers
         !!                                  By default, `tolerance = rtol_sp` or `tolerance = rtol_dp`.
         !!
         !!  - `transpose` (*optional*)  :   `logical` flag determining whether the eigenvalues of \(A\)
-        !!                                  or \(A^H\) need to be computed. It is an optional `intent(in)` 
+        !!                                  or \(A^H\) need to be computed. It is an optional `intent(in)`
         !!                                  argument.
         module procedure eigs_rsp
         module procedure eigs_rdp
@@ -1688,7 +1647,7 @@ contains
             do i = 1, k
                 idx = indices(i)
                     write (1234, fmt) k, vals(idx),                           res(i), res(i) < tol
-            end do 
+            end do
             close (1234)
         end if
     end subroutine write_results_rsp
@@ -1719,7 +1678,7 @@ contains
             do i = 1, k
                 idx = indices(i)
                     write (1234, fmt) k, vals(idx),                           res(i), res(i) < tol
-            end do 
+            end do
             close (1234)
         end if
     end subroutine write_results_rdp
@@ -1752,7 +1711,7 @@ contains
                 idx = indices(i)
                     modulus = sqrt(vals(idx)%re**2 + vals(idx)%im**2)
                     write (1234, fmt) k, vals(idx)%re, vals(idx)%im, modulus, res(i), res(i) < tol
-            end do 
+            end do
             close (1234)
         end if
     end subroutine write_results_csp
@@ -1785,7 +1744,7 @@ contains
                 idx = indices(i)
                     modulus = sqrt(vals(idx)%re**2 + vals(idx)%im**2)
                     write (1234, fmt) k, vals(idx)%re, vals(idx)%im, modulus, res(i), res(i) < tol
-            end do 
+            end do
             close (1234)
         end if
     end subroutine write_results_cdp
@@ -1836,37 +1795,69 @@ contains
     end function compute_residual_cdp
 
 
-    module procedure save_eigenspectrum_rsp
+    subroutine save_eigenspectrum_rsp(lambda, residuals, fname)
+        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+        implicit none(type, external)
+        real(sp), intent(in) :: lambda(:)
+        !! Eigenalues.
+        real(sp), intent(in) :: residuals(:)
+        !! Residual of the corresponding Ritz eigenpairs.
+        character(len=*), intent(in) :: fname
+        !! Name of the output file.
         ! Internal variables.
         real(sp) :: array(size(lambda), 2)
         array(:, 1) = lambda ; array(:, 2) = residuals
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure save_eigenspectrum_rsp
+    end subroutine save_eigenspectrum_rsp
 
-    module procedure save_eigenspectrum_rdp
+    subroutine save_eigenspectrum_rdp(lambda, residuals, fname)
+        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+        implicit none(type, external)
+        real(dp), intent(in) :: lambda(:)
+        !! Eigenalues.
+        real(dp), intent(in) :: residuals(:)
+        !! Residual of the corresponding Ritz eigenpairs.
+        character(len=*), intent(in) :: fname
+        !! Name of the output file.
         ! Internal variables.
         real(dp) :: array(size(lambda), 2)
         array(:, 1) = lambda ; array(:, 2) = residuals
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure save_eigenspectrum_rdp
+    end subroutine save_eigenspectrum_rdp
 
-    module procedure save_eigenspectrum_csp
+    subroutine save_eigenspectrum_csp(lambda, residuals, fname)
+        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+        implicit none(type, external)
+        complex(sp), intent(in) :: lambda(:)
+        !! Eigenalues.
+        real(sp), intent(in) :: residuals(:)
+        !! Residual of the corresponding Ritz eigenpairs.
+        character(len=*), intent(in) :: fname
+        !! Name of the output file.
         ! Internal variables.
         real(sp) :: array(size(lambda), 3)
         array(:, 1) = lambda%re ; array(:, 2) = lambda%im ; array(:, 3) = residuals
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure save_eigenspectrum_csp
+    end subroutine save_eigenspectrum_csp
 
-    module procedure save_eigenspectrum_cdp
+    subroutine save_eigenspectrum_cdp(lambda, residuals, fname)
+        !! Saves the eigenspectrum and corresponding residuals to disk use the `npy` binary format.
+        implicit none(type, external)
+        complex(dp), intent(in) :: lambda(:)
+        !! Eigenalues.
+        real(dp), intent(in) :: residuals(:)
+        !! Residual of the corresponding Ritz eigenpairs.
+        character(len=*), intent(in) :: fname
+        !! Name of the output file.
         ! Internal variables.
         real(dp) :: array(size(lambda), 3)
         array(:, 1) = lambda%re ; array(:, 2) = lambda%im ; array(:, 3) = residuals
         ! Save the eigenspectrum to disk.
         call save_npy(fname, array)
-    end procedure save_eigenspectrum_cdp
+    end subroutine save_eigenspectrum_cdp
 
 
     !---------------------------------------------------
@@ -1996,7 +1987,7 @@ contains
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
-            
+
         end do krylovschur
 
         !--------------------------------
@@ -2006,9 +1997,9 @@ contains
         block
         integer :: indices(kdim_)
         real(sp) :: abs_eigvals(kdim_)
-       
+
         ! Re-compute eigenvalues and eigenvectors.
-        k = min(k, kdim_);
+        k = min(k, kdim_)
         if (time_lightkrylov()) call timer%start('eig')
         call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
         if (time_lightkrylov()) call timer%stop('eig')
@@ -2039,7 +2030,7 @@ contains
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_rsp
-    
+
     subroutine eigs_rdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
         implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: A
@@ -2163,7 +2154,7 @@ contains
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
-            
+
         end do krylovschur
 
         !--------------------------------
@@ -2173,9 +2164,9 @@ contains
         block
         integer :: indices(kdim_)
         real(dp) :: abs_eigvals(kdim_)
-       
+
         ! Re-compute eigenvalues and eigenvectors.
-        k = min(k, kdim_);
+        k = min(k, kdim_)
         if (time_lightkrylov()) call timer%start('eig')
         call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
         if (time_lightkrylov()) call timer%stop('eig')
@@ -2206,7 +2197,7 @@ contains
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_rdp
-    
+
     subroutine eigs_csp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
         implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: A
@@ -2320,7 +2311,7 @@ contains
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
-            
+
         end do krylovschur
 
         !--------------------------------
@@ -2330,9 +2321,9 @@ contains
         block
         integer :: indices(kdim_)
         real(sp) :: abs_eigvals(kdim_)
-       
+
         ! Re-compute eigenvalues and eigenvectors.
-        k = min(k, kdim_);
+        k = min(k, kdim_)
         if (time_lightkrylov()) call timer%start('eig')
         call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
         if (time_lightkrylov()) call timer%stop('eig')
@@ -2363,7 +2354,7 @@ contains
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_csp
-    
+
     subroutine eigs_cdp(A, X, eigvals, residuals, info, x0, kdim, tolerance, transpose, write_intermediate)
         implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: A
@@ -2477,7 +2468,7 @@ contains
             ! Krylov-Schur restarting procedure.
             krst  = krst + 1
             call krylov_schur(kstart, Xwrk, H, median_selector) ; kstart = kstart + 1
-            
+
         end do krylovschur
 
         !--------------------------------
@@ -2487,9 +2478,9 @@ contains
         block
         integer :: indices(kdim_)
         real(dp) :: abs_eigvals(kdim_)
-       
+
         ! Re-compute eigenvalues and eigenvectors.
-        k = min(k, kdim_);
+        k = min(k, kdim_)
         if (time_lightkrylov()) call timer%start('eig')
         call eig(H(:k, :k), eigvecs_wrk(:k, :k), eigvals_wrk(:k))
         if (time_lightkrylov()) call timer%stop('eig')
@@ -2520,6 +2511,6 @@ contains
             selected = abs(lambda) > median(abs(lambda))
         end function median_selector
     end subroutine eigs_cdp
-    
+
 
 end module LightKrylov_IterativeSolvers

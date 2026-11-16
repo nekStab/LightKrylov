@@ -2,7 +2,7 @@ module LightKrylov_AbstractLinops
     !!  This module provides the base classes `abtract_linop_rsp`, `abstract_linop_rdp`,
     !!  `abstract_linop_csp` and `abstract_linop_cdp` which can be used to define your own
     !!  linear operators. To do so, you simply need to provide two type-bound procedures:
-    !!  
+    !!
     !!  - `matvec(self, vec_in, vec_out)`   :   Computes the matrix-vector product.
     !!  - `rmatvec(self, vec_in, vec_out)   :   Computes the transpose matrix-vector product.
     !!
@@ -21,6 +21,8 @@ module LightKrylov_AbstractLinops
 
     character(len=*), parameter :: this_module      = 'LK_Linops'
     character(len=*), parameter :: this_module_long = 'Lightkrylov_AbstractLinops'
+
+    public :: verify_linop_axioms
 
     type, abstract, public :: abstract_linop
         !!  Base type to define an abstract linear operator. All other operator types defined
@@ -45,6 +47,9 @@ module LightKrylov_AbstractLinops
         procedure, pass(self), public :: finalize_timer => finalize_linop_timer
         !! Finalize timers and print complete history_info
     end type abstract_linop
+
+    type, abstract, extends(abstract_linop), public :: abstract_sym_linop
+    end type abstract_sym_linop
 
     !------------------------------------------------------------------------------
     !-----     Definition of an abstract real(sp) operator with kind=sp     -----
@@ -97,8 +102,8 @@ module LightKrylov_AbstractLinops
     !-----     Definition of an abstract real(sp) exponential propagator with kind=sp     -----
     !--------------------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_rsp), public :: abstract_exptA_linop_rsp
-        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
-        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian
         !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
         !!
         !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
@@ -166,8 +171,8 @@ module LightKrylov_AbstractLinops
     !-----     Definition of an abstract real(dp) exponential propagator with kind=dp     -----
     !--------------------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_rdp), public :: abstract_exptA_linop_rdp
-        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
-        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian
         !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
         !!
         !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
@@ -235,8 +240,8 @@ module LightKrylov_AbstractLinops
     !-----     Definition of an abstract complex(sp) exponential propagator with kind=sp     -----
     !--------------------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_csp), public :: abstract_exptA_linop_csp
-        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
-        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian
         !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
         !!
         !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
@@ -304,8 +309,8 @@ module LightKrylov_AbstractLinops
     !-----     Definition of an abstract complex(dp) exponential propagator with kind=dp     -----
     !--------------------------------------------------------------------------------------------
     type, abstract, extends(abstract_linop_cdp), public :: abstract_exptA_linop_cdp
-        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map 
-        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian 
+        !! Utility type to define the exponential propagator \( \mathbf{\Phi}_\tau \) which is the linear map
+        !! corresponding to the matrix exponential of the (possibly time-dependent) system Jacobian
         !! \( \mathbf{L}(t) \) over a time horizon \( \tau \) as:
         !!
         !! $$ \mathbf{\Phi}_\tau = \int_0^\tau \mathbf{L}(t) \: \text{d}t $$
@@ -491,31 +496,113 @@ module LightKrylov_AbstractLinops
     !----------------------------------------------------------------
     !-----     Definition of an abstract symmetric operator     -----
     !----------------------------------------------------------------
-    type, abstract, extends(abstract_linop_rsp), public :: abstract_sym_linop_rsp
+    type, abstract, extends(abstract_sym_linop), public :: abstract_sym_linop_rsp
         !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
+        private
+        ! User defined procedures
+        procedure(abstract_sym_matvec_rsp), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_sym_matvec_rsp
+        !! Wrapper for matvec including the counter increment
     end type abstract_sym_linop_rsp
+    abstract interface
+        subroutine abstract_sym_matvec_rsp(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_sym_linop_rsp
+            implicit none(type, external)
+            class(abstract_sym_linop_rsp) , intent(inout)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_rsp), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_rsp), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_sym_matvec_rsp
+    end interface
     !----------------------------------------------------------------
     !-----     Definition of an abstract symmetric operator     -----
     !----------------------------------------------------------------
-    type, abstract, extends(abstract_linop_rdp), public :: abstract_sym_linop_rdp
+    type, abstract, extends(abstract_sym_linop), public :: abstract_sym_linop_rdp
         !! Abstract representation of an abstract symmetric (real valued) linear operator.
     contains
+        private
+        ! User defined procedures
+        procedure(abstract_sym_matvec_rdp), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_sym_matvec_rdp
+        !! Wrapper for matvec including the counter increment
     end type abstract_sym_linop_rdp
+    abstract interface
+        subroutine abstract_sym_matvec_rdp(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_sym_linop_rdp
+            implicit none(type, external)
+            class(abstract_sym_linop_rdp) , intent(inout)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_rdp), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_rdp), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_sym_matvec_rdp
+    end interface
     !----------------------------------------------------------------------------------
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
-    type, abstract, extends(abstract_linop_csp), public :: abstract_hermitian_linop_csp
+    type, abstract, extends(abstract_sym_linop), public :: abstract_hermitian_linop_csp
         !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
+        ! User defined procedures
+        procedure(abstract_herm_matvec_csp), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_herm_matvec_csp
+        !! Wrapper for matvec including the counter increment
     end type abstract_hermitian_linop_csp
+    abstract interface
+        subroutine abstract_herm_matvec_csp(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_hermitian_linop_csp
+            implicit none(type, external)
+            class(abstract_hermitian_linop_csp) , intent(inout)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_csp), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_csp), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_herm_matvec_csp
+    end interface
     !----------------------------------------------------------------------------------
     !-----     Definition of an abstract Hermitian positive definite operator     -----
     !----------------------------------------------------------------------------------
-    type, abstract, extends(abstract_linop_cdp), public :: abstract_hermitian_linop_cdp
+    type, abstract, extends(abstract_sym_linop), public :: abstract_hermitian_linop_cdp
         !! Abstract representation of an abstract hermitian (complex-valued) linear operator.
     contains
+        ! User defined procedures
+        procedure(abstract_herm_matvec_cdp), pass(self), deferred, public :: matvec
+        !! Procedure to compute the matrix-vector product \( \mathbf{y} = \mathbf{Ax} \).
+        ! Wrappers including counter increment
+        procedure, pass(self), public :: apply_matvec => apply_herm_matvec_cdp
+        !! Wrapper for matvec including the counter increment
     end type abstract_hermitian_linop_cdp
+    abstract interface
+        subroutine abstract_herm_matvec_cdp(self, vec_in, vec_out)
+            !! Interface for the matrix-vector product.
+            use lightkrylov_AbstractVectors
+            import abstract_hermitian_linop_cdp
+            implicit none(type, external)
+            class(abstract_hermitian_linop_cdp) , intent(inout)  :: self
+            !! Linear operator \(\mathbf{A}\).
+            class(abstract_vector_cdp), intent(in)  :: vec_in
+            !! Vector to be multiplied by \(\mathbf{A}\).
+            class(abstract_vector_cdp), intent(out) :: vec_out
+            !! Result of the matrix-vector product.
+        end subroutine abstract_herm_matvec_cdp
+    end interface
 
     !------------------------------------------------
     !-----     Convenience dense linop type     -----
@@ -553,7 +640,14 @@ module LightKrylov_AbstractLinops
         module procedure initialize_dense_linop_from_array_cdp
     end interface
     public :: dense_linop
-   
+
+    interface verify_linop_axioms
+        module procedure verify_linop_axioms_rsp
+        module procedure verify_linop_axioms_rdp
+        module procedure verify_linop_axioms_csp
+        module procedure verify_linop_axioms_cdp
+    end interface
+
 contains
 
     !--------------------------------------------------------------
@@ -591,7 +685,7 @@ contains
       !! optional flag to choose whether to fully reset the timer (default: .false.)
       ! internals
       integer :: counter_, count_old
-      logical :: reset_timer_ 
+      logical :: reset_timer_
       character(len=128) :: msg
       counter_ = optval(counter, 0)
       count_old = self%get_counter(trans)
@@ -687,7 +781,7 @@ contains
         class(abstract_linop_rsp), intent(inout) :: self
         class(abstract_vector_rsp), intent(in) :: vec_in
         class(abstract_vector_rsp), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
@@ -698,6 +792,24 @@ contains
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
     end subroutine apply_rmatvec_rsp
+
+    subroutine apply_sym_matvec_rsp(self, vec_in, vec_out)
+        implicit none(type, external)
+        class(abstract_sym_linop_rsp), intent(inout) :: self
+        class(abstract_vector_rsp), intent(in) :: vec_in
+        class(abstract_vector_rsp), intent(out) :: vec_out
+        ! internal
+        character(len=128) :: msg
+        self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call log_debug(msg, this_module, 'matvec')
+        call self%matvec_timer%start()
+        call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call log_debug(msg, this_module, 'matvec')
+        return
+    end subroutine apply_sym_matvec_rsp
     subroutine apply_matvec_rdp(self, vec_in, vec_out)
         implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: self
@@ -721,7 +833,7 @@ contains
         class(abstract_linop_rdp), intent(inout) :: self
         class(abstract_vector_rdp), intent(in) :: vec_in
         class(abstract_vector_rdp), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
@@ -732,6 +844,24 @@ contains
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
     end subroutine apply_rmatvec_rdp
+
+    subroutine apply_sym_matvec_rdp(self, vec_in, vec_out)
+        implicit none(type, external)
+        class(abstract_sym_linop_rdp), intent(inout) :: self
+        class(abstract_vector_rdp), intent(in) :: vec_in
+        class(abstract_vector_rdp), intent(out) :: vec_out
+        ! internal
+        character(len=128) :: msg
+        self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call log_debug(msg, this_module, 'matvec')
+        call self%matvec_timer%start()
+        call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call log_debug(msg, this_module, 'matvec')
+        return
+    end subroutine apply_sym_matvec_rdp
     subroutine apply_matvec_csp(self, vec_in, vec_out)
         implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: self
@@ -755,7 +885,7 @@ contains
         class(abstract_linop_csp), intent(inout) :: self
         class(abstract_vector_csp), intent(in) :: vec_in
         class(abstract_vector_csp), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
@@ -766,6 +896,25 @@ contains
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
     end subroutine apply_rmatvec_csp
+
+    subroutine apply_herm_matvec_csp(self, vec_in, vec_out)
+        implicit none(type, external)
+        class(abstract_hermitian_linop_csp), intent(inout) :: self
+        class(abstract_vector_csp), intent(in) :: vec_in
+        class(abstract_vector_csp), intent(out) :: vec_out
+        ! internal
+        character(len=128) :: msg
+        self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call log_debug(msg, this_module, 'matvec')
+        call self%matvec_timer%start()
+        call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call log_debug(msg, this_module, 'matvec')
+        return
+    end subroutine apply_herm_matvec_csp
+
     subroutine apply_matvec_cdp(self, vec_in, vec_out)
         implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: self
@@ -789,7 +938,7 @@ contains
         class(abstract_linop_cdp), intent(inout) :: self
         class(abstract_vector_cdp), intent(in) :: vec_in
         class(abstract_vector_cdp), intent(out) :: vec_out
-        ! internal 
+        ! internal
         character(len=128) :: msg
         self%rmatvec_counter = self%rmatvec_counter + 1
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'start'
@@ -800,6 +949,25 @@ contains
         write(msg,'(I0,1X,A)') self%rmatvec_counter, 'end'
         call log_debug(msg, this_module, 'rmatvec')
     end subroutine apply_rmatvec_cdp
+
+    subroutine apply_herm_matvec_cdp(self, vec_in, vec_out)
+        implicit none(type, external)
+        class(abstract_hermitian_linop_cdp), intent(inout) :: self
+        class(abstract_vector_cdp), intent(in) :: vec_in
+        class(abstract_vector_cdp), intent(out) :: vec_out
+        ! internal
+        character(len=128) :: msg
+        self%matvec_counter = self%matvec_counter + 1
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'start'
+        call log_debug(msg, this_module, 'matvec')
+        call self%matvec_timer%start()
+        call self%matvec(vec_in, vec_out)
+        call self%matvec_timer%stop()
+        write(msg,'(I0,1X,A)') self%matvec_counter, 'end'
+        call log_debug(msg, this_module, 'matvec')
+        return
+    end subroutine apply_herm_matvec_cdp
+
 
     !------------------------------------------------------------------------------
     !-----     Concrete matvec/rmatvec implementations for special linops     -----
@@ -1485,7 +1653,7 @@ contains
         end select
     end subroutine dense_rmatvec_cdp
 
-    
+
     function initialize_dense_linop_from_array_rsp(A) result(linop)
         implicit none(type, external)
         real(sp), intent(in) :: A(:, :)
@@ -1510,5 +1678,645 @@ contains
         type(dense_linop_cdp) :: linop
         linop%data = A
     end function initialize_dense_linop_from_array_cdp
+    
+    !--------------------------------------
+    !-----      UTILITY FUNCTIONS     -----
+    !--------------------------------------
+
+    logical function verify_linop_axioms_rsp(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
+        implicit none(type, external)
+        class(abstract_linop_rsp), intent(inout) :: A
+        !! Linear operator whose implementation needs to be tested.
+        class(abstract_vector_rsp), intent(in) :: x
+        !! Mold vector from the operator's domain (used to generate random inputs).
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_zero_map
+        !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
+        logical, optional, intent(in) :: test_adjoint
+        !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+
+        integer :: ntrials_, i
+        logical :: test_zero_map_, test_adjoint_
+        real(sp) :: tol, error_norm, scale
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+
+        character(len=*), parameter :: this_procedure = 'verify_linop_axioms_rsp'
+
+        !> Deals with optional arguments.
+        ntrials_ = optval(ntrials, 10)
+        tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+        test_zero_map_ = optval(test_zero_map, .true.)
+        test_adjoint_ = optval(test_adjoint, .true.)
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-------------------------------------------
+            !-----     LINEARITY : ADDITIVITY      -----
+            !-------------------------------------------
+            additivity: block
+                class(abstract_vector_rsp), allocatable :: u, v, Au, Av, Auv
+                allocate(u, v, Au, Av, Auv, source=x)
+
+                !> Generate random vectors.
+                call u%rand()
+                call v%rand()
+
+                !> Check additivity.
+                call A%apply_matvec(u, Au)
+                call A%apply_matvec(v, Av)
+                scale = Au%norm() + Av%norm()
+                call Au%add(Av)                 ! Au <- A(u) + A(v)
+
+                call u%add(v)
+                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+
+                call Auv%sub(Au)
+                error_norm = Auv%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+                if (.not. success) then
+                    failed_test = 'additivity'
+                    exit verification
+                end if
+            end block additivity
+
+            !-------------------------------------------
+            !-----     LINEARITY : HOMOGENEITY     -----
+            !-------------------------------------------
+            homogeneity: block
+                class(abstract_vector_rsp), allocatable :: u, Au, Aau
+                real(sp) :: alpha
+
+                !> Generate random vectors.
+                allocate(u, Au, Aau, source=x)
+                call u%rand()
+                !> generate the identical non-trivial alpha on all ranks
+                alpha = (-1.0_sp)**i * (1.0_sp + real(i,sp))
+
+                !> Check homogeneity.
+                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                scale = Au%norm()
+
+                call u%scal(alpha)
+                call A%apply_matvec(u, Aau)
+
+                call Aau%sub(Au)
+                error_norm = Aau%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'homogeneity'
+                    exit verification
+                end if
+            end block homogeneity
+
+            !-------------------------------------------
+            !-----     ZERO MAPS TO ZERO           -----
+            !-------------------------------------------
+            if (test_zero_map_) then
+                zero_to_zero: block
+                    class(abstract_vector_rsp), allocatable :: u, Au
+
+                    !> Check that the zero vector is mapped to the zero vector.
+                    allocate(u, Au, source=x)
+                    call u%zero()
+                    call A%apply_matvec(u, Au)
+                    error_norm = Au%norm()
+                    success = merge(.true., .false., error_norm <= tol)
+
+                    !> Exit if the test fails.
+                    if (.not. success) then
+                        failed_test = 'zero_to_zero'
+                        exit verification
+                    end if
+                end block zero_to_zero
+            end if
+
+            !-------------------------------------------
+            !-----     ADJOINT CONSISTENCY         -----
+            !-----     <A u, v> = <u, A^H v>        -----
+            !-------------------------------------------
+            if (test_adjoint_) then
+                adjoint_consistency: block
+                    class(abstract_vector_rsp), allocatable :: u, v, Au, Av
+                    real(sp) :: lhs, rhs
+
+                    !> Generate random vectors.
+                    allocate(u, v, Au, Av, source=x)
+                    call u%rand()
+                    call v%rand()
+    
+                    !> Check adjoint consistency.
+                    call A%apply_matvec(u, Au)      ! A u
+                    call A%apply_rmatvec(v, Av)     ! A^H v
+                    scale = Au%norm()*v%norm()
+                    lhs = Au%dot(v)                 ! <A u, v>
+                    rhs = u%dot(Av)                 ! <u, A^H v>
+                    error_norm = abs(lhs - rhs)
+                    success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+    
+                    if (.not. success) then
+                        failed_test = 'adjoint_consistency'
+                        exit verification
+                    end if
+                end block adjoint_consistency
+                end if
+
+        enddo verification
+
+        if (success) then
+            write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
+
+    end function verify_linop_axioms_rsp
+
+    logical function verify_linop_axioms_rdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
+        implicit none(type, external)
+        class(abstract_linop_rdp), intent(inout) :: A
+        !! Linear operator whose implementation needs to be tested.
+        class(abstract_vector_rdp), intent(in) :: x
+        !! Mold vector from the operator's domain (used to generate random inputs).
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_zero_map
+        !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
+        logical, optional, intent(in) :: test_adjoint
+        !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+
+        integer :: ntrials_, i
+        logical :: test_zero_map_, test_adjoint_
+        real(dp) :: tol, error_norm, scale
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+
+        character(len=*), parameter :: this_procedure = 'verify_linop_axioms_rdp'
+
+        !> Deals with optional arguments.
+        ntrials_ = optval(ntrials, 10)
+        tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+        test_zero_map_ = optval(test_zero_map, .true.)
+        test_adjoint_ = optval(test_adjoint, .true.)
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-------------------------------------------
+            !-----     LINEARITY : ADDITIVITY      -----
+            !-------------------------------------------
+            additivity: block
+                class(abstract_vector_rdp), allocatable :: u, v, Au, Av, Auv
+                allocate(u, v, Au, Av, Auv, source=x)
+
+                !> Generate random vectors.
+                call u%rand()
+                call v%rand()
+
+                !> Check additivity.
+                call A%apply_matvec(u, Au)
+                call A%apply_matvec(v, Av)
+                scale = Au%norm() + Av%norm()
+                call Au%add(Av)                 ! Au <- A(u) + A(v)
+
+                call u%add(v)
+                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+
+                call Auv%sub(Au)
+                error_norm = Auv%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+                if (.not. success) then
+                    failed_test = 'additivity'
+                    exit verification
+                end if
+            end block additivity
+
+            !-------------------------------------------
+            !-----     LINEARITY : HOMOGENEITY     -----
+            !-------------------------------------------
+            homogeneity: block
+                class(abstract_vector_rdp), allocatable :: u, Au, Aau
+                real(dp) :: alpha
+
+                !> Generate random vectors.
+                allocate(u, Au, Aau, source=x)
+                call u%rand()
+                !> generate the identical non-trivial alpha on all ranks
+                alpha = (-1.0_dp)**i * (1.0_dp + real(i,dp))
+
+                !> Check homogeneity.
+                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                scale = Au%norm()
+
+                call u%scal(alpha)
+                call A%apply_matvec(u, Aau)
+
+                call Aau%sub(Au)
+                error_norm = Aau%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'homogeneity'
+                    exit verification
+                end if
+            end block homogeneity
+
+            !-------------------------------------------
+            !-----     ZERO MAPS TO ZERO           -----
+            !-------------------------------------------
+            if (test_zero_map_) then
+                zero_to_zero: block
+                    class(abstract_vector_rdp), allocatable :: u, Au
+
+                    !> Check that the zero vector is mapped to the zero vector.
+                    allocate(u, Au, source=x)
+                    call u%zero()
+                    call A%apply_matvec(u, Au)
+                    error_norm = Au%norm()
+                    success = merge(.true., .false., error_norm <= tol)
+
+                    !> Exit if the test fails.
+                    if (.not. success) then
+                        failed_test = 'zero_to_zero'
+                        exit verification
+                    end if
+                end block zero_to_zero
+            end if
+
+            !-------------------------------------------
+            !-----     ADJOINT CONSISTENCY         -----
+            !-----     <A u, v> = <u, A^H v>        -----
+            !-------------------------------------------
+            if (test_adjoint_) then
+                adjoint_consistency: block
+                    class(abstract_vector_rdp), allocatable :: u, v, Au, Av
+                    real(dp) :: lhs, rhs
+
+                    !> Generate random vectors.
+                    allocate(u, v, Au, Av, source=x)
+                    call u%rand()
+                    call v%rand()
+    
+                    !> Check adjoint consistency.
+                    call A%apply_matvec(u, Au)      ! A u
+                    call A%apply_rmatvec(v, Av)     ! A^H v
+                    scale = Au%norm()*v%norm()
+                    lhs = Au%dot(v)                 ! <A u, v>
+                    rhs = u%dot(Av)                 ! <u, A^H v>
+                    error_norm = abs(lhs - rhs)
+                    success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+    
+                    if (.not. success) then
+                        failed_test = 'adjoint_consistency'
+                        exit verification
+                    end if
+                end block adjoint_consistency
+                end if
+
+        enddo verification
+
+        if (success) then
+            write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
+
+    end function verify_linop_axioms_rdp
+
+    logical function verify_linop_axioms_csp(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
+        implicit none(type, external)
+        class(abstract_linop_csp), intent(inout) :: A
+        !! Linear operator whose implementation needs to be tested.
+        class(abstract_vector_csp), intent(in) :: x
+        !! Mold vector from the operator's domain (used to generate random inputs).
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(sp), optional, intent(in) :: tolerance
+        !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_zero_map
+        !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
+        logical, optional, intent(in) :: test_adjoint
+        !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+
+        integer :: ntrials_, i
+        logical :: test_zero_map_, test_adjoint_
+        real(sp) :: tol, error_norm, scale
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+
+        character(len=*), parameter :: this_procedure = 'verify_linop_axioms_csp'
+
+        !> Deals with optional arguments.
+        ntrials_ = optval(ntrials, 10)
+        tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+        test_zero_map_ = optval(test_zero_map, .true.)
+        test_adjoint_ = optval(test_adjoint, .true.)
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-------------------------------------------
+            !-----     LINEARITY : ADDITIVITY      -----
+            !-------------------------------------------
+            additivity: block
+                class(abstract_vector_csp), allocatable :: u, v, Au, Av, Auv
+                allocate(u, v, Au, Av, Auv, source=x)
+
+                !> Generate random vectors.
+                call u%rand()
+                call v%rand()
+
+                !> Check additivity.
+                call A%apply_matvec(u, Au)
+                call A%apply_matvec(v, Av)
+                scale = Au%norm() + Av%norm()
+                call Au%add(Av)                 ! Au <- A(u) + A(v)
+
+                call u%add(v)
+                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+
+                call Auv%sub(Au)
+                error_norm = Auv%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+                if (.not. success) then
+                    failed_test = 'additivity'
+                    exit verification
+                end if
+            end block additivity
+
+            !-------------------------------------------
+            !-----     LINEARITY : HOMOGENEITY     -----
+            !-------------------------------------------
+            homogeneity: block
+                class(abstract_vector_csp), allocatable :: u, Au, Aau
+                complex(sp) :: alpha
+
+                !> Generate random vectors.
+                allocate(u, Au, Aau, source=x)
+                call u%rand()
+                !> generate the identical non-trivial alpha on all ranks
+                alpha = cmplx(1.0_sp + real(i,sp), -0.5_sp*real(i,sp), sp)
+
+                !> Check homogeneity.
+                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                scale = Au%norm()
+
+                call u%scal(alpha)
+                call A%apply_matvec(u, Aau)
+
+                call Aau%sub(Au)
+                error_norm = Aau%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'homogeneity'
+                    exit verification
+                end if
+            end block homogeneity
+
+            !-------------------------------------------
+            !-----     ZERO MAPS TO ZERO           -----
+            !-------------------------------------------
+            if (test_zero_map_) then
+                zero_to_zero: block
+                    class(abstract_vector_csp), allocatable :: u, Au
+
+                    !> Check that the zero vector is mapped to the zero vector.
+                    allocate(u, Au, source=x)
+                    call u%zero()
+                    call A%apply_matvec(u, Au)
+                    error_norm = Au%norm()
+                    success = merge(.true., .false., error_norm <= tol)
+
+                    !> Exit if the test fails.
+                    if (.not. success) then
+                        failed_test = 'zero_to_zero'
+                        exit verification
+                    end if
+                end block zero_to_zero
+            end if
+
+            !-------------------------------------------
+            !-----     ADJOINT CONSISTENCY         -----
+            !-----     <A u, v> = <u, A^H v>        -----
+            !-------------------------------------------
+            if (test_adjoint_) then
+                adjoint_consistency: block
+                    class(abstract_vector_csp), allocatable :: u, v, Au, Av
+                    complex(sp) :: lhs, rhs
+
+                    !> Generate random vectors.
+                    allocate(u, v, Au, Av, source=x)
+                    call u%rand()
+                    call v%rand()
+    
+                    !> Check adjoint consistency.
+                    call A%apply_matvec(u, Au)      ! A u
+                    call A%apply_rmatvec(v, Av)     ! A^H v
+                    scale = Au%norm()*v%norm()
+                    lhs = Au%dot(v)                 ! <A u, v>
+                    rhs = u%dot(Av)                 ! <u, A^H v>
+                    error_norm = abs(lhs - rhs)
+                    success = merge(.true., .false., error_norm <= tol * max(scale, one_rsp))
+    
+                    if (.not. success) then
+                        failed_test = 'adjoint_consistency'
+                        exit verification
+                    end if
+                end block adjoint_consistency
+                end if
+
+        enddo verification
+
+        if (success) then
+            write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
+
+    end function verify_linop_axioms_csp
+
+    logical function verify_linop_axioms_cdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint) result(success)
+        implicit none(type, external)
+        class(abstract_linop_cdp), intent(inout) :: A
+        !! Linear operator whose implementation needs to be tested.
+        class(abstract_vector_cdp), intent(in) :: x
+        !! Mold vector from the operator's domain (used to generate random inputs).
+        integer, optional, intent(in) :: ntrials
+        !! Number of random samples generated for the tests.
+        real(dp), optional, intent(in) :: tolerance
+        !! Tolerance used for the axiom checks.
+        logical, optional, intent(in) :: test_zero_map
+        !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
+        logical, optional, intent(in) :: test_adjoint
+        !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
+
+        integer :: ntrials_, i
+        logical :: test_zero_map_, test_adjoint_
+        real(dp) :: tol, error_norm, scale
+        character(len=128) :: failed_test
+        character(len=256) :: msg
+
+        character(len=*), parameter :: this_procedure = 'verify_linop_axioms_cdp'
+
+        !> Deals with optional arguments.
+        ntrials_ = optval(ntrials, 10)
+        tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+        test_zero_map_ = optval(test_zero_map, .true.)
+        test_adjoint_ = optval(test_adjoint, .true.)
+
+        !> Run all tests to verify axioms.
+        success = .false.
+        verification: do i = 1, ntrials_
+
+            !-------------------------------------------
+            !-----     LINEARITY : ADDITIVITY      -----
+            !-------------------------------------------
+            additivity: block
+                class(abstract_vector_cdp), allocatable :: u, v, Au, Av, Auv
+                allocate(u, v, Au, Av, Auv, source=x)
+
+                !> Generate random vectors.
+                call u%rand()
+                call v%rand()
+
+                !> Check additivity.
+                call A%apply_matvec(u, Au)
+                call A%apply_matvec(v, Av)
+                scale = Au%norm() + Av%norm()
+                call Au%add(Av)                 ! Au <- A(u) + A(v)
+
+                call u%add(v)
+                call A%apply_matvec(u, Auv)     ! Auv <- A(u + v)
+
+                call Auv%sub(Au)
+                error_norm = Auv%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+                if (.not. success) then
+                    failed_test = 'additivity'
+                    exit verification
+                end if
+            end block additivity
+
+            !-------------------------------------------
+            !-----     LINEARITY : HOMOGENEITY     -----
+            !-------------------------------------------
+            homogeneity: block
+                class(abstract_vector_cdp), allocatable :: u, Au, Aau
+                complex(dp) :: alpha
+
+                !> Generate random vectors.
+                allocate(u, Au, Aau, source=x)
+                call u%rand()
+                !> generate the identical non-trivial alpha on all ranks
+                alpha = cmplx(1.0_dp + real(i,dp), -0.5_dp*real(i,dp), dp)
+
+                !> Check homogeneity.
+                call A%apply_matvec(u, Au) ; call Au%scal(alpha)
+                scale = Au%norm()
+
+                call u%scal(alpha)
+                call A%apply_matvec(u, Aau)
+
+                call Aau%sub(Au)
+                error_norm = Aau%norm()
+                success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+
+                !> Exit if the test fails.
+                if (.not. success) then
+                    failed_test = 'homogeneity'
+                    exit verification
+                end if
+            end block homogeneity
+
+            !-------------------------------------------
+            !-----     ZERO MAPS TO ZERO           -----
+            !-------------------------------------------
+            if (test_zero_map_) then
+                zero_to_zero: block
+                    class(abstract_vector_cdp), allocatable :: u, Au
+
+                    !> Check that the zero vector is mapped to the zero vector.
+                    allocate(u, Au, source=x)
+                    call u%zero()
+                    call A%apply_matvec(u, Au)
+                    error_norm = Au%norm()
+                    success = merge(.true., .false., error_norm <= tol)
+
+                    !> Exit if the test fails.
+                    if (.not. success) then
+                        failed_test = 'zero_to_zero'
+                        exit verification
+                    end if
+                end block zero_to_zero
+            end if
+
+            !-------------------------------------------
+            !-----     ADJOINT CONSISTENCY         -----
+            !-----     <A u, v> = <u, A^H v>        -----
+            !-------------------------------------------
+            if (test_adjoint_) then
+                adjoint_consistency: block
+                    class(abstract_vector_cdp), allocatable :: u, v, Au, Av
+                    complex(dp) :: lhs, rhs
+
+                    !> Generate random vectors.
+                    allocate(u, v, Au, Av, source=x)
+                    call u%rand()
+                    call v%rand()
+    
+                    !> Check adjoint consistency.
+                    call A%apply_matvec(u, Au)      ! A u
+                    call A%apply_rmatvec(v, Av)     ! A^H v
+                    scale = Au%norm()*v%norm()
+                    lhs = Au%dot(v)                 ! <A u, v>
+                    rhs = u%dot(Av)                 ! <u, A^H v>
+                    error_norm = abs(lhs - rhs)
+                    success = merge(.true., .false., error_norm <= tol * max(scale, one_rdp))
+    
+                    if (.not. success) then
+                        failed_test = 'adjoint_consistency'
+                        exit verification
+                    end if
+                end block adjoint_consistency
+                end if
+
+        enddo verification
+
+        if (success) then
+            write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
+            call log_information(msg, this_module, this_procedure)
+        else
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
+            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,E12.5,A,E12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
+            call log_message(msg, this_module, this_procedure)
+        end if
+
+    end function verify_linop_axioms_cdp
 
 end module LightKrylov_AbstractLinops

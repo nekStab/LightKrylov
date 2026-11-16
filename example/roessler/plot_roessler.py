@@ -3,6 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
 
+params = {'text.usetex': False,
+          'font.size': 25,
+          'axes.labelsize' : 12, 
+          'xtick.labelsize': 10,  # X-tick label font size
+          'ytick.labelsize': 10,  # Y-tick label font size
+          'legend.fontsize': 12,
+          'legend.handlelength': 1.,}
+plt.rcParams.update(params)
+
 def load_trajectory(file):
    # Read the data from the file
    data = np.loadtxt(file, skiprows=1)
@@ -103,11 +112,36 @@ if __name__ == '__main__':
    #
    #    Plot the roessler attractor 
    #        with periodic orbit
+   #            (thumbnail)
    #
    #####################################
 
    pox, poy, poz = po_otd['bf'].T
-   fig = plt.figure()
+   fig = plt.figure(figsize=(4,4))
+   ax = fig.add_subplot(111, projection='3d')
+   ax.plot(rax, ray, raz, c='black', alpha=0.4)
+   ax.plot(pox, poy, poz, c='red',   lw=2)
+   ax.set_xlabel('x')
+   ax.set_ylabel('y')
+   ax.set_zlabel('z')
+   ax.set_xlim([-10,10])
+   ax.set_xticks(np.linspace(-10,10,5))
+   ax.set_yticks(np.linspace(-10,10,5))
+   ax.set_zticks(np.linspace(-10,10,5))
+   ax.set_box_aspect((1, 1, 1))
+   ax.set_position([0.1, 0.3, 0.3, 0.8])
+   fig.subplots_adjust(left=0.02, right=0.88, bottom=0.08, top=0.88)
+   #plt.show()
+
+   #####################################
+   #
+   #    Plot the roessler attractor 
+   #        with periodic orbit
+   #       (replaces thumbnail)
+   #
+   #####################################
+
+   pox, poy, poz = po_otd['bf'].T
    ax = fig.add_subplot(111, projection='3d')
    ax.plot(rax, ray, raz, c='black', alpha=0.5, label='chaotic attractor')
    ax.plot(pox, poy, poz,  c='green', lw=2, label='periodic orbit')
@@ -223,5 +257,6 @@ if __name__ == '__main__':
    ax.set_xlim((tend-2*T)/T,tend/T)
    ax.set_ylim(-4, 4)
    plt.legend()
+   plt.tight_layout()
 
    plt.show()

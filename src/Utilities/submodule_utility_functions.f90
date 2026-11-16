@@ -106,7 +106,7 @@ contains
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
-        lwork =  4*n 
+        lwork =  4*n
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
@@ -126,7 +126,7 @@ contains
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
-        lwork =  4*n 
+        lwork =  4*n
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, wr, wi, vl, ldvl, vecs, ldvr, work, lwork, info)
@@ -147,7 +147,7 @@ contains
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
-        lwork =  2*n 
+        lwork =  2*n
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, &
@@ -167,7 +167,7 @@ contains
 
         ! Setup variables.
         n = size(A, 1) ; lda = n ; ldvl = 1 ; ldvr = n ; a_tilde = a
-        lwork =  2*n 
+        lwork =  2*n
 
         ! Eigendecomposition.
         call geev(jobvl, jobvr, n, a_tilde, lda, vals, vl, ldvl, vecs, ldvr, work, lwork, rwork, &

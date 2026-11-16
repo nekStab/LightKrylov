@@ -7,8 +7,21 @@
 [![GitHub release](https://img.shields.io/github/release/nekStab/LightKrylov.svg)](https://github.com/nekStab/LightKrylov/releases/latest)
 [![Build Status](https://github.com/nekStab/LightKrylov/actions/workflows/ci.yml/badge.svg)](https://github.com/nekStab/LightKrylov/actions)
 [![Github actions](https://github.com/nekStab/LightKrylov/actions/workflows/docs.yml/badge.svg?event=push)](https://nekstab.github.io/LightKrylov) 
-[![codecov](https://codecov.io/gh/nekStab/LightKrylov/branch/main/graph/badge.svg)](https://codecov.io/gh/nekStan/LightKrylov)
-[![last-commit](https://img.shields.io/github/last-commit/loiseaujc/quadprog)](https://github.com/loiseaujc/quadprog/commits/main)
+[![codecov](https://codecov.io/gh/nekStab/LightKrylov/branch/main/graph/badge.svg)](https://codecov.io/gh/nekStab/LightKrylov)
+[![last-commit](https://img.shields.io/github/last-commit/nekStab/LightKrylov)](https://github.com/nekStab/neklab/commits/main)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18412137.svg)](https://doi.org/10.5281/zenodo.18412137)
+
+| **Documentation** | [link](https://nekstab.github.io/LightKrylov/index.html) |
+|:-------------:|:----:|
+| **Contact**   | [jean-christophe.loiseau@ensam.eu](mailto:jean-christophe.loiseau@ensam.eu)    |
+
+**Scope :** `LightKrylov` is a modern Fortran package for linear algebra based on Krylov methods. It is primarily intended for applications where:
+
+- The notion of a vector $x$ cannot be easily represented as a standard rank-1 array, e.g. the state vector in fluid dynamics is often split between multiple multidimensional arrays each representing a different state variable (density, velocity components, temperature, etc).
+
+- The matrix $A$ is not readibily available but its application onto a vector ($A x$) is easily computed using a dedicated function. A typical example would the matrix exponential operator whose application is typically evaluated via time-integration or Krylov exponential methods.
+
+## Description
 
 Targeting large-scale linear algebra applications where the matrix $\mathbf{A}$ is only defined implicitly (e.g. through a call to a `matvec` subroutine), this package provides lightweight Fortran implementations of the most useful Krylov methods to solve a variety of problems, among which:
 
@@ -43,16 +56,16 @@ This was made possible thanks to [`fypp`](https://github.com/aradi/fypp), a pyth
 
 ### Examples
 
-Some examples can be found in the `example` folder. These include:
-- [Ginzburg-Landau]() : Serial computation of the leading eigenpairs of a complex-valued linear operator via time-stepping.
-- [Laplace operator]() : Parallel computation of the leading eigenpairs of the Laplace operator defined on the unit-square.
-- [Roessler system]() : Computation of an unstable periodic orbit embedded in the strange attractor of the system along with an OTD analysis of this orbit.
+Some examples can be found in the `example` folder or the dedicated [`LightKrylov_examples`](https://github.com/nekStab/LightKrylov_examples) repository. These include:
+- [Ginzburg-Landau](https://nekstab.github.io/LightKrylov/page/examples/ginzburg-landau.html) : Serial computation of the leading eigenpairs of a complex-valued linear operator via time-stepping.
+- [Poisson equation](https://github.com/nekStab/LightKrylov_examples/tree/main/poisson)) : MPI-based solver for the Poisson equation on the unit-square.
+- [Roessler system](https://nekstab.github.io/LightKrylov/page/examples/roessler.html) : Computation of an unstable periodic orbit embedded in the strange attractor of the system along with an OTD analysis of this orbit.
 
 Alternatively, you can also look at [`neklab`](https://github.com/nekStab/neklab), a bifurcation and stability analysis toolbox based on `LightKrylov` and designed to augment the functionalities of the massively parallel spectral element solver [`Nek5000`](https://github.com/Nek5000/Nek5000).
 
-| [**Ginzburg-Landau**]() | [**Laplace operator**]() | [**Roesler system**]() |
-| :---------------------: | :----------------------: | :--------------------: |
-|       ADD FIGURE        |        ADD FIGURE        | ADD FIGURE |
+| [**Ginzburg-Landau**](https://nekstab.github.io/LightKrylov/page/examples/ginzburg-landau.html) | [**Poisson equation**](https://github.com/nekStab/LightKrylov_examples/tree/main/poisson) | [**Roesler system**](https://nekstab.github.io/LightKrylov/page/examples/roessler.html) |
+| :----------------------: | :-----------------------: | :----------------------------: |
+| ![](imgs/example_GL.png) | ![](imgs/poisson_spy.png) | ![](imgs/example_Roessler.png) |
 
 ## Installation
 
@@ -78,10 +91,15 @@ gh repo clone nekStab/LightKrylov
 All other dependencies are directly handled by the Fortran Package Manage `fpm`.
 To date, the tested compilers include:
 
-- `gfortran 12` (Linux)
-- `gfortran 13` (Linux, Windows, MacOS)
-- `ifort` (Linux)
-- `ifx` (Linux)
+- `gfortran 10` (Linux, Windows)
+- `gfortran 11` (Linux, macOS, Windows)
+- `gfortran 12` (Linux, macOS, Windows)
+- `gfortran 13` (Linux, macOS, Windows)
+- `gfortran 14` (Linux, macOS, Windows)
+- `gfortran 15` (macOS, Windows)
+- `ifort 2021.10` (Linux, macOS, Windows)
+- `ifx 2025.0` (Linux, Windows)
+- `nvidia-hpc 25.1` (Linux)
 
 ### Building with `fpm`
 
@@ -133,19 +151,24 @@ For more details, please refer to each of the examples.
 
 ## Contributing
 
-### Current developers
-
 `LightKrylov` is currently developed and maintained by a team of three:
 - [Jean-Christophe Loiseau](https://loiseaujc.github.io/) : Assistant Professor of Applied maths and Fluid dynamics at [DynFluid](https://dynfluid.ensam.eu/), Arts et Métiers Institute of Technology, Paris, France.
 - [Ricardo Frantz](https://github.com/ricardofrantz) : PhD in Fluid dynamics (Arts et Métiers, France, 2022) and currently postdoctoral researcher at DynFluid.
 - [Simon Kern](https://github.com/Simkern/) : PhD in Fluid dynamics (KTH, Sweden, 2023) and currently postdoctoral researcher at DynFluid.
 
-Anyone else interested in contributing is obviously most welcomed!
+Contributions are more than welcomed ! More information can be found in the following pages:
+
+- [Guidelines](https://github.com/nekStab/LightKrylov/blob/main/CONTRIBUTING.md)
+- [Issues](https://github.com/nekStab/LightKrylov/issues)
+- [Workflow](https://github.com/nekStab/LightKrylov/blob/main/WORKFLOW.md)
+- [Style guide](https://github.com/nekStab/LightKrylov/blob/main/STYLE_GUIDE.md)
+- [Code of conduct](https://github.com/nekStab/LightKrylov/blob/main/CODE_OF_CONDUCT.md)
+- [Licence](https://github.com/nekStab/LightKrylov/blob/main/LICENSE)
 
 ## Acknowledgment
 
 The development of `LightKrylov` is part of an on-going research project funded by [Agence Nationale pour la Recherche](https://anr.fr/en/) (ANR) under the grant agreement ANR-22-CE46-0008. The project started in January 2023 and will run until December 2026.
-We are also very grateful to the [fortran-lang](https://fortran-lang.org/) community and the maintainers of [`stdlib`](https://github.com/fortran-lang/stdlib), in particular to @perazz, @jalvesz and @jvdp1 for their awesome work on the `stdlib_linalg` module which greatly simplified the developlement of `LightKrylov`.
+We are also very grateful to the [fortran-lang](https://fortran-lang.org/) community and the maintainers of [`stdlib`](https://github.com/fortran-lang/stdlib), in particular to [@perazz](https://github.com/perazz), [@jalvesz](https://github.com/jalvesz) and [@jvdp1](https://github.com/jvdp1) for their awesome work on the `stdlib_linalg` module which greatly simplified the developlement of `LightKrylov`.
 
 ### Related projects
 

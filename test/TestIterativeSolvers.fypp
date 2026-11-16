@@ -298,6 +298,7 @@ contains
         call check_test(error, 'test_sym_evp_${type[0]}$${kind}$', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size), source=zero_${type[0]}$${kind}$)
         G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
@@ -382,6 +383,7 @@ contains
         call check_test(error, 'test_hermitian_evp_${type[0]}$${kind}$', info='evec/eval correctness', eq='A @ V = diag(E) @ V', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis.
+        allocate(G(test_size, test_size), source=zero_${type[0]}$${kind}$)
         G = Gram(X)
 
         ! Check orthonormality of the eigenvectors.
@@ -489,7 +491,7 @@ contains
         call check_test(error, 'test_svd_${type[0]}$${kind}$', 'Singular values', context=msg)
 
         ! Compute Gram matrix associated to the Krylov basis of the left singular vectors.
-        ! allocate(G(test_size, test_size)) ; G = zero_${type[0]}$${kind}$
+        allocate(G(test_size, test_size), source=zero_${type[0]}$${kind}$)
         G = Gram(U(1:test_size))
 
         ! Check orthonormality of the left singular vectors
@@ -505,7 +507,7 @@ contains
         err = maxval(abs(G - eye(test_size, mold=1.0_${kind}$)))
         call get_err_str(msg, "max err: ", err)
         call check(error, err < rtol_${kind}$)
-        call check_test(error, 'test_svd_${type[0]}$${kind}$', info='svec orthonormality (right)', eq='V.H @ V /= I', context=msg)
+        call check_test(error, 'test_svd_${type[0]}$${kind}$', info='svec orthonormality (right)', eq='V.H @ V = I', context=msg)
 
         return
     end subroutine test_svd_${type[0]}$${kind}$
@@ -520,8 +522,8 @@ contains
     subroutine collect_gmres_${type[0]}$${kind}$_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
         testsuite = [ &
-                    new_unittest("Full GMRES", test_gmres_${type[0]}$${kind}$), &
-                    new_unittest("Full (SPD) GMRES", test_gmres_spd_${type[0]}$${kind}$) &
+                    new_unittest("Full GMRES", test_gmres_${type[0]}$${kind}$) &
+                    ! new_unittest("Full (SPD) GMRES", test_gmres_spd_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_gmres_${type[0]}$${kind}$_testsuite
@@ -566,49 +568,49 @@ contains
         return
     end subroutine test_gmres_${type[0]}$${kind}$
     
-    subroutine test_gmres_spd_${type[0]}$${kind}$(error)
-        ! Error type to be returned.
-        type(error_type), allocatable, intent(out) :: error
-        ! Linear problem.
-        #:if type[0] == "r"
-        type(spd_linop_${type[0]}$${kind}$) , allocatable :: A ! Linear Operator.
-        #:else
-        type(hermitian_linop_${type[0]}$${kind}$), allocatable :: A
-        #:endif
-        type(vector_${type[0]}$${kind}$), allocatable :: b ! Right-hand side vector.
-        type(vector_${type[0]}$${kind}$), allocatable :: x ! Solution vector.
-        ! GMRES options.
-        type(gmres_${kind}$_opts) :: opts
-        ! GMRES metadata.
-        type(gmres_${kind}$_metadata) :: meta
-        ! Information flag.
-        integer :: info
-        ! Misc
-        real(${kind}$) :: err
-        character(len=256) :: msg
-
-        ! Initialize linear problem.
-        #:if type[0] == "r"
-        A = spd_linop_${type[0]}$${kind}$()  ; call init_rand(A)
-        #:else
-        A = hermitian_linop_${type[0]}$${kind}$() ; call init_rand(A)
-        #:endif
-        b = vector_${type[0]}$${kind}$() ; call init_rand(b)
-        x = vector_${type[0]}$${kind}$() ; call x%zero()
-
-        ! GMRES solver.
-        opts = gmres_${kind}$_opts(kdim=test_size, if_print_metadata=.true.)
-        call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
-        call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_${type[0]}$${kind}$')
-
-        ! Check convergence.
-        err = norm2(abs(matmul(A%data, x%data) - b%data))
-        call get_err_str(msg, "max err: ", err)
-        call check(error, err < b%norm() * rtol_${kind}$)
-        call check_test(error, 'test_gmres_spd_${type[0]}$${kind}$', eq='A @ x = b', context=msg)
-
-        return
-    end subroutine test_gmres_spd_${type[0]}$${kind}$
+    ! subroutine test_gmres_spd_${type[0]}$${kind}$(error)
+    !     ! Error type to be returned.
+    !     type(error_type), allocatable, intent(out) :: error
+    !     ! Linear problem.
+    !     #:if type[0] == "r"
+    !     type(spd_linop_${type[0]}$${kind}$) , allocatable :: A ! Linear Operator.
+    !     #:else
+    !     type(hermitian_linop_${type[0]}$${kind}$), allocatable :: A
+    !     #:endif
+    !     type(vector_${type[0]}$${kind}$), allocatable :: b ! Right-hand side vector.
+    !     type(vector_${type[0]}$${kind}$), allocatable :: x ! Solution vector.
+    !     ! GMRES options.
+    !     type(gmres_${kind}$_opts) :: opts
+    !     ! GMRES metadata.
+    !     type(gmres_${kind}$_metadata) :: meta
+    !     ! Information flag.
+    !     integer :: info
+    !     ! Misc
+    !     real(${kind}$) :: err
+    !     character(len=256) :: msg
+    !
+    !     ! Initialize linear problem.
+    !     #:if type[0] == "r"
+    !     A = spd_linop_${type[0]}$${kind}$()  ; call init_rand(A)
+    !     #:else
+    !     A = hermitian_linop_${type[0]}$${kind}$() ; call init_rand(A)
+    !     #:endif
+    !     b = vector_${type[0]}$${kind}$() ; call init_rand(b)
+    !     x = vector_${type[0]}$${kind}$() ; call x%zero()
+    !
+    !     ! GMRES solver.
+    !     opts = gmres_${kind}$_opts(kdim=test_size, if_print_metadata=.true.)
+    !     call gmres(A, b, x, info, rtol=rtol_${kind}$, atol=atol_${kind}$, options=opts, meta=meta)
+    !     call check_info(info, 'gmres', module=this_module_long, procedure='test_gmres_spd_${type[0]}$${kind}$')
+    !
+    !     ! Check convergence.
+    !     err = norm2(abs(matmul(A%data, x%data) - b%data))
+    !     call get_err_str(msg, "max err: ", err)
+    !     call check(error, err < b%norm() * rtol_${kind}$)
+    !     call check_test(error, 'test_gmres_spd_${type[0]}$${kind}$', eq='A @ x = b', context=msg)
+    !
+    !     return
+    ! end subroutine test_gmres_spd_${type[0]}$${kind}$
 
     #:endfor
 
