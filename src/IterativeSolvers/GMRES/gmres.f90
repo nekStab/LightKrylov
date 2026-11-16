@@ -24,7 +24,7 @@ contains
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
             call log_message(msg, this_module, this_procedure)
-            write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
+            write(msg,'(A14,ES15.8)') '   INIT:', self%res(1)
             call log_message(msg, this_module, this_procedure)
             do i = 1, self%n_iter
                write(msg,'(A,I3,A,E20.8)') '   Step ', i, ': ', self%res(i)
@@ -69,7 +69,7 @@ contains
         if (ifverbose) then
             write(msg,'(14X,A15)') 'Residual'
             call log_message(msg, this_module, this_procedure)
-            write(msg,'(A14,E15.8)') '   INIT:', self%res(1)
+            write(msg,'(A14,ES15.8)') '   INIT:', self%res(1)
             call log_message(msg, this_module, this_procedure)
             do i = 1, self%n_iter
                write(msg,'(A,I3,A,E20.8)') '   Step ', i, ': ', self%res(i)
@@ -185,7 +185,7 @@ contains
             if (gmres_meta%n_outer == 0) then
                allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg)
                call check_allocation(iostat, msg, this_module, this_procedure)
-               write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
+               write(msg,'(2(A,ES11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)
             end if
@@ -227,7 +227,7 @@ contains
                 gmres_meta%res     = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
-                write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                write(msg,'(A,I3,2(A,ES11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
                 call log_information(msg, this_module, this_procedure)
 
@@ -258,7 +258,7 @@ contains
             gmres_meta%n_outer = gmres_meta%n_outer + 1
             gmres_meta%res = [ gmres_meta%res, abs(beta) ]
 
-            write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k) outer step   ', gmres_meta%n_outer, ': |res|= ', &
+            write(msg,'(A,I3,2(A,ES11.4))') 'GMRES(k) outer step   ', gmres_meta%n_outer, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
 
@@ -377,7 +377,7 @@ contains
             if (gmres_meta%n_outer == 0) then
                allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg)
                call check_allocation(iostat, msg, this_module, this_procedure)
-               write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
+               write(msg,'(2(A,ES11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)
             end if
@@ -419,7 +419,7 @@ contains
                 gmres_meta%res     = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
-                write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                write(msg,'(A,I3,2(A,ES11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
                 call log_information(msg, this_module, this_procedure)
 
@@ -450,7 +450,7 @@ contains
             gmres_meta%n_outer = gmres_meta%n_outer + 1
             gmres_meta%res = [ gmres_meta%res, abs(beta) ]
 
-            write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k) outer step   ', gmres_meta%n_outer, ': |res|= ', &
+            write(msg,'(A,I3,2(A,ES11.4))') 'GMRES(k) outer step   ', gmres_meta%n_outer, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
 
@@ -569,7 +569,7 @@ contains
             if (gmres_meta%n_outer == 0) then
                allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg)
                call check_allocation(iostat, msg, this_module, this_procedure)
-               write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
+               write(msg,'(2(A,ES11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)
             end if
@@ -611,7 +611,7 @@ contains
                 gmres_meta%res     = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
-                write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                write(msg,'(A,I3,2(A,ES11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
                 call log_information(msg, this_module, this_procedure)
 
@@ -642,7 +642,7 @@ contains
             gmres_meta%n_outer = gmres_meta%n_outer + 1
             gmres_meta%res = [ gmres_meta%res, abs(beta) ]
 
-            write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k) outer step   ', gmres_meta%n_outer, ': |res|= ', &
+            write(msg,'(A,I3,2(A,ES11.4))') 'GMRES(k) outer step   ', gmres_meta%n_outer, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
 
@@ -761,7 +761,7 @@ contains
             if (gmres_meta%n_outer == 0) then
                allocate(gmres_meta%res(1), source=abs(beta), stat=iostat, errmsg=msg)
                call check_allocation(iostat, msg, this_module, this_procedure)
-               write(msg,'(2(A,E11.4))') 'GMRES(k)   init step     : |res|= ', &
+               write(msg,'(2(A,ES11.4))') 'GMRES(k)   init step     : |res|= ', &
                         & abs(beta), ', tol= ', tol
                call log_information(msg, this_module, this_procedure)
             end if
@@ -803,7 +803,7 @@ contains
                 gmres_meta%res     = [ gmres_meta%res, abs(beta) ]
 
                 ! Check convergence.
-                write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
+                write(msg,'(A,I3,2(A,ES11.4))') 'GMRES(k)   inner step ', k, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
                 call log_information(msg, this_module, this_procedure)
 
@@ -834,7 +834,7 @@ contains
             gmres_meta%n_outer = gmres_meta%n_outer + 1
             gmres_meta%res = [ gmres_meta%res, abs(beta) ]
 
-            write(msg,'(A,I3,2(A,E11.4))') 'GMRES(k) outer step   ', gmres_meta%n_outer, ': |res|= ', &
+            write(msg,'(A,I3,2(A,ES11.4))') 'GMRES(k) outer step   ', gmres_meta%n_outer, ': |res|= ', &
                             & abs(beta), ', tol= ', tol
             call log_information(msg, this_module, this_procedure)
 

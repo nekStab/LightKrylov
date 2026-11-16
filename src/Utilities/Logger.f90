@@ -4,7 +4,7 @@ module LightKrylov_Logger
 #endif
    ! Fortran Standard Library
    use stdlib_optval, only: optval
-   use stdlib_logger, only: logger => global_logger, none_level
+   use stdlib_logger, only: logger => global_logger, debug_level, information_level, warning_level, error_level, none_level
    use stdlib_ascii, only: to_lower
    use stdlib_strings, only: chomp, replace_all
    ! LightKrylov
@@ -15,10 +15,12 @@ module LightKrylov_Logger
 
    character(len=128), parameter :: this_module = 'LightKrylov_Logger'
 
-   logical, parameter, private :: exit_on_error = .true.
+   logical, parameter, private :: exit_on_error      = .true.
    logical, parameter, private :: exit_on_test_error = .true.
+   integer, parameter, private :: inactive_log_level = information_level
+   !! Log level used when logger_setup has not been called
    logical :: logger_is_active = .false.
-   logical :: lk_owns_mpi = .false.
+   logical :: lk_owns_mpi      = .false.
 #ifdef LIGHTKRYLOV_MPI
    type(MPI_Comm) :: lk_comm
 #endif
@@ -185,8 +187,8 @@ contains
             call logger%log_message(msg, module=module, procedure=procedure)
             if (flush_) call flush_log_units()
          end if
-      else if (fallback_print()) then
-         print '(A)', msg
+      else
+         if (inactive_log_level <= information_level) print '(A)', msg
       end if
    end subroutine log_message
 
@@ -207,8 +209,8 @@ contains
             call logger%log_information(msg, module=module, procedure=procedure)
             if (flush_) call flush_log_units()
          end if
-      else if (fallback_print()) then
-         print '("INFO: ",A)', msg
+      else
+         if (inactive_log_level <= information_level) print '("INFO: ",A)', msg
       end if
    end subroutine log_information
 
@@ -224,8 +226,8 @@ contains
             call logger%log_warning(msg, module=module, procedure=procedure)
             call flush_log_units()
          end if
-      else if (fallback_print()) then
-         print '("WARN: ",A)', msg
+      else
+         if (inactive_log_level <= warning_level) print '("WARN: ",A)', msg
       end if
    end subroutine log_warning
 
@@ -248,6 +250,7 @@ contains
          end if
       else if (fallback_print()) then
          print '(A,": ",A)', msg, errmsg
+         call error_handler(-1)
       end if
    end subroutine log_error
 
@@ -263,8 +266,8 @@ contains
             call logger%log_debug(msg, module=module, procedure=procedure)
             call flush_log_units()
          end if
-      else if (fallback_print()) then
-         print '("DEBUG: ",A)', msg
+      else
+         if (inactive_log_level <= debug_level) print '("DEBUG: ",A)', msg
       end if
    end subroutine log_debug
 
@@ -847,6 +850,32 @@ contains
                call log_error(origin, module=module, procedure=procedure, &
                               stat=info, errmsg=trim(msg))
                ierr = -1
+            else if (info == -3) then
+               write (msg, '(A)') 'kexpm: invalid workspace X (fewer than 2*blksize vectors or not a multiple of blksize).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            else if (info == -4) then
+               write (msg, '(A)') 'kexpm: invalid Krylov dimension (kdim < 1).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            else if (info == -5) then
+               write (msg, '(A)') 'kexpm: invalid tolerance (tol < 0).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            else if (info == -6) then
+               write (msg, '(A)') 'kexpm: invalid block (B is empty or size(C) /= size(B)).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            else if (info == -7) then
+               write (msg, '(A)') 'kexpm: invalid options (max_rejections < 1 or max_substeps < 1).'
+               call log_error(origin, module=module, procedure=procedure, &
+                              stat=info, errmsg=trim(msg))
+               ierr = -1
+            else
                write (msg, '(A)') "Undocumented error. "//trim(str)
                call log_error(origin, module=module, procedure=procedure, &
                               stat=info, errmsg=trim(msg))

@@ -38,10 +38,51 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
+                    new_unittest("Verify linearization consistency", test_linearization_consistency_${type[0]}$${kind}$), &
                     new_unittest("Fixed point calculation", test_fixedp_${type[0]}$${kind}$) &
                     ]
         return
     end subroutine collect_newton_${type[0]}$${kind}$_testsuite
+
+    subroutine test_linearization_consistency_${type[0]}$${kind}$(error)
+      ! Error type.
+      type(error_type), allocatable, intent(out) :: error
+      ! Roessler system
+      type(roessler_${type[0]}$${kind}$), allocatable :: sys
+      ! State vector
+      type(state_vector_${type[0]}$${kind}$)    :: fp1, fp2
+      real(${kind}$), allocatable     :: orders(:)
+      real(${kind}$), parameter       :: order_tol = 1.0e-3_${kind}$
+      real(${kind}$) :: err
+      integer :: k
+      character(len=256) :: msg, infomsg
+
+      call roessler_analytical_fp_${type[0]}$${kind}$(fp1, fp2)
+
+      ! Allocate and set Roessler system and Jacobian
+      sys = roessler_${type[0]}$${kind}$()
+      sys%jacobian = jacobian_${type[0]}$${kind}$()
+      ! Place system on fixed point 1
+      sys%jacobian%X = fp1
+
+      !> kind-specific defaults for eps0 and stepratio.
+      #:if kind == "sp"
+      call verify_system_linearization(sys, eps0=1e-01_${kind}$, stepratio=5e-01_${kind}$, orders=orders)
+      #:else
+      call verify_system_linearization(sys, eps0=1e-02_${kind}$, stepratio=1e-01_${kind}$, orders=orders)
+      #:endif
+      if (size(orders) == 0) then
+         err = huge(1.0_${kind}$)
+      else
+         err = maxval(abs(orders - 2.0_${kind}$))
+      end if
+
+      write(infomsg,'(A,ES8.2)') "order = 2.0 +- ", order_tol
+      call get_err_str(msg, "max err: ", err)
+      call check(error, err < order_tol)
+      call check_test(error, 'test_linearization_consistency_${type[0]}$${kind}$', info=infomsg, context=msg)
+      return
+    end subroutine test_linearization_consistency_${type[0]}$${kind}$
 
     subroutine test_fixedp_${type[0]}$${kind}$(error)
        ! Error type.
@@ -81,11 +122,7 @@ contains
        err = X%norm()
        call get_err_str(msg, "max err: ", err)
        call check(error, err < rtol_${kind}$)
-       #:if type[0] == "r"
        call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
-       #:else
-       call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
-       #:endif
 
        X%x = zero_${type[0]}$${kind}$
        X%y = zero_${type[0]}$${kind}$
@@ -102,7 +139,7 @@ contains
        call check_test(error, 'test_fixedp_${type[0]}$${kind}$', info=infomsg, context=msg)
 
        return
-   end subroutine test_fixedp_${type[0]}$${kind}$
+    end subroutine test_fixedp_${type[0]}$${kind}$
    #:endfor
 
 end module TestNewtonKrylov

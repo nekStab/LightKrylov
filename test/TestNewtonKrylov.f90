@@ -36,10 +36,47 @@ contains
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
+                    new_unittest("Verify linearization consistency", test_linearization_consistency_rsp), &
                     new_unittest("Fixed point calculation", test_fixedp_rsp) &
                     ]
         return
     end subroutine collect_newton_rsp_testsuite
+
+    subroutine test_linearization_consistency_rsp(error)
+      ! Error type.
+      type(error_type), allocatable, intent(out) :: error
+      ! Roessler system
+      type(roessler_rsp), allocatable :: sys
+      ! State vector
+      type(state_vector_rsp)    :: fp1, fp2
+      real(sp), allocatable     :: orders(:)
+      real(sp), parameter       :: order_tol = 1.0e-3_sp
+      real(sp) :: err
+      integer :: k
+      character(len=256) :: msg, infomsg
+
+      call roessler_analytical_fp_rsp(fp1, fp2)
+
+      ! Allocate and set Roessler system and Jacobian
+      sys = roessler_rsp()
+      sys%jacobian = jacobian_rsp()
+      ! Place system on fixed point 1
+      sys%jacobian%X = fp1
+
+      !> kind-specific defaults for eps0 and stepratio.
+      call verify_system_linearization(sys, eps0=1e-01_sp, stepratio=5e-01_sp, orders=orders)
+      if (size(orders) == 0) then
+         err = huge(1.0_sp)
+      else
+         err = maxval(abs(orders - 2.0_sp))
+      end if
+
+      write(infomsg,'(A,ES8.2)') "order = 2.0 +- ", order_tol
+      call get_err_str(msg, "max err: ", err)
+      call check(error, err < order_tol)
+      call check_test(error, 'test_linearization_consistency_rsp', info=infomsg, context=msg)
+      return
+    end subroutine test_linearization_consistency_rsp
 
     subroutine test_fixedp_rsp(error)
        ! Error type.
@@ -96,15 +133,52 @@ contains
        call check_test(error, 'test_fixedp_rsp', info=infomsg, context=msg)
 
        return
-   end subroutine test_fixedp_rsp
+    end subroutine test_fixedp_rsp
     subroutine collect_newton_rdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
+                    new_unittest("Verify linearization consistency", test_linearization_consistency_rdp), &
                     new_unittest("Fixed point calculation", test_fixedp_rdp) &
                     ]
         return
     end subroutine collect_newton_rdp_testsuite
+
+    subroutine test_linearization_consistency_rdp(error)
+      ! Error type.
+      type(error_type), allocatable, intent(out) :: error
+      ! Roessler system
+      type(roessler_rdp), allocatable :: sys
+      ! State vector
+      type(state_vector_rdp)    :: fp1, fp2
+      real(dp), allocatable     :: orders(:)
+      real(dp), parameter       :: order_tol = 1.0e-3_dp
+      real(dp) :: err
+      integer :: k
+      character(len=256) :: msg, infomsg
+
+      call roessler_analytical_fp_rdp(fp1, fp2)
+
+      ! Allocate and set Roessler system and Jacobian
+      sys = roessler_rdp()
+      sys%jacobian = jacobian_rdp()
+      ! Place system on fixed point 1
+      sys%jacobian%X = fp1
+
+      !> kind-specific defaults for eps0 and stepratio.
+      call verify_system_linearization(sys, eps0=1e-02_dp, stepratio=1e-01_dp, orders=orders)
+      if (size(orders) == 0) then
+         err = huge(1.0_dp)
+      else
+         err = maxval(abs(orders - 2.0_dp))
+      end if
+
+      write(infomsg,'(A,ES8.2)') "order = 2.0 +- ", order_tol
+      call get_err_str(msg, "max err: ", err)
+      call check(error, err < order_tol)
+      call check_test(error, 'test_linearization_consistency_rdp', info=infomsg, context=msg)
+      return
+    end subroutine test_linearization_consistency_rdp
 
     subroutine test_fixedp_rdp(error)
        ! Error type.
@@ -161,15 +235,52 @@ contains
        call check_test(error, 'test_fixedp_rdp', info=infomsg, context=msg)
 
        return
-   end subroutine test_fixedp_rdp
+    end subroutine test_fixedp_rdp
     subroutine collect_newton_csp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
+                    new_unittest("Verify linearization consistency", test_linearization_consistency_csp), &
                     new_unittest("Fixed point calculation", test_fixedp_csp) &
                     ]
         return
     end subroutine collect_newton_csp_testsuite
+
+    subroutine test_linearization_consistency_csp(error)
+      ! Error type.
+      type(error_type), allocatable, intent(out) :: error
+      ! Roessler system
+      type(roessler_csp), allocatable :: sys
+      ! State vector
+      type(state_vector_csp)    :: fp1, fp2
+      real(sp), allocatable     :: orders(:)
+      real(sp), parameter       :: order_tol = 1.0e-3_sp
+      real(sp) :: err
+      integer :: k
+      character(len=256) :: msg, infomsg
+
+      call roessler_analytical_fp_csp(fp1, fp2)
+
+      ! Allocate and set Roessler system and Jacobian
+      sys = roessler_csp()
+      sys%jacobian = jacobian_csp()
+      ! Place system on fixed point 1
+      sys%jacobian%X = fp1
+
+      !> kind-specific defaults for eps0 and stepratio.
+      call verify_system_linearization(sys, eps0=1e-01_sp, stepratio=5e-01_sp, orders=orders)
+      if (size(orders) == 0) then
+         err = huge(1.0_sp)
+      else
+         err = maxval(abs(orders - 2.0_sp))
+      end if
+
+      write(infomsg,'(A,ES8.2)') "order = 2.0 +- ", order_tol
+      call get_err_str(msg, "max err: ", err)
+      call check(error, err < order_tol)
+      call check_test(error, 'test_linearization_consistency_csp', info=infomsg, context=msg)
+      return
+    end subroutine test_linearization_consistency_csp
 
     subroutine test_fixedp_csp(error)
        ! Error type.
@@ -226,15 +337,52 @@ contains
        call check_test(error, 'test_fixedp_csp', info=infomsg, context=msg)
 
        return
-   end subroutine test_fixedp_csp
+    end subroutine test_fixedp_csp
     subroutine collect_newton_cdp_testsuite(testsuite)
         type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
          testsuite = [ &
+                    new_unittest("Verify linearization consistency", test_linearization_consistency_cdp), &
                     new_unittest("Fixed point calculation", test_fixedp_cdp) &
                     ]
         return
     end subroutine collect_newton_cdp_testsuite
+
+    subroutine test_linearization_consistency_cdp(error)
+      ! Error type.
+      type(error_type), allocatable, intent(out) :: error
+      ! Roessler system
+      type(roessler_cdp), allocatable :: sys
+      ! State vector
+      type(state_vector_cdp)    :: fp1, fp2
+      real(dp), allocatable     :: orders(:)
+      real(dp), parameter       :: order_tol = 1.0e-3_dp
+      real(dp) :: err
+      integer :: k
+      character(len=256) :: msg, infomsg
+
+      call roessler_analytical_fp_cdp(fp1, fp2)
+
+      ! Allocate and set Roessler system and Jacobian
+      sys = roessler_cdp()
+      sys%jacobian = jacobian_cdp()
+      ! Place system on fixed point 1
+      sys%jacobian%X = fp1
+
+      !> kind-specific defaults for eps0 and stepratio.
+      call verify_system_linearization(sys, eps0=1e-02_dp, stepratio=1e-01_dp, orders=orders)
+      if (size(orders) == 0) then
+         err = huge(1.0_dp)
+      else
+         err = maxval(abs(orders - 2.0_dp))
+      end if
+
+      write(infomsg,'(A,ES8.2)') "order = 2.0 +- ", order_tol
+      call get_err_str(msg, "max err: ", err)
+      call check(error, err < order_tol)
+      call check_test(error, 'test_linearization_consistency_cdp', info=infomsg, context=msg)
+      return
+    end subroutine test_linearization_consistency_cdp
 
     subroutine test_fixedp_cdp(error)
        ! Error type.
@@ -291,7 +439,7 @@ contains
        call check_test(error, 'test_fixedp_cdp', info=infomsg, context=msg)
 
        return
-   end subroutine test_fixedp_cdp
+    end subroutine test_fixedp_cdp
 
 end module TestNewtonKrylov
 

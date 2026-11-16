@@ -86,6 +86,7 @@ module LightKrylov
     public :: abstract_system_${type[0]}$${kind}$
     public :: abstract_jacobian_linop_${type[0]}$${kind}$
     #:endfor
+    public :: verify_system_linearization
 
     ! BaseKrylov exports.
     public :: qr
@@ -132,7 +133,14 @@ module LightKrylov
     public :: abstract_exptA_${type[0]}$${kind}$
     #:endfor
     public :: kexpm
+    public :: kexpm_substep
     public :: krylov_exptA
+    #:for kind in REAL_KINDS
+    public :: kexpm_${kind}$_opts, kexpm_${kind}$_metadata
+    #:endfor
+    #:for kind, type in RC_KINDS_TYPES
+    public :: kexpm_workspace_${type[0]}$${kind}$
+    #:endfor
 
     ! Timer exports
     public :: lightkrylov_timer
