@@ -417,9 +417,7 @@ contains
         q        = optval(stepratio, 0.1_sp)
         eps0_    = optval(eps0, 5.0e-2_sp)
         tol      = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
-
-        !> real and imaginary perturbations run separately for complex systems.
-        npass = 1
+        npass    = 1
         if (present(orders)) then
             allocate(orders(max(nsteps_-1, 0)*npass))
             orders = 0.0_sp
@@ -526,9 +524,7 @@ contains
         q        = optval(stepratio, 0.1_dp)
         eps0_    = optval(eps0, 5.0e-2_dp)
         tol      = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
-
-        !> real and imaginary perturbations run separately for complex systems.
-        npass = 1
+        npass    = 1
         if (present(orders)) then
             allocate(orders(max(nsteps_-1, 0)*npass))
             orders = 0.0_dp
@@ -635,9 +631,7 @@ contains
         q        = optval(stepratio, 0.1_sp)
         eps0_    = optval(eps0, 5.0e-2_sp)
         tol      = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
-
-        !> real and imaginary perturbations run separately for complex systems.
-        npass = 2
+        npass    = 2 ! real and imag perturbations run separately for complex systems.
         if (present(orders)) then
             allocate(orders(max(nsteps_-1, 0)*npass))
             orders = 0.0_sp
@@ -746,9 +740,7 @@ contains
         q        = optval(stepratio, 0.1_dp)
         eps0_    = optval(eps0, 5.0e-2_dp)
         tol      = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
-
-        !> real and imaginary perturbations run separately for complex systems.
-        npass = 2
+        npass    = 2 ! real and imag perturbations run separately for complex systems.
         if (present(orders)) then
             allocate(orders(max(nsteps_-1, 0)*npass))
             orders = 0.0_dp

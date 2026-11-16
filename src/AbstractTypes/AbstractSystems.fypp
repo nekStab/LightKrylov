@@ -234,12 +234,10 @@ contains
         q        = optval(stepratio, 0.1_${kind}$)
         eps0_    = optval(eps0, 5.0e-2_${kind}$)
         tol      = optval(tolerance, 10.0_${kind}$**(-(precision(1.0_${kind}$)-1)))
-
-        !> real and imaginary perturbations run separately for complex systems.
         #:if type[0] == 'c'
-        npass = 2
+        npass    = 2 ! real and imag perturbations run separately for complex systems.
         #:else
-        npass = 1
+        npass    = 1
         #:endif
         if (present(orders)) then
             allocate(orders(max(nsteps_-1, 0)*npass))
