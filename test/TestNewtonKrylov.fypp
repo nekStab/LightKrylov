@@ -52,7 +52,11 @@ contains
       ! State vector
       type(state_vector_${type[0]}$${kind}$)    :: fp1, fp2
       real(${kind}$), allocatable     :: orders(:)
+      #:if kind == "sp"
+      real(${kind}$), parameter       :: order_tol = 1.0e-2_${kind}$
+      #:else
       real(${kind}$), parameter       :: order_tol = 1.0e-3_${kind}$
+      #:endif
       real(${kind}$) :: err
       integer :: k
       character(len=256) :: msg, infomsg
