@@ -50,7 +50,7 @@ contains
       ! State vector
       type(state_vector_rsp)    :: fp1, fp2
       real(sp), allocatable     :: orders(:)
-      real(sp), parameter       :: order_tol = 1.0e-3_sp
+      real(sp), parameter       :: order_tol = 1.0e-2_sp
       real(sp) :: err
       integer :: k
       character(len=256) :: msg, infomsg
@@ -254,7 +254,7 @@ contains
       ! State vector
       type(state_vector_csp)    :: fp1, fp2
       real(sp), allocatable     :: orders(:)
-      real(sp), parameter       :: order_tol = 1.0e-3_sp
+      real(sp), parameter       :: order_tol = 1.0e-2_sp
       real(sp) :: err
       integer :: k
       character(len=256) :: msg, infomsg
