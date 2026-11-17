@@ -747,8 +747,8 @@ contains
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
-                  call u%rand()
-                  call v%rand()
+                  call u%rand(ifnorm=.true.)
+                  call v%rand(ifnorm=.true.)
 
                   !> Check additivity.
                   call A%apply_matvec(u, Au)
@@ -783,7 +783,7 @@ contains
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   !> generate the identical non-trivial alpha on all ranks
                   #:if type[0] == "c"
                   alpha = cmplx(1.0_${kind}$ + real(i,${kind}$), -0.5_${kind}$*real(i,${kind}$), ${kind}$)

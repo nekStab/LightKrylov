@@ -1747,8 +1747,8 @@ contains
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
-                  call u%rand()
-                  call v%rand()
+                  call u%rand(ifnorm=.true.)
+                  call v%rand(ifnorm=.true.)
 
                   !> Check additivity.
                   call A%apply_matvec(u, Au)
@@ -1783,7 +1783,7 @@ contains
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   !> generate the identical non-trivial alpha on all ranks
                   alpha = (-1.0_sp)**i * (1.0_sp + real(i,sp))
 
@@ -1986,8 +1986,8 @@ contains
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
-                  call u%rand()
-                  call v%rand()
+                  call u%rand(ifnorm=.true.)
+                  call v%rand(ifnorm=.true.)
 
                   !> Check additivity.
                   call A%apply_matvec(u, Au)
@@ -2022,7 +2022,7 @@ contains
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   !> generate the identical non-trivial alpha on all ranks
                   alpha = (-1.0_dp)**i * (1.0_dp + real(i,dp))
 
@@ -2225,8 +2225,8 @@ contains
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
-                  call u%rand()
-                  call v%rand()
+                  call u%rand(ifnorm=.true.)
+                  call v%rand(ifnorm=.true.)
 
                   !> Check additivity.
                   call A%apply_matvec(u, Au)
@@ -2261,7 +2261,7 @@ contains
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   !> generate the identical non-trivial alpha on all ranks
                   alpha = cmplx(1.0_sp + real(i,sp), -0.5_sp*real(i,sp), sp)
 
@@ -2464,8 +2464,8 @@ contains
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
-                  call u%rand()
-                  call v%rand()
+                  call u%rand(ifnorm=.true.)
+                  call v%rand(ifnorm=.true.)
 
                   !> Check additivity.
                   call A%apply_matvec(u, Au)
@@ -2500,7 +2500,7 @@ contains
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   !> generate the identical non-trivial alpha on all ranks
                   alpha = cmplx(1.0_dp + real(i,dp), -0.5_dp*real(i,dp), dp)
 
