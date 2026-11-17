@@ -1663,7 +1663,9 @@ contains
                 real(sp) :: a, b
                 character(len=*), parameter :: this_test = "scaling compatibility"
                 call random_number(a)
+                a = 2.0_sp*a - 1.0_sp
                 call random_number(b)
+                b = 2.0_sp*b - 1.0_sp
 
                 !> Generate random vectors.
                 allocate(u, v, source=x)
@@ -1693,30 +1695,33 @@ contains
             end block scaling_compatibility
 
             scaling_distributivity: block
-                class(abstract_vector_rsp), allocatable :: u, v, w
+                class(abstract_vector_rsp), allocatable :: u, v, wrk1, wrk2
                 real(sp) :: a
                 character(len=*), parameter :: this_test = "scaling distributivity 1"
-                call random_number(a)
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
+                allocate(u, v, wrk1, wrk2, source=x)
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
+                  call random_number(a)
+                  a = 2.0_sp*a - 1.0_sp
+
                   call u%rand()
                   call v%rand()
-                  w = u
-
+                  
                   !> Check distributivity.
-                  call w%add(v)
-                  call w%scal(a)
+                  wrk1 = u
+                  call wrk1%add(v)
+                  call wrk1%scal(a)
 
-                  call u%scal(a)
+                  wrk2 = u
+                  call wrk2%scal(a)
                   call v%scal(a)
-                  call v%add(u)
+                  call wrk2%add(v)
 
-                  call v%sub(w)
-                  error_norm = v%norm()
+                  call wrk1%sub(wrk2)
+                  error_norm = wrk1%norm()
                   success = merge(.true., .false., error_norm <= tol)
 
                   !> log information if verbose.
@@ -2157,7 +2162,9 @@ contains
                 real(dp) :: a, b
                 character(len=*), parameter :: this_test = "scaling compatibility"
                 call random_number(a)
+                a = 2.0_dp*a - 1.0_dp
                 call random_number(b)
+                b = 2.0_dp*b - 1.0_dp
 
                 !> Generate random vectors.
                 allocate(u, v, source=x)
@@ -2187,30 +2194,33 @@ contains
             end block scaling_compatibility
 
             scaling_distributivity: block
-                class(abstract_vector_rdp), allocatable :: u, v, w
+                class(abstract_vector_rdp), allocatable :: u, v, wrk1, wrk2
                 real(dp) :: a
                 character(len=*), parameter :: this_test = "scaling distributivity 1"
-                call random_number(a)
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
+                allocate(u, v, wrk1, wrk2, source=x)
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
+                  call random_number(a)
+                  a = 2.0_dp*a - 1.0_dp
+
                   call u%rand()
                   call v%rand()
-                  w = u
-
+                  
                   !> Check distributivity.
-                  call w%add(v)
-                  call w%scal(a)
+                  wrk1 = u
+                  call wrk1%add(v)
+                  call wrk1%scal(a)
 
-                  call u%scal(a)
+                  wrk2 = u
+                  call wrk2%scal(a)
                   call v%scal(a)
-                  call v%add(u)
+                  call wrk2%add(v)
 
-                  call v%sub(w)
-                  error_norm = v%norm()
+                  call wrk1%sub(wrk2)
+                  error_norm = wrk1%norm()
                   success = merge(.true., .false., error_norm <= tol)
 
                   !> log information if verbose.
@@ -2652,9 +2662,11 @@ contains
                 character(len=*), parameter :: this_test = "scaling compatibility"
                 real(sp) :: c(2)
                 call random_number(c)
-                a = cmplx(c(1), c(2), kind=sp)
+                a = cmplx(2.0_sp*c(1) - 1.0_sp, &
+                          2.0_sp*c(2) - 1.0_sp, kind=sp)
                 call random_number(c)
-                b = cmplx(c(1), c(2), kind=sp)
+                b = cmplx(2.0_sp*c(1) - 1.0_sp, &
+                          2.0_sp*c(2) - 1.0_sp, kind=sp)
 
                 !> Generate random vectors.
                 allocate(u, v, source=x)
@@ -2684,32 +2696,35 @@ contains
             end block scaling_compatibility
 
             scaling_distributivity: block
-                class(abstract_vector_csp), allocatable :: u, v, w
+                class(abstract_vector_csp), allocatable :: u, v, wrk1, wrk2
                 complex(sp) :: a
                 character(len=*), parameter :: this_test = "scaling distributivity 1"
                 real(sp) :: b(2)
-                call random_number(b)
-                a = cmplx(b(1), b(2), kind=sp)
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
+                allocate(u, v, wrk1, wrk2, source=x)
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
+                  call random_number(b)
+                  a = cmplx(2.0_sp*b(1) - 1.0_sp, &
+                            2.0_sp*b(2) - 1.0_sp, kind=sp)
+
                   call u%rand()
                   call v%rand()
-                  w = u
-
+                  
                   !> Check distributivity.
-                  call w%add(v)
-                  call w%scal(a)
+                  wrk1 = u
+                  call wrk1%add(v)
+                  call wrk1%scal(a)
 
-                  call u%scal(a)
+                  wrk2 = u
+                  call wrk2%scal(a)
                   call v%scal(a)
-                  call v%add(u)
+                  call wrk2%add(v)
 
-                  call v%sub(w)
-                  error_norm = v%norm()
+                  call wrk1%sub(wrk2)
+                  error_norm = wrk1%norm()
                   success = merge(.true., .false., error_norm <= tol)
 
                   !> log information if verbose.
@@ -3154,9 +3169,11 @@ contains
                 character(len=*), parameter :: this_test = "scaling compatibility"
                 real(dp) :: c(2)
                 call random_number(c)
-                a = cmplx(c(1), c(2), kind=dp)
+                a = cmplx(2.0_dp*c(1) - 1.0_dp, &
+                          2.0_dp*c(2) - 1.0_dp, kind=dp)
                 call random_number(c)
-                b = cmplx(c(1), c(2), kind=dp)
+                b = cmplx(2.0_dp*c(1) - 1.0_dp, &
+                          2.0_dp*c(2) - 1.0_dp, kind=dp)
 
                 !> Generate random vectors.
                 allocate(u, v, source=x)
@@ -3186,32 +3203,35 @@ contains
             end block scaling_compatibility
 
             scaling_distributivity: block
-                class(abstract_vector_cdp), allocatable :: u, v, w
+                class(abstract_vector_cdp), allocatable :: u, v, wrk1, wrk2
                 complex(dp) :: a
                 character(len=*), parameter :: this_test = "scaling distributivity 1"
                 real(dp) :: b(2)
-                call random_number(b)
-                a = cmplx(b(1), b(2), kind=dp)
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
+                allocate(u, v, wrk1, wrk2, source=x)
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
+                  call random_number(b)
+                  a = cmplx(2.0_dp*b(1) - 1.0_dp, &
+                            2.0_dp*b(2) - 1.0_dp, kind=dp)
+
                   call u%rand()
                   call v%rand()
-                  w = u
-
+                  
                   !> Check distributivity.
-                  call w%add(v)
-                  call w%scal(a)
+                  wrk1 = u
+                  call wrk1%add(v)
+                  call wrk1%scal(a)
 
-                  call u%scal(a)
+                  wrk2 = u
+                  call wrk2%scal(a)
                   call v%scal(a)
-                  call v%add(u)
+                  call wrk2%add(v)
 
-                  call v%sub(w)
-                  error_norm = v%norm()
+                  call wrk1%sub(wrk2)
+                  error_norm = wrk1%norm()
                   success = merge(.true., .false., error_norm <= tol)
 
                   !> log information if verbose.

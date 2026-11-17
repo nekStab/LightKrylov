@@ -940,12 +940,16 @@ contains
                 #:if type.startswith('complex')
                 real(${kind}$) :: c(2)
                 call random_number(c)
-                a = cmplx(c(1), c(2), kind=${kind}$)
+                a = cmplx(2.0_${kind}$*c(1) - 1.0_${kind}$, &
+                          2.0_${kind}$*c(2) - 1.0_${kind}$, kind=${kind}$)
                 call random_number(c)
-                b = cmplx(c(1), c(2), kind=${kind}$)
+                b = cmplx(2.0_${kind}$*c(1) - 1.0_${kind}$, &
+                          2.0_${kind}$*c(2) - 1.0_${kind}$, kind=${kind}$)
                 #:else
                 call random_number(a)
+                a = 2.0_${kind}$*a - 1.0_${kind}$
                 call random_number(b)
+                b = 2.0_${kind}$*b - 1.0_${kind}$
                 #:endif
 
                 !> Generate random vectors.
@@ -976,36 +980,42 @@ contains
             end block scaling_compatibility
 
             scaling_distributivity: block
-                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, w
+                class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, wrk1, wrk2
                 ${type}$ :: a
                 character(len=*), parameter :: this_test = "scaling distributivity 1"
                 #:if type.startswith('complex')
                 real(${kind}$) :: b(2)
-                call random_number(b)
-                a = cmplx(b(1), b(2), kind=${kind}$)
-                #:else
-                call random_number(a)
                 #:endif
 
                 !> Generate random vectors.
-                allocate(u, v, w, source=x)
+                allocate(u, v, wrk1, wrk2, source=x)
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
+                  #:if type.startswith('complex')
+                  call random_number(b)
+                  a = cmplx(2.0_${kind}$*b(1) - 1.0_${kind}$, &
+                            2.0_${kind}$*b(2) - 1.0_${kind}$, kind=${kind}$)
+                  #:else
+                  call random_number(a)
+                  a = 2.0_${kind}$*a - 1.0_${kind}$
+                  #:endif
+
                   call u%rand()
                   call v%rand()
-                  w = u
-
+                  
                   !> Check distributivity.
-                  call w%add(v)
-                  call w%scal(a)
+                  wrk1 = u
+                  call wrk1%add(v)
+                  call wrk1%scal(a)
 
-                  call u%scal(a)
+                  wrk2 = u
+                  call wrk2%scal(a)
                   call v%scal(a)
-                  call v%add(u)
+                  call wrk2%add(v)
 
-                  call v%sub(w)
-                  error_norm = v%norm()
+                  call wrk1%sub(wrk2)
+                  error_norm = wrk1%norm()
                   success = merge(.true., .false., error_norm <= tol)
 
                   !> log information if verbose.
