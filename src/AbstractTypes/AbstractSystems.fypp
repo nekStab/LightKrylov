@@ -194,7 +194,7 @@ contains
     !--------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    subroutine taylor_test_system_linearization_${type[0]}$${kind}$(sys, nsteps, eps0, stepratio, tolerance, orders)
+    subroutine taylor_test_system_linearization_${type[0]}$${kind}$(sys, nsteps, eps0, stepratio, tolerance, verbose, orders)
         !! Taylor test of the system linearization around the state sys%jacobian%x.
         !!
         !! For a perturbation direction d and decreasing steps h, prints
@@ -212,12 +212,15 @@ contains
         !! ratio between consecutive step sizes (default: 0.1)
         real(${kind}$), optional,         intent(in)  :: tolerance
         !! tolerance for the system evaluation (default: 1.0e-8)
+        logical, optional,            intent(in)  :: verbose
+        !! flag to print the results of the Taylor test (default: .true.)
         real(${kind}$), optional, allocatable, intent(out) :: orders(:)
         !! observed convergence orders of the remainder between consecutive steps (size nsteps-1)
         ! internal
         class(abstract_vector_${type[0]}$${kind}$), allocatable :: X0, Fx, dF, alpha_x, delta, Jdelta, wrk
         integer :: nsteps_, k, ipass, npass
         real(${kind}$) :: tol, xnorm, eps, eps0_, q, r0, r1, r1_prev, order
+        logical :: verb
         ${type}$ :: alpha
         character(len=256) :: msg
         character(len=*), parameter :: this_procedure = 'verify_system_linearization_${type[0]}$${kind}$'
@@ -234,6 +237,7 @@ contains
         q        = optval(stepratio, 0.1_${kind}$)
         eps0_    = optval(eps0, 5.0e-2_${kind}$)
         tol      = optval(tolerance, 10.0_${kind}$**(-(precision(1.0_${kind}$)-1)))
+        verb     = optval(verbose, .true.)
         #:if type[0] == 'c'
         npass    = 2 ! real and imag perturbations run separately for complex systems.
         #:else
@@ -251,9 +255,9 @@ contains
         xnorm = X0%norm()
         call sys%eval(X0, Fx, tol)
 
-        call log_message('Taylor test of the system linearization', this_module, this_procedure)
+        if (verb) call log_message('Taylor test of the system linearization', this_module, this_procedure)
         write(msg, '(3(A,ES12.5))') '   ||x|| = ', xnorm, ', ||F(x)|| = ', Fx%norm(), ', atol = ', tol
-        call log_message(msg, this_module, this_procedure)
+        if (verb) call log_message(msg, this_module, this_procedure)
 
         !> Perturbation direction: delta = J u / ||J u|| (random vector, apply J to satisfy BCs).
         call wrk%rand()
@@ -264,15 +268,15 @@ contains
         call sys%jacobian%apply_matvec(delta, Jdelta)
 
         write(msg, '(A,ES12.5)') '   ||J delta|| = ', Jdelta%norm()
-        call log_message(msg, this_module, this_procedure)
+        if (verb) call log_message(msg, this_module, this_procedure)
 
         do ipass = 1, npass
             #:if type[0] == 'c'
             msg = merge('Pass 1: real perturbation', 'Pass 2: imag perturbation', ipass == 1)
-            call log_message(msg, this_module, this_procedure)
+            if (verb) call log_message(msg, this_module, this_procedure)
             #:endif
             write(msg, '(3X,A12,2X,A16,2X,A16,2X,A6)') 'e', '||dF||', '||dF - e*Jd||', 'order'
-            call log_message(msg, this_module, this_procedure)
+            if (verb) call log_message(msg, this_module, this_procedure)
 
             r1_prev = 0.0_${kind}$
             steps: do k = 1, nsteps_
@@ -305,7 +309,7 @@ contains
                 else
                     write(msg, '(3X,ES12.5,2X,ES16.5,2X,ES16.5,2X,A6)') eps, r0, r1, '-'
                 end if
-                call log_message(msg, this_module, this_procedure)
+                if (verb) call log_message(msg, this_module, this_procedure)
 
                 r1_prev = r1
             end do steps

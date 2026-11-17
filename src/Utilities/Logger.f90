@@ -3,6 +3,7 @@ module LightKrylov_Logger
    use mpi_f08
 #endif
    ! Fortran Standard Library
+   use iso_fortran_env, only: output_unit
    use stdlib_optval, only: optval
    use stdlib_logger, only: &
          logger               => global_logger, &
@@ -40,6 +41,7 @@ module LightKrylov_Logger
    public :: logger_add_unit
    public :: logger_remove_unit
    public :: get_log_level
+   public :: logger_writes_to_stdout
 
    ! MPI subroutines
    public :: comm_setup
@@ -175,6 +177,20 @@ contains
       !! Current logging level on this rank (none_level on non-I/O ranks).
       call logger%configuration(level=level)
    end function get_log_level
+
+   logical function logger_writes_to_stdout() result(yes)
+      !! True if LightKrylov log messages already reach stdout on this rank.
+      integer, allocatable :: units(:)
+      if (.not. logger_is_active) then
+         ! Fallback path: log_message prints with a plain `print`
+         yes = (inactive_log_level <= lk_information_level)
+         return
+      end if
+      yes = .false.
+      if (.not. io_rank()) return          ! non-I/O ranks log to /dev/null
+      call logger%configuration(log_units=units)
+      yes = any(units == output_unit)
+   end function logger_writes_to_stdout
 
    subroutine log_message(msg, module, procedure, flush_log)
       character(len=*), intent(in)  :: msg
