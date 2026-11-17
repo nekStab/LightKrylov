@@ -914,7 +914,7 @@ contains
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   v = u
                   !> Check identity.
                   call v%scal(one)
@@ -1006,8 +1006,8 @@ contains
                   a = 2.0_${kind}$*a - 1.0_${kind}$
                   #:endif
 
-                  call u%rand()
-                  call v%rand()
+                  call u%rand(ifnorm=.true.)
+                  call v%rand(ifnorm=.true.)
                   
                   !> Check distributivity.
                   wrk1 = u
@@ -1060,7 +1060,7 @@ contains
                   call random_number(a)
                   b = 2.0_${kind}$*a - 1.0_${kind}$
                   #:endif
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   v = u
 
                   !> Check distributivity.

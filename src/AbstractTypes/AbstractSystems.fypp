@@ -260,7 +260,7 @@ contains
         if (verb) call log_message(msg, this_module, this_procedure)
 
         !> Perturbation direction: delta = J u / ||J u|| (random vector, apply J to satisfy BCs).
-        call wrk%rand()
+        call wrk%rand(ifnorm=.true.)
         call sys%jacobian%apply_matvec(wrk, delta)
         call delta%scal(one_${type[0]}$${kind}$ / delta%norm())
 

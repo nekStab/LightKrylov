@@ -439,7 +439,7 @@ contains
         if (verb) call log_message(msg, this_module, this_procedure)
 
         !> Perturbation direction: delta = J u / ||J u|| (random vector, apply J to satisfy BCs).
-        call wrk%rand()
+        call wrk%rand(ifnorm=.true.)
         call sys%jacobian%apply_matvec(wrk, delta)
         call delta%scal(one_rsp / delta%norm())
 
@@ -550,7 +550,7 @@ contains
         if (verb) call log_message(msg, this_module, this_procedure)
 
         !> Perturbation direction: delta = J u / ||J u|| (random vector, apply J to satisfy BCs).
-        call wrk%rand()
+        call wrk%rand(ifnorm=.true.)
         call sys%jacobian%apply_matvec(wrk, delta)
         call delta%scal(one_rdp / delta%norm())
 
@@ -661,7 +661,7 @@ contains
         if (verb) call log_message(msg, this_module, this_procedure)
 
         !> Perturbation direction: delta = J u / ||J u|| (random vector, apply J to satisfy BCs).
-        call wrk%rand()
+        call wrk%rand(ifnorm=.true.)
         call sys%jacobian%apply_matvec(wrk, delta)
         call delta%scal(one_csp / delta%norm())
 
@@ -774,7 +774,7 @@ contains
         if (verb) call log_message(msg, this_module, this_procedure)
 
         !> Perturbation direction: delta = J u / ||J u|| (random vector, apply J to satisfy BCs).
-        call wrk%rand()
+        call wrk%rand(ifnorm=.true.)
         call sys%jacobian%apply_matvec(wrk, delta)
         call delta%scal(one_cdp / delta%norm())
 

@@ -1639,7 +1639,7 @@ contains
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   v = u
                   !> Check identity.
                   call v%scal(one)
@@ -1710,8 +1710,8 @@ contains
                   call random_number(a)
                   a = 2.0_sp*a - 1.0_sp
 
-                  call u%rand()
-                  call v%rand()
+                  call u%rand(ifnorm=.true.)
+                  call v%rand(ifnorm=.true.)
                   
                   !> Check distributivity.
                   wrk1 = u
@@ -1752,7 +1752,7 @@ contains
                   a = 2.0_sp*a - 1.0_sp
                   call random_number(a)
                   b = 2.0_sp*a - 1.0_sp
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   v = u
 
                   !> Check distributivity.
@@ -2143,7 +2143,7 @@ contains
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   v = u
                   !> Check identity.
                   call v%scal(one)
@@ -2214,8 +2214,8 @@ contains
                   call random_number(a)
                   a = 2.0_dp*a - 1.0_dp
 
-                  call u%rand()
-                  call v%rand()
+                  call u%rand(ifnorm=.true.)
+                  call v%rand(ifnorm=.true.)
                   
                   !> Check distributivity.
                   wrk1 = u
@@ -2256,7 +2256,7 @@ contains
                   a = 2.0_dp*a - 1.0_dp
                   call random_number(a)
                   b = 2.0_dp*a - 1.0_dp
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   v = u
 
                   !> Check distributivity.
@@ -2647,7 +2647,7 @@ contains
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   v = u
                   !> Check identity.
                   call v%scal(one)
@@ -2723,8 +2723,8 @@ contains
                   a = cmplx(2.0_sp*b(1) - 1.0_sp, &
                             2.0_sp*b(2) - 1.0_sp, kind=sp)
 
-                  call u%rand()
-                  call v%rand()
+                  call u%rand(ifnorm=.true.)
+                  call v%rand(ifnorm=.true.)
                   
                   !> Check distributivity.
                   wrk1 = u
@@ -2768,7 +2768,7 @@ contains
                   call random_number(c)
                   b = cmplx(2.0_sp*c(1) - 1.0_sp, &
                             2.0_sp*c(2) - 1.0_sp, kind=sp)
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   v = u
 
                   !> Check distributivity.
@@ -3159,7 +3159,7 @@ contains
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   v = u
                   !> Check identity.
                   call v%scal(one)
@@ -3235,8 +3235,8 @@ contains
                   a = cmplx(2.0_dp*b(1) - 1.0_dp, &
                             2.0_dp*b(2) - 1.0_dp, kind=dp)
 
-                  call u%rand()
-                  call v%rand()
+                  call u%rand(ifnorm=.true.)
+                  call v%rand(ifnorm=.true.)
                   
                   !> Check distributivity.
                   wrk1 = u
@@ -3280,7 +3280,7 @@ contains
                   call random_number(c)
                   b = cmplx(2.0_dp*c(1) - 1.0_dp, &
                             2.0_dp*c(2) - 1.0_dp, kind=dp)
-                  call u%rand()
+                  call u%rand(ifnorm=.true.)
                   v = u
 
                   !> Check distributivity.

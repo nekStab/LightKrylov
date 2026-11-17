@@ -1850,9 +1850,9 @@ contains
                      !> Generate random vectors.
                      !> Ensure that the BCs are imposed by applying the operator
                      !> (the rand function may not enforce (all) BCs).
-                     call wrk%rand()
+                     call wrk%rand(ifnorm=.true.)
                      call A%apply_matvec(wrk, u)
-                     call wrk%rand()
+                     call wrk%rand(ifnorm=.true.)
                      call A%apply_matvec(wrk, v)
       
                      !> Check adjoint consistency.
@@ -2089,9 +2089,9 @@ contains
                      !> Generate random vectors.
                      !> Ensure that the BCs are imposed by applying the operator
                      !> (the rand function may not enforce (all) BCs).
-                     call wrk%rand()
+                     call wrk%rand(ifnorm=.true.)
                      call A%apply_matvec(wrk, u)
-                     call wrk%rand()
+                     call wrk%rand(ifnorm=.true.)
                      call A%apply_matvec(wrk, v)
       
                      !> Check adjoint consistency.
@@ -2328,9 +2328,9 @@ contains
                      !> Generate random vectors.
                      !> Ensure that the BCs are imposed by applying the operator
                      !> (the rand function may not enforce (all) BCs).
-                     call wrk%rand()
+                     call wrk%rand(ifnorm=.true.)
                      call A%apply_matvec(wrk, u)
-                     call wrk%rand()
+                     call wrk%rand(ifnorm=.true.)
                      call A%apply_matvec(wrk, v)
       
                      !> Check adjoint consistency.
@@ -2567,9 +2567,9 @@ contains
                      !> Generate random vectors.
                      !> Ensure that the BCs are imposed by applying the operator
                      !> (the rand function may not enforce (all) BCs).
-                     call wrk%rand()
+                     call wrk%rand(ifnorm=.true.)
                      call A%apply_matvec(wrk, u)
-                     call wrk%rand()
+                     call wrk%rand(ifnorm=.true.)
                      call A%apply_matvec(wrk, v)
       
                      !> Check adjoint consistency.
