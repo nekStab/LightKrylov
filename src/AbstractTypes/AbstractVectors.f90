@@ -1739,14 +1739,16 @@ contains
                 class(abstract_vector_rsp), allocatable :: u, v
                 real(sp) :: a, b
                 character(len=*), parameter :: this_test = "scaling distributivity 2"
-                call random_number(a)
-                call random_number(b)
 
                 !> Generate random vector.
                 allocate(u, source=x)
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
+                  call random_number(a)
+                  a = 2.0_sp*a - 1.0_sp
+                  call random_number(a)
+                  b = 2.0_sp*a - 1.0_sp
                   call u%rand()
                   v = u
 
@@ -2238,14 +2240,16 @@ contains
                 class(abstract_vector_rdp), allocatable :: u, v
                 real(dp) :: a, b
                 character(len=*), parameter :: this_test = "scaling distributivity 2"
-                call random_number(a)
-                call random_number(b)
 
                 !> Generate random vector.
                 allocate(u, source=x)
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
+                  call random_number(a)
+                  a = 2.0_dp*a - 1.0_dp
+                  call random_number(a)
+                  b = 2.0_dp*a - 1.0_dp
                   call u%rand()
                   v = u
 
@@ -2743,16 +2747,18 @@ contains
                 complex(sp) :: a, b
                 character(len=*), parameter :: this_test = "scaling distributivity 2"
                 real(sp) :: c(2)
-                call random_number(c)
-                a = cmplx(c(1), c(2), kind=sp)
-                call random_number(c)
-                b = cmplx(c(1), c(2), kind=sp)
 
                 !> Generate random vector.
                 allocate(u, source=x)
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
+                  call random_number(c)
+                  a = cmplx(2.0_sp*c(1) - 1.0_sp, &
+                            2.0_sp*c(2) - 1.0_sp, kind=sp)
+                  call random_number(c)
+                  b = cmplx(2.0_sp*c(1) - 1.0_sp, &
+                            2.0_sp*c(2) - 1.0_sp, kind=sp)
                   call u%rand()
                   v = u
 
@@ -3250,16 +3256,18 @@ contains
                 complex(dp) :: a, b
                 character(len=*), parameter :: this_test = "scaling distributivity 2"
                 real(dp) :: c(2)
-                call random_number(c)
-                a = cmplx(c(1), c(2), kind=dp)
-                call random_number(c)
-                b = cmplx(c(1), c(2), kind=dp)
 
                 !> Generate random vector.
                 allocate(u, source=x)
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
+                  call random_number(c)
+                  a = cmplx(2.0_dp*c(1) - 1.0_dp, &
+                            2.0_dp*c(2) - 1.0_dp, kind=dp)
+                  call random_number(c)
+                  b = cmplx(2.0_dp*c(1) - 1.0_dp, &
+                            2.0_dp*c(2) - 1.0_dp, kind=dp)
                   call u%rand()
                   v = u
 

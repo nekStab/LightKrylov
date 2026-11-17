@@ -1035,13 +1035,6 @@ contains
                 character(len=*), parameter :: this_test = "scaling distributivity 2"
                 #:if type.startswith('complex')
                 real(${kind}$) :: c(2)
-                call random_number(c)
-                a = cmplx(c(1), c(2), kind=${kind}$)
-                call random_number(c)
-                b = cmplx(c(1), c(2), kind=${kind}$)
-                #:else
-                call random_number(a)
-                call random_number(b)
                 #:endif
 
                 !> Generate random vector.
@@ -1049,6 +1042,19 @@ contains
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
+                  #:if type.startswith('complex')
+                  call random_number(c)
+                  a = cmplx(2.0_${kind}$*c(1) - 1.0_${kind}$, &
+                            2.0_${kind}$*c(2) - 1.0_${kind}$, kind=${kind}$)
+                  call random_number(c)
+                  b = cmplx(2.0_${kind}$*c(1) - 1.0_${kind}$, &
+                            2.0_${kind}$*c(2) - 1.0_${kind}$, kind=${kind}$)
+                  #:else
+                  call random_number(a)
+                  a = 2.0_${kind}$*a - 1.0_${kind}$
+                  call random_number(a)
+                  b = 2.0_${kind}$*a - 1.0_${kind}$
+                  #:endif
                   call u%rand()
                   v = u
 
