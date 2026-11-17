@@ -1683,7 +1683,8 @@ contains
     !-----      UTILITY FUNCTIONS     -----
     !--------------------------------------
 
-    logical function verify_linop_axioms_rsp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, verbose) result(success)
+    logical function verify_linop_axioms_rsp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, &
+                                                            verbose, stop_on_failure, max_errors) result(success)
         implicit none(type, external)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -1699,10 +1700,17 @@ contains
         !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
         logical, optional, intent(in) :: verbose
         !! Print information about each test? (Default: .false.)
+        logical, optional, intent(in) :: stop_on_failure
+        !! Skip the remaining checks after the first failure? (Default: .true.)
+        real(sp), optional, intent(out) :: max_errors(4)
+        !! Max error over all trials for: additivity, homogeneity, zero map, adjoint (-1 = not run).
 
         integer :: ntrials_, i
         logical :: test_zero_map_, test_adjoint_, verb
         real(sp) :: tol, error_norm, scale
+        logical :: stop_
+        integer :: fail_trial
+        real(sp) :: max_err(4) ! one for each test
         character(len=128) :: failed_test
         character(len=256) :: msg
 
@@ -1714,9 +1722,12 @@ contains
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
         verb = optval(verbose, .false.)
-
+        stop_ = optval(stop_on_failure, .true.)
+        max_err = -1.0_sp ! default: not run
+        
         !> Run each test ntrials_ times before moving on to the next one.
         success = .true.
+        fail_trial = 0
         failed_test = ''
         error_norm = 0.0_sp
         i = 0
@@ -1729,6 +1740,7 @@ contains
             additivity: block
                 class(abstract_vector_rsp), allocatable :: u, v, Au, Av, Auv
                 character(len=*), parameter :: this_test = 'additivity'
+                integer, parameter          :: test_id = 1
 
                 allocate(u, v, Au, Av, Auv, source=x)
                 if (verb) call log_test_header(this_test)
@@ -1749,15 +1761,9 @@ contains
 
                   call Auv%sub(Au)
                   error_norm = Auv%norm() / max(scale, one_rsp)
-                  success = merge(.true., .false., error_norm <= tol)
-
+                  
                   if (verb) call log_trial(i, error_norm)
-
-                  !> Exit if the test fails.
-                  if (.not. success) then
-                     failed_test = this_test
-                     exit tests
-                  end if
+                  if (record(test_id, this_test)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, v, Au, Av, Auv)
@@ -1770,6 +1776,7 @@ contains
                 class(abstract_vector_rsp), allocatable :: u, Au, Aau
                 real(sp) :: alpha
                 character(len=*), parameter :: this_test = 'homogeneity'
+                integer, parameter          :: test_id = 2
 
                 allocate(u, Au, Aau, source=x)
                 if (verb) call log_test_header(this_test)
@@ -1792,12 +1799,7 @@ contains
                   success = merge(.true., .false., error_norm <= tol)
 
                   if (verb) call log_trial(i, error_norm)
-
-                  !> Exit if the test fails.
-                  if (.not. success) then
-                     failed_test = this_test
-                     exit tests
-                  end if
+                  if (record(test_id, this_test)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, Au, Aau)
@@ -1810,6 +1812,7 @@ contains
                 zero_to_zero: block
                   class(abstract_vector_rsp), allocatable :: u, Au
                   character(len=*), parameter :: this_test = 'zero -> zero'
+                  integer, parameter          :: test_id = 3
 
                   allocate(u, Au, source=x)
                   if (verb) call log_test_header(this_test)
@@ -1821,12 +1824,7 @@ contains
                      success = merge(.true., .false., error_norm <= tol)
 
                      if (verb) call log_trial(i, error_norm)
-
-                     !> Exit if the test fails.
-                     if (.not. success) then
-                        failed_test = this_test
-                        exit tests
-                     end if
+                     if (record(test_id, this_test)) exit tests
                   end do
                   !> Clean up.
                   deallocate(u, Au)
@@ -1842,6 +1840,7 @@ contains
                   class(abstract_vector_rsp), allocatable :: wrk, u, v, Au, Av
                   real(sp) :: lhs, rhs
                   character(len=*), parameter :: this_test = 'adjoint consistency'
+                  integer, parameter          :: test_id = 4
 
                   !> Generate random vectors.
                   allocate(wrk, u, v, Au, Av, source=x)
@@ -1866,12 +1865,7 @@ contains
                      success = merge(.true., .false., error_norm <= tol)
 
                      if (verb) call log_trial(i, error_norm)
-      
-                     !> Exit if the test fails.
-                     if (.not. success) then
-                        failed_test = this_test
-                        exit tests
-                     end if
+                     if (record(test_id, this_test)) exit tests
                   end do
                   !> Clean up.
                   deallocate(wrk, u, v, Au, Av)
@@ -1880,15 +1874,16 @@ contains
 
         end block tests
 
+        if (present(max_errors)) max_errors = max_err
         if (success) then
             write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
             call log_information(msg, this_module, this_procedure)
         else
-            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
-            call log_message(msg, this_module, this_procedure)
-            write(msg, '(A,ES12.5,A,ES12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
-            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', fail_trial, ', test: '//trim(failed_test)
+            call log_warning(msg, this_module, this_procedure)
         end if
+        write(msg, '(A,4ES12.4)') 'max errors [add, hom, zero, adj]: ', max_err
+        if (verb) call log_message(msg, this_module, this_procedure)
 
     contains
 
@@ -1909,9 +1904,26 @@ contains
          call log_message(msg)
       end subroutine log_trial
 
+      logical function record(itest, name) result(abort)
+         !! Track the max error per test; flag the first failure; abort only if requested.
+         integer,          intent(in) :: itest
+         character(len=*), intent(in) :: name
+         max_err(itest) = max(max_err(itest), error_norm)
+         abort = .false.
+         if (error_norm > tol) then
+            if (success) then            ! keep the first failure
+               failed_test = name
+               fail_trial  = i
+            end if
+            success = .false.
+            abort   = stop_
+         end if
+      end function record
+
     end function verify_linop_axioms_rsp
 
-    logical function verify_linop_axioms_rdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, verbose) result(success)
+    logical function verify_linop_axioms_rdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, &
+                                                            verbose, stop_on_failure, max_errors) result(success)
         implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -1927,10 +1939,17 @@ contains
         !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
         logical, optional, intent(in) :: verbose
         !! Print information about each test? (Default: .false.)
+        logical, optional, intent(in) :: stop_on_failure
+        !! Skip the remaining checks after the first failure? (Default: .true.)
+        real(dp), optional, intent(out) :: max_errors(4)
+        !! Max error over all trials for: additivity, homogeneity, zero map, adjoint (-1 = not run).
 
         integer :: ntrials_, i
         logical :: test_zero_map_, test_adjoint_, verb
         real(dp) :: tol, error_norm, scale
+        logical :: stop_
+        integer :: fail_trial
+        real(dp) :: max_err(4) ! one for each test
         character(len=128) :: failed_test
         character(len=256) :: msg
 
@@ -1942,9 +1961,12 @@ contains
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
         verb = optval(verbose, .false.)
-
+        stop_ = optval(stop_on_failure, .true.)
+        max_err = -1.0_dp ! default: not run
+        
         !> Run each test ntrials_ times before moving on to the next one.
         success = .true.
+        fail_trial = 0
         failed_test = ''
         error_norm = 0.0_dp
         i = 0
@@ -1957,6 +1979,7 @@ contains
             additivity: block
                 class(abstract_vector_rdp), allocatable :: u, v, Au, Av, Auv
                 character(len=*), parameter :: this_test = 'additivity'
+                integer, parameter          :: test_id = 1
 
                 allocate(u, v, Au, Av, Auv, source=x)
                 if (verb) call log_test_header(this_test)
@@ -1977,15 +2000,9 @@ contains
 
                   call Auv%sub(Au)
                   error_norm = Auv%norm() / max(scale, one_rdp)
-                  success = merge(.true., .false., error_norm <= tol)
-
+                  
                   if (verb) call log_trial(i, error_norm)
-
-                  !> Exit if the test fails.
-                  if (.not. success) then
-                     failed_test = this_test
-                     exit tests
-                  end if
+                  if (record(test_id, this_test)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, v, Au, Av, Auv)
@@ -1998,6 +2015,7 @@ contains
                 class(abstract_vector_rdp), allocatable :: u, Au, Aau
                 real(dp) :: alpha
                 character(len=*), parameter :: this_test = 'homogeneity'
+                integer, parameter          :: test_id = 2
 
                 allocate(u, Au, Aau, source=x)
                 if (verb) call log_test_header(this_test)
@@ -2020,12 +2038,7 @@ contains
                   success = merge(.true., .false., error_norm <= tol)
 
                   if (verb) call log_trial(i, error_norm)
-
-                  !> Exit if the test fails.
-                  if (.not. success) then
-                     failed_test = this_test
-                     exit tests
-                  end if
+                  if (record(test_id, this_test)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, Au, Aau)
@@ -2038,6 +2051,7 @@ contains
                 zero_to_zero: block
                   class(abstract_vector_rdp), allocatable :: u, Au
                   character(len=*), parameter :: this_test = 'zero -> zero'
+                  integer, parameter          :: test_id = 3
 
                   allocate(u, Au, source=x)
                   if (verb) call log_test_header(this_test)
@@ -2049,12 +2063,7 @@ contains
                      success = merge(.true., .false., error_norm <= tol)
 
                      if (verb) call log_trial(i, error_norm)
-
-                     !> Exit if the test fails.
-                     if (.not. success) then
-                        failed_test = this_test
-                        exit tests
-                     end if
+                     if (record(test_id, this_test)) exit tests
                   end do
                   !> Clean up.
                   deallocate(u, Au)
@@ -2070,6 +2079,7 @@ contains
                   class(abstract_vector_rdp), allocatable :: wrk, u, v, Au, Av
                   real(dp) :: lhs, rhs
                   character(len=*), parameter :: this_test = 'adjoint consistency'
+                  integer, parameter          :: test_id = 4
 
                   !> Generate random vectors.
                   allocate(wrk, u, v, Au, Av, source=x)
@@ -2094,12 +2104,7 @@ contains
                      success = merge(.true., .false., error_norm <= tol)
 
                      if (verb) call log_trial(i, error_norm)
-      
-                     !> Exit if the test fails.
-                     if (.not. success) then
-                        failed_test = this_test
-                        exit tests
-                     end if
+                     if (record(test_id, this_test)) exit tests
                   end do
                   !> Clean up.
                   deallocate(wrk, u, v, Au, Av)
@@ -2108,15 +2113,16 @@ contains
 
         end block tests
 
+        if (present(max_errors)) max_errors = max_err
         if (success) then
             write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
             call log_information(msg, this_module, this_procedure)
         else
-            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
-            call log_message(msg, this_module, this_procedure)
-            write(msg, '(A,ES12.5,A,ES12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
-            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', fail_trial, ', test: '//trim(failed_test)
+            call log_warning(msg, this_module, this_procedure)
         end if
+        write(msg, '(A,4ES12.4)') 'max errors [add, hom, zero, adj]: ', max_err
+        if (verb) call log_message(msg, this_module, this_procedure)
 
     contains
 
@@ -2137,9 +2143,26 @@ contains
          call log_message(msg)
       end subroutine log_trial
 
+      logical function record(itest, name) result(abort)
+         !! Track the max error per test; flag the first failure; abort only if requested.
+         integer,          intent(in) :: itest
+         character(len=*), intent(in) :: name
+         max_err(itest) = max(max_err(itest), error_norm)
+         abort = .false.
+         if (error_norm > tol) then
+            if (success) then            ! keep the first failure
+               failed_test = name
+               fail_trial  = i
+            end if
+            success = .false.
+            abort   = stop_
+         end if
+      end function record
+
     end function verify_linop_axioms_rdp
 
-    logical function verify_linop_axioms_csp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, verbose) result(success)
+    logical function verify_linop_axioms_csp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, &
+                                                            verbose, stop_on_failure, max_errors) result(success)
         implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -2155,10 +2178,17 @@ contains
         !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
         logical, optional, intent(in) :: verbose
         !! Print information about each test? (Default: .false.)
+        logical, optional, intent(in) :: stop_on_failure
+        !! Skip the remaining checks after the first failure? (Default: .true.)
+        real(sp), optional, intent(out) :: max_errors(4)
+        !! Max error over all trials for: additivity, homogeneity, zero map, adjoint (-1 = not run).
 
         integer :: ntrials_, i
         logical :: test_zero_map_, test_adjoint_, verb
         real(sp) :: tol, error_norm, scale
+        logical :: stop_
+        integer :: fail_trial
+        real(sp) :: max_err(4) ! one for each test
         character(len=128) :: failed_test
         character(len=256) :: msg
 
@@ -2170,9 +2200,12 @@ contains
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
         verb = optval(verbose, .false.)
-
+        stop_ = optval(stop_on_failure, .true.)
+        max_err = -1.0_sp ! default: not run
+        
         !> Run each test ntrials_ times before moving on to the next one.
         success = .true.
+        fail_trial = 0
         failed_test = ''
         error_norm = 0.0_sp
         i = 0
@@ -2185,6 +2218,7 @@ contains
             additivity: block
                 class(abstract_vector_csp), allocatable :: u, v, Au, Av, Auv
                 character(len=*), parameter :: this_test = 'additivity'
+                integer, parameter          :: test_id = 1
 
                 allocate(u, v, Au, Av, Auv, source=x)
                 if (verb) call log_test_header(this_test)
@@ -2205,15 +2239,9 @@ contains
 
                   call Auv%sub(Au)
                   error_norm = Auv%norm() / max(scale, one_rsp)
-                  success = merge(.true., .false., error_norm <= tol)
-
+                  
                   if (verb) call log_trial(i, error_norm)
-
-                  !> Exit if the test fails.
-                  if (.not. success) then
-                     failed_test = this_test
-                     exit tests
-                  end if
+                  if (record(test_id, this_test)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, v, Au, Av, Auv)
@@ -2226,6 +2254,7 @@ contains
                 class(abstract_vector_csp), allocatable :: u, Au, Aau
                 complex(sp) :: alpha
                 character(len=*), parameter :: this_test = 'homogeneity'
+                integer, parameter          :: test_id = 2
 
                 allocate(u, Au, Aau, source=x)
                 if (verb) call log_test_header(this_test)
@@ -2248,12 +2277,7 @@ contains
                   success = merge(.true., .false., error_norm <= tol)
 
                   if (verb) call log_trial(i, error_norm)
-
-                  !> Exit if the test fails.
-                  if (.not. success) then
-                     failed_test = this_test
-                     exit tests
-                  end if
+                  if (record(test_id, this_test)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, Au, Aau)
@@ -2266,6 +2290,7 @@ contains
                 zero_to_zero: block
                   class(abstract_vector_csp), allocatable :: u, Au
                   character(len=*), parameter :: this_test = 'zero -> zero'
+                  integer, parameter          :: test_id = 3
 
                   allocate(u, Au, source=x)
                   if (verb) call log_test_header(this_test)
@@ -2277,12 +2302,7 @@ contains
                      success = merge(.true., .false., error_norm <= tol)
 
                      if (verb) call log_trial(i, error_norm)
-
-                     !> Exit if the test fails.
-                     if (.not. success) then
-                        failed_test = this_test
-                        exit tests
-                     end if
+                     if (record(test_id, this_test)) exit tests
                   end do
                   !> Clean up.
                   deallocate(u, Au)
@@ -2298,6 +2318,7 @@ contains
                   class(abstract_vector_csp), allocatable :: wrk, u, v, Au, Av
                   complex(sp) :: lhs, rhs
                   character(len=*), parameter :: this_test = 'adjoint consistency'
+                  integer, parameter          :: test_id = 4
 
                   !> Generate random vectors.
                   allocate(wrk, u, v, Au, Av, source=x)
@@ -2322,12 +2343,7 @@ contains
                      success = merge(.true., .false., error_norm <= tol)
 
                      if (verb) call log_trial(i, error_norm)
-      
-                     !> Exit if the test fails.
-                     if (.not. success) then
-                        failed_test = this_test
-                        exit tests
-                     end if
+                     if (record(test_id, this_test)) exit tests
                   end do
                   !> Clean up.
                   deallocate(wrk, u, v, Au, Av)
@@ -2336,15 +2352,16 @@ contains
 
         end block tests
 
+        if (present(max_errors)) max_errors = max_err
         if (success) then
             write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
             call log_information(msg, this_module, this_procedure)
         else
-            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
-            call log_message(msg, this_module, this_procedure)
-            write(msg, '(A,ES12.5,A,ES12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
-            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', fail_trial, ', test: '//trim(failed_test)
+            call log_warning(msg, this_module, this_procedure)
         end if
+        write(msg, '(A,4ES12.4)') 'max errors [add, hom, zero, adj]: ', max_err
+        if (verb) call log_message(msg, this_module, this_procedure)
 
     contains
 
@@ -2365,9 +2382,26 @@ contains
          call log_message(msg)
       end subroutine log_trial
 
+      logical function record(itest, name) result(abort)
+         !! Track the max error per test; flag the first failure; abort only if requested.
+         integer,          intent(in) :: itest
+         character(len=*), intent(in) :: name
+         max_err(itest) = max(max_err(itest), error_norm)
+         abort = .false.
+         if (error_norm > tol) then
+            if (success) then            ! keep the first failure
+               failed_test = name
+               fail_trial  = i
+            end if
+            success = .false.
+            abort   = stop_
+         end if
+      end function record
+
     end function verify_linop_axioms_csp
 
-    logical function verify_linop_axioms_cdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, verbose) result(success)
+    logical function verify_linop_axioms_cdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, &
+                                                            verbose, stop_on_failure, max_errors) result(success)
         implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -2383,10 +2417,17 @@ contains
         !! Verify also the adjoint consistency `<A u, v> = <u, A^H v>`? (Default: .true.)
         logical, optional, intent(in) :: verbose
         !! Print information about each test? (Default: .false.)
+        logical, optional, intent(in) :: stop_on_failure
+        !! Skip the remaining checks after the first failure? (Default: .true.)
+        real(dp), optional, intent(out) :: max_errors(4)
+        !! Max error over all trials for: additivity, homogeneity, zero map, adjoint (-1 = not run).
 
         integer :: ntrials_, i
         logical :: test_zero_map_, test_adjoint_, verb
         real(dp) :: tol, error_norm, scale
+        logical :: stop_
+        integer :: fail_trial
+        real(dp) :: max_err(4) ! one for each test
         character(len=128) :: failed_test
         character(len=256) :: msg
 
@@ -2398,9 +2439,12 @@ contains
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
         verb = optval(verbose, .false.)
-
+        stop_ = optval(stop_on_failure, .true.)
+        max_err = -1.0_dp ! default: not run
+        
         !> Run each test ntrials_ times before moving on to the next one.
         success = .true.
+        fail_trial = 0
         failed_test = ''
         error_norm = 0.0_dp
         i = 0
@@ -2413,6 +2457,7 @@ contains
             additivity: block
                 class(abstract_vector_cdp), allocatable :: u, v, Au, Av, Auv
                 character(len=*), parameter :: this_test = 'additivity'
+                integer, parameter          :: test_id = 1
 
                 allocate(u, v, Au, Av, Auv, source=x)
                 if (verb) call log_test_header(this_test)
@@ -2433,15 +2478,9 @@ contains
 
                   call Auv%sub(Au)
                   error_norm = Auv%norm() / max(scale, one_rdp)
-                  success = merge(.true., .false., error_norm <= tol)
-
+                  
                   if (verb) call log_trial(i, error_norm)
-
-                  !> Exit if the test fails.
-                  if (.not. success) then
-                     failed_test = this_test
-                     exit tests
-                  end if
+                  if (record(test_id, this_test)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, v, Au, Av, Auv)
@@ -2454,6 +2493,7 @@ contains
                 class(abstract_vector_cdp), allocatable :: u, Au, Aau
                 complex(dp) :: alpha
                 character(len=*), parameter :: this_test = 'homogeneity'
+                integer, parameter          :: test_id = 2
 
                 allocate(u, Au, Aau, source=x)
                 if (verb) call log_test_header(this_test)
@@ -2476,12 +2516,7 @@ contains
                   success = merge(.true., .false., error_norm <= tol)
 
                   if (verb) call log_trial(i, error_norm)
-
-                  !> Exit if the test fails.
-                  if (.not. success) then
-                     failed_test = this_test
-                     exit tests
-                  end if
+                  if (record(test_id, this_test)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, Au, Aau)
@@ -2494,6 +2529,7 @@ contains
                 zero_to_zero: block
                   class(abstract_vector_cdp), allocatable :: u, Au
                   character(len=*), parameter :: this_test = 'zero -> zero'
+                  integer, parameter          :: test_id = 3
 
                   allocate(u, Au, source=x)
                   if (verb) call log_test_header(this_test)
@@ -2505,12 +2541,7 @@ contains
                      success = merge(.true., .false., error_norm <= tol)
 
                      if (verb) call log_trial(i, error_norm)
-
-                     !> Exit if the test fails.
-                     if (.not. success) then
-                        failed_test = this_test
-                        exit tests
-                     end if
+                     if (record(test_id, this_test)) exit tests
                   end do
                   !> Clean up.
                   deallocate(u, Au)
@@ -2526,6 +2557,7 @@ contains
                   class(abstract_vector_cdp), allocatable :: wrk, u, v, Au, Av
                   complex(dp) :: lhs, rhs
                   character(len=*), parameter :: this_test = 'adjoint consistency'
+                  integer, parameter          :: test_id = 4
 
                   !> Generate random vectors.
                   allocate(wrk, u, v, Au, Av, source=x)
@@ -2550,12 +2582,7 @@ contains
                      success = merge(.true., .false., error_norm <= tol)
 
                      if (verb) call log_trial(i, error_norm)
-      
-                     !> Exit if the test fails.
-                     if (.not. success) then
-                        failed_test = this_test
-                        exit tests
-                     end if
+                     if (record(test_id, this_test)) exit tests
                   end do
                   !> Clean up.
                   deallocate(wrk, u, v, Au, Av)
@@ -2564,15 +2591,16 @@ contains
 
         end block tests
 
+        if (present(max_errors)) max_errors = max_err
         if (success) then
             write(msg, '(A,I0,A)') 'All linop axioms verified (', ntrials_, ' trials).'
             call log_information(msg, this_module, this_procedure)
         else
-            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', i, ', test: '//trim(failed_test)
-            call log_message(msg, this_module, this_procedure)
-            write(msg, '(A,ES12.5,A,ES12.5)') 'error_norm = ', error_norm, ' > tol = ', tol
-            call log_message(msg, this_module, this_procedure)
+            write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', fail_trial, ', test: '//trim(failed_test)
+            call log_warning(msg, this_module, this_procedure)
         end if
+        write(msg, '(A,4ES12.4)') 'max errors [add, hom, zero, adj]: ', max_err
+        if (verb) call log_message(msg, this_module, this_procedure)
 
     contains
 
@@ -2592,6 +2620,22 @@ contains
          write(msg, '(3X,I5,A,ES12.5)') trial, ': ', err
          call log_message(msg)
       end subroutine log_trial
+
+      logical function record(itest, name) result(abort)
+         !! Track the max error per test; flag the first failure; abort only if requested.
+         integer,          intent(in) :: itest
+         character(len=*), intent(in) :: name
+         max_err(itest) = max(max_err(itest), error_norm)
+         abort = .false.
+         if (error_norm > tol) then
+            if (success) then            ! keep the first failure
+               failed_test = name
+               fail_trial  = i
+            end if
+            success = .false.
+            abort   = stop_
+         end if
+      end function record
 
     end function verify_linop_axioms_cdp
 
