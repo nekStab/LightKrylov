@@ -4,7 +4,14 @@ module LightKrylov_Logger
 #endif
    ! Fortran Standard Library
    use stdlib_optval, only: optval
-   use stdlib_logger, only: logger => global_logger, debug_level, information_level, warning_level, error_level, none_level
+   use stdlib_logger, only: &
+         logger               => global_logger, &
+         lk_all_level         => all_level, &
+         lk_debug_level       => debug_level, &
+         lk_information_level => information_level, &
+         lk_warning_level     => warning_level, &
+         lk_error_level       => error_level, &
+         lk_none_level        => none_level
    use stdlib_ascii, only: to_lower
    use stdlib_strings, only: chomp, replace_all
    ! LightKrylov
@@ -17,7 +24,7 @@ module LightKrylov_Logger
 
    logical, parameter, private :: exit_on_error      = .true.
    logical, parameter, private :: exit_on_test_error = .true.
-   integer, parameter, private :: inactive_log_level = information_level
+   integer, parameter, private :: inactive_log_level = lk_information_level
    !! Log level used when logger_setup has not been called
    logical :: logger_is_active = .false.
    logical :: lk_owns_mpi      = .false.
@@ -25,9 +32,8 @@ module LightKrylov_Logger
    type(MPI_Comm) :: lk_comm
 #endif
 
-   public :: stop_error
-   public :: type_error
-   public :: check_info
+   public :: stop_error, type_error, check_info
+   public :: lk_debug_level, lk_information_level, lk_warning_level, lk_error_level, lk_none_level, lk_all_level
    public :: log_message, log_information, log_warning, log_error, log_debug
 
    public :: logger_setup
@@ -49,12 +55,12 @@ contains
       !! I/O rank for logging
       integer, optional, intent(in)          :: log_level
       !! set logging level
-      !! 0   : all_level
-      !! 10  : debug_level
-      !! 20  : information_level
-      !! 30  : warning_level
-      !! 40  : error_level
-      !! 100 : none_level
+      !! 0   : lk_all_level
+      !! 10  : lk_debug_level
+      !! 20  : lk_information_level
+      !! 30  : lk_warning_level
+      !! 40  : lk_error_level
+      !! 100 : lk_none_level
       logical, optional, intent(in)          :: log_stdout
       !! duplicate log messages to stdout?
       logical, optional, intent(in)          :: log_timestamp
@@ -86,8 +92,8 @@ contains
          if (len_trim(logfile) > 0) logfile_ = trim(logfile)
       end if
       nio_ = optval(nio, 0)
-      log_level_ = optval(log_level, 20)
-      log_level_ = max(0, min(log_level_, 100))
+      log_level_ = optval(log_level, lk_information_level)
+      log_level_ = max(0, min(log_level_, lk_none_level))
       log_stdout_ = optval(log_stdout, .true.)
       log_timestamp_ = optval(log_timestamp, .true.)
       close_old_ = optval(close_old, .true.)
@@ -131,7 +137,7 @@ contains
          if (present(iunit)) iunit = iunit_
       else 
          if (close_old_) call reset_log_units()
-         call logger%configure(level=none_level)
+         call logger%configure(level=lk_none_level)
          call logger%add_log_file('/dev/null', unit=iunit_, stat=stat)
       end if
 
@@ -188,7 +194,7 @@ contains
             if (flush_) call flush_log_units()
          end if
       else
-         if (inactive_log_level <= information_level) print '(A)', msg
+         if (inactive_log_level <= lk_information_level) print '(A)', msg
       end if
    end subroutine log_message
 
@@ -210,7 +216,7 @@ contains
             if (flush_) call flush_log_units()
          end if
       else
-         if (inactive_log_level <= information_level) print '("INFO: ",A)', msg
+         if (inactive_log_level <= lk_information_level) print '("INFO: ",A)', msg
       end if
    end subroutine log_information
 
@@ -227,7 +233,7 @@ contains
             call flush_log_units()
          end if
       else
-         if (inactive_log_level <= warning_level) print '("WARN: ",A)', msg
+         if (inactive_log_level <= lk_warning_level) print '("WARN: ",A)', msg
       end if
    end subroutine log_warning
 
@@ -267,7 +273,7 @@ contains
             call flush_log_units()
          end if
       else
-         if (inactive_log_level <= debug_level) print '("DEBUG: ",A)', msg
+         if (inactive_log_level <= lk_debug_level) print '("DEBUG: ",A)', msg
       end if
    end subroutine log_debug
 
