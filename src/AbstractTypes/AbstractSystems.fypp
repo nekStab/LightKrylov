@@ -271,7 +271,7 @@ contains
         if (verb) call log_message(msg, this_module, this_procedure)
 
         do ipass = 1, npass
-            #:if type[0] == 'c'
+            #:if type[0] == "c"
             msg = merge('Pass 1: real perturbation', 'Pass 2: imag perturbation', ipass == 1)
             if (verb) call log_message(msg, this_module, this_procedure)
             #:endif

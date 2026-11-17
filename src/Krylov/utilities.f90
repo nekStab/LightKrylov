@@ -270,7 +270,7 @@ contains
         ! apply symmetric transformation in-place
         block
             class(abstract_vector_rsp), allocatable :: Xwrk(:)
-            call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
+            call linear_combination(Xwrk, X, matmul(hermitian(VT(:nretain, :)), diag(S(:nretain))))
             call copy(X(:nretain), Xwrk)
             call zero_basis(X(nretain+1:))
             call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))
@@ -320,7 +320,7 @@ contains
         ! apply symmetric transformation in-place
         block
             class(abstract_vector_rdp), allocatable :: Xwrk(:)
-            call linear_combination(Xwrk, X, matmul(transpose(VT(:nretain, :)), diag(S(:nretain))))
+            call linear_combination(Xwrk, X, matmul(hermitian(VT(:nretain, :)), diag(S(:nretain))))
             call copy(X(:nretain), Xwrk)
             call zero_basis(X(nretain+1:))
             call linear_combination(Xwrk, Y, matmul(U(:, :nretain), diag(S(:nretain))))

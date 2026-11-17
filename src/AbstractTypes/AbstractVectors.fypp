@@ -937,19 +937,8 @@ contains
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v
                 ${type}$ :: a, b
                 character(len=*), parameter :: this_test = "scaling compatibility"
-                #:if type.startswith('complex')
+                #:if type[0] == "c"
                 real(${kind}$) :: c(2)
-                call random_number(c)
-                a = cmplx(2.0_${kind}$*c(1) - 1.0_${kind}$, &
-                          2.0_${kind}$*c(2) - 1.0_${kind}$, kind=${kind}$)
-                call random_number(c)
-                b = cmplx(2.0_${kind}$*c(1) - 1.0_${kind}$, &
-                          2.0_${kind}$*c(2) - 1.0_${kind}$, kind=${kind}$)
-                #:else
-                call random_number(a)
-                a = 2.0_${kind}$*a - 1.0_${kind}$
-                call random_number(b)
-                b = 2.0_${kind}$*b - 1.0_${kind}$
                 #:endif
 
                 !> Generate random vectors.
@@ -957,6 +946,22 @@ contains
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
+                  !> Generate random scalars.
+                  #:if type[0] == "c"
+                  call random_number(c)
+                  a = cmplx(2.0_${kind}$*c(1) - 1.0_${kind}$, &
+                            2.0_${kind}$*c(2) - 1.0_${kind}$, kind=${kind}$)
+                  call random_number(c)
+                  b = cmplx(2.0_${kind}$*c(1) - 1.0_${kind}$, &
+                            2.0_${kind}$*c(2) - 1.0_${kind}$, kind=${kind}$)
+                  #:else
+                  call random_number(a)
+                  a = 2.0_${kind}$*a - 1.0_${kind}$
+                  call random_number(a)
+                  b = 2.0_${kind}$*a - 1.0_${kind}$
+                  #:endif
+
+                  !> Generate random vector.
                   call u%rand(ifnorm=.true.)
                   v = u
 
@@ -983,7 +988,7 @@ contains
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v, wrk1, wrk2
                 ${type}$ :: a
                 character(len=*), parameter :: this_test = "scaling distributivity 1"
-                #:if type.startswith('complex')
+                #:if type[0] == "c"
                 real(${kind}$) :: b(2)
                 #:endif
 
@@ -992,7 +997,7 @@ contains
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
-                  #:if type.startswith('complex')
+                  #:if type[0] == "c"
                   call random_number(b)
                   a = cmplx(2.0_${kind}$*b(1) - 1.0_${kind}$, &
                             2.0_${kind}$*b(2) - 1.0_${kind}$, kind=${kind}$)
@@ -1033,7 +1038,7 @@ contains
                 class(abstract_vector_${type[0]}$${kind}$), allocatable :: u, v
                 ${type}$ :: a, b
                 character(len=*), parameter :: this_test = "scaling distributivity 2"
-                #:if type.startswith('complex')
+                #:if type[0] == "c"
                 real(${kind}$) :: c(2)
                 #:endif
 
@@ -1042,7 +1047,7 @@ contains
                 if (verb) call log_test_header(this_test)
 
                 do i = 1, ntrials_
-                  #:if type.startswith('complex')
+                  #:if type[0] == "c"
                   call random_number(c)
                   a = cmplx(2.0_${kind}$*c(1) - 1.0_${kind}$, &
                             2.0_${kind}$*c(2) - 1.0_${kind}$, kind=${kind}$)
