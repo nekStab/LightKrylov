@@ -1746,7 +1746,7 @@ contains
                 integer, parameter          :: test_id = 1
 
                 allocate(u, v, Au, Av, Auv, source=x)
-                if (verb) call log_test_header(this_test)
+                if (verb) call log_test_header(this_test, tol)
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
@@ -1766,7 +1766,7 @@ contains
                   error_norm = Auv%norm() / max(scale, one_rsp)
                   
                   if (verb) call log_trial(i, error_norm)
-                  if (record(test_id, this_test)) exit tests
+                  if (record(test_id, this_test, tol)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, v, Au, Av, Auv)
@@ -1782,7 +1782,7 @@ contains
                 integer, parameter          :: test_id = 2
 
                 allocate(u, Au, Aau, source=x)
-                if (verb) call log_test_header(this_test)
+                if (verb) call log_test_header(this_test, tol)
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
@@ -1799,10 +1799,9 @@ contains
 
                   call Aau%sub(Au)
                   error_norm = Aau%norm() / max(scale, one_rsp)
-                  success = merge(.true., .false., error_norm <= tol)
 
                   if (verb) call log_trial(i, error_norm)
-                  if (record(test_id, this_test)) exit tests
+                  if (record(test_id, this_test, tol)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, Au, Aau)
@@ -1818,16 +1817,15 @@ contains
                   integer, parameter          :: test_id = 3
 
                   allocate(u, Au, source=x)
-                  if (verb) call log_test_header(this_test)
+                  if (verb) call log_test_header(this_test, tol)
 
                   do i = 1, ntrials_
                      call u%zero()
                      call A%apply_matvec(u, Au)
                      error_norm = Au%norm()
-                     success = merge(.true., .false., error_norm <= tol)
 
                      if (verb) call log_trial(i, error_norm)
-                     if (record(test_id, this_test)) exit tests
+                     if (record(test_id, this_test, tol)) exit tests
                   end do
                   !> Clean up.
                   deallocate(u, Au)
@@ -1847,7 +1845,7 @@ contains
 
                   !> Generate random vectors.
                   allocate(wrk, u, v, Au, Av, source=x)
-                  if (verb) call log_test_header(this_test)
+                  if (verb) call log_test_header(this_test, adj_tol)
 
                   do i = 1, ntrials_
                      !> Generate random vectors.
@@ -1865,10 +1863,9 @@ contains
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
                      error_norm = abs(lhs - rhs) / max(scale, one_rsp)
-                     success = merge(.true., .false., error_norm <= adj_tol)
 
                      if (verb) call log_trial(i, error_norm)
-                     if (record(test_id, this_test)) exit tests
+                     if (record(test_id, this_test, adj_tol)) exit tests
                   end do
                   !> Clean up.
                   deallocate(wrk, u, v, Au, Av)
@@ -1885,14 +1882,17 @@ contains
             write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', fail_trial, ', test: '//trim(failed_test)
             call log_warning(msg, this_module, this_procedure)
         end if
-        write(msg, '(A,4ES12.4)') 'max errors [add, hom, zero, adj]: ', max_err
+        write(msg, '(A,4ES12.4)') 'tolerance  : ', tol, tol, tol, adj_tol
+        if (verb) call log_message(msg, this_module, this_procedure)
+        write(msg, '(A,4ES12.4)') 'max errors : ', max_err
         if (verb) call log_message(msg, this_module, this_procedure)
 
     contains
 
-      subroutine log_test_header(test_name)
+      subroutine log_test_header(test_name, tol)
          !! Prints the test name and tolerance, followed by the column header.
          character(len=*), intent(in) :: test_name
+         real(sp), intent(in) :: tol
          write(msg, '(A,A,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
          call log_message(msg)
          write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
@@ -1907,10 +1907,11 @@ contains
          call log_message(msg)
       end subroutine log_trial
 
-      logical function record(itest, name) result(abort)
+      logical function record(itest, name, tol) result(abort)
          !! Track the max error per test; flag the first failure; abort only if requested.
          integer,          intent(in) :: itest
          character(len=*), intent(in) :: name
+         real(sp),   intent(in) :: tol
          max_err(itest) = max(max_err(itest), error_norm)
          abort = .false.
          if (error_norm > tol) then
@@ -1988,7 +1989,7 @@ contains
                 integer, parameter          :: test_id = 1
 
                 allocate(u, v, Au, Av, Auv, source=x)
-                if (verb) call log_test_header(this_test)
+                if (verb) call log_test_header(this_test, tol)
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
@@ -2008,7 +2009,7 @@ contains
                   error_norm = Auv%norm() / max(scale, one_rdp)
                   
                   if (verb) call log_trial(i, error_norm)
-                  if (record(test_id, this_test)) exit tests
+                  if (record(test_id, this_test, tol)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, v, Au, Av, Auv)
@@ -2024,7 +2025,7 @@ contains
                 integer, parameter          :: test_id = 2
 
                 allocate(u, Au, Aau, source=x)
-                if (verb) call log_test_header(this_test)
+                if (verb) call log_test_header(this_test, tol)
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
@@ -2041,10 +2042,9 @@ contains
 
                   call Aau%sub(Au)
                   error_norm = Aau%norm() / max(scale, one_rdp)
-                  success = merge(.true., .false., error_norm <= tol)
 
                   if (verb) call log_trial(i, error_norm)
-                  if (record(test_id, this_test)) exit tests
+                  if (record(test_id, this_test, tol)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, Au, Aau)
@@ -2060,16 +2060,15 @@ contains
                   integer, parameter          :: test_id = 3
 
                   allocate(u, Au, source=x)
-                  if (verb) call log_test_header(this_test)
+                  if (verb) call log_test_header(this_test, tol)
 
                   do i = 1, ntrials_
                      call u%zero()
                      call A%apply_matvec(u, Au)
                      error_norm = Au%norm()
-                     success = merge(.true., .false., error_norm <= tol)
 
                      if (verb) call log_trial(i, error_norm)
-                     if (record(test_id, this_test)) exit tests
+                     if (record(test_id, this_test, tol)) exit tests
                   end do
                   !> Clean up.
                   deallocate(u, Au)
@@ -2089,7 +2088,7 @@ contains
 
                   !> Generate random vectors.
                   allocate(wrk, u, v, Au, Av, source=x)
-                  if (verb) call log_test_header(this_test)
+                  if (verb) call log_test_header(this_test, adj_tol)
 
                   do i = 1, ntrials_
                      !> Generate random vectors.
@@ -2107,10 +2106,9 @@ contains
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
                      error_norm = abs(lhs - rhs) / max(scale, one_rdp)
-                     success = merge(.true., .false., error_norm <= adj_tol)
 
                      if (verb) call log_trial(i, error_norm)
-                     if (record(test_id, this_test)) exit tests
+                     if (record(test_id, this_test, adj_tol)) exit tests
                   end do
                   !> Clean up.
                   deallocate(wrk, u, v, Au, Av)
@@ -2127,14 +2125,17 @@ contains
             write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', fail_trial, ', test: '//trim(failed_test)
             call log_warning(msg, this_module, this_procedure)
         end if
-        write(msg, '(A,4ES12.4)') 'max errors [add, hom, zero, adj]: ', max_err
+        write(msg, '(A,4ES12.4)') 'tolerance  : ', tol, tol, tol, adj_tol
+        if (verb) call log_message(msg, this_module, this_procedure)
+        write(msg, '(A,4ES12.4)') 'max errors : ', max_err
         if (verb) call log_message(msg, this_module, this_procedure)
 
     contains
 
-      subroutine log_test_header(test_name)
+      subroutine log_test_header(test_name, tol)
          !! Prints the test name and tolerance, followed by the column header.
          character(len=*), intent(in) :: test_name
+         real(dp), intent(in) :: tol
          write(msg, '(A,A,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
          call log_message(msg)
          write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
@@ -2149,10 +2150,11 @@ contains
          call log_message(msg)
       end subroutine log_trial
 
-      logical function record(itest, name) result(abort)
+      logical function record(itest, name, tol) result(abort)
          !! Track the max error per test; flag the first failure; abort only if requested.
          integer,          intent(in) :: itest
          character(len=*), intent(in) :: name
+         real(dp),   intent(in) :: tol
          max_err(itest) = max(max_err(itest), error_norm)
          abort = .false.
          if (error_norm > tol) then
@@ -2230,7 +2232,7 @@ contains
                 integer, parameter          :: test_id = 1
 
                 allocate(u, v, Au, Av, Auv, source=x)
-                if (verb) call log_test_header(this_test)
+                if (verb) call log_test_header(this_test, tol)
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
@@ -2250,7 +2252,7 @@ contains
                   error_norm = Auv%norm() / max(scale, one_rsp)
                   
                   if (verb) call log_trial(i, error_norm)
-                  if (record(test_id, this_test)) exit tests
+                  if (record(test_id, this_test, tol)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, v, Au, Av, Auv)
@@ -2266,7 +2268,7 @@ contains
                 integer, parameter          :: test_id = 2
 
                 allocate(u, Au, Aau, source=x)
-                if (verb) call log_test_header(this_test)
+                if (verb) call log_test_header(this_test, tol)
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
@@ -2283,10 +2285,9 @@ contains
 
                   call Aau%sub(Au)
                   error_norm = Aau%norm() / max(scale, one_rsp)
-                  success = merge(.true., .false., error_norm <= tol)
 
                   if (verb) call log_trial(i, error_norm)
-                  if (record(test_id, this_test)) exit tests
+                  if (record(test_id, this_test, tol)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, Au, Aau)
@@ -2302,16 +2303,15 @@ contains
                   integer, parameter          :: test_id = 3
 
                   allocate(u, Au, source=x)
-                  if (verb) call log_test_header(this_test)
+                  if (verb) call log_test_header(this_test, tol)
 
                   do i = 1, ntrials_
                      call u%zero()
                      call A%apply_matvec(u, Au)
                      error_norm = Au%norm()
-                     success = merge(.true., .false., error_norm <= tol)
 
                      if (verb) call log_trial(i, error_norm)
-                     if (record(test_id, this_test)) exit tests
+                     if (record(test_id, this_test, tol)) exit tests
                   end do
                   !> Clean up.
                   deallocate(u, Au)
@@ -2331,7 +2331,7 @@ contains
 
                   !> Generate random vectors.
                   allocate(wrk, u, v, Au, Av, source=x)
-                  if (verb) call log_test_header(this_test)
+                  if (verb) call log_test_header(this_test, adj_tol)
 
                   do i = 1, ntrials_
                      !> Generate random vectors.
@@ -2349,10 +2349,9 @@ contains
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
                      error_norm = abs(lhs - rhs) / max(scale, one_rsp)
-                     success = merge(.true., .false., error_norm <= adj_tol)
 
                      if (verb) call log_trial(i, error_norm)
-                     if (record(test_id, this_test)) exit tests
+                     if (record(test_id, this_test, adj_tol)) exit tests
                   end do
                   !> Clean up.
                   deallocate(wrk, u, v, Au, Av)
@@ -2369,14 +2368,17 @@ contains
             write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', fail_trial, ', test: '//trim(failed_test)
             call log_warning(msg, this_module, this_procedure)
         end if
-        write(msg, '(A,4ES12.4)') 'max errors [add, hom, zero, adj]: ', max_err
+        write(msg, '(A,4ES12.4)') 'tolerance  : ', tol, tol, tol, adj_tol
+        if (verb) call log_message(msg, this_module, this_procedure)
+        write(msg, '(A,4ES12.4)') 'max errors : ', max_err
         if (verb) call log_message(msg, this_module, this_procedure)
 
     contains
 
-      subroutine log_test_header(test_name)
+      subroutine log_test_header(test_name, tol)
          !! Prints the test name and tolerance, followed by the column header.
          character(len=*), intent(in) :: test_name
+         real(sp), intent(in) :: tol
          write(msg, '(A,A,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
          call log_message(msg)
          write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
@@ -2391,10 +2393,11 @@ contains
          call log_message(msg)
       end subroutine log_trial
 
-      logical function record(itest, name) result(abort)
+      logical function record(itest, name, tol) result(abort)
          !! Track the max error per test; flag the first failure; abort only if requested.
          integer,          intent(in) :: itest
          character(len=*), intent(in) :: name
+         real(sp),   intent(in) :: tol
          max_err(itest) = max(max_err(itest), error_norm)
          abort = .false.
          if (error_norm > tol) then
@@ -2472,7 +2475,7 @@ contains
                 integer, parameter          :: test_id = 1
 
                 allocate(u, v, Au, Av, Auv, source=x)
-                if (verb) call log_test_header(this_test)
+                if (verb) call log_test_header(this_test, tol)
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
@@ -2492,7 +2495,7 @@ contains
                   error_norm = Auv%norm() / max(scale, one_rdp)
                   
                   if (verb) call log_trial(i, error_norm)
-                  if (record(test_id, this_test)) exit tests
+                  if (record(test_id, this_test, tol)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, v, Au, Av, Auv)
@@ -2508,7 +2511,7 @@ contains
                 integer, parameter          :: test_id = 2
 
                 allocate(u, Au, Aau, source=x)
-                if (verb) call log_test_header(this_test)
+                if (verb) call log_test_header(this_test, tol)
 
                 do i = 1, ntrials_
                   !> Generate random vectors.
@@ -2525,10 +2528,9 @@ contains
 
                   call Aau%sub(Au)
                   error_norm = Aau%norm() / max(scale, one_rdp)
-                  success = merge(.true., .false., error_norm <= tol)
 
                   if (verb) call log_trial(i, error_norm)
-                  if (record(test_id, this_test)) exit tests
+                  if (record(test_id, this_test, tol)) exit tests
                 end do
                 !> Clean up.
                 deallocate(u, Au, Aau)
@@ -2544,16 +2546,15 @@ contains
                   integer, parameter          :: test_id = 3
 
                   allocate(u, Au, source=x)
-                  if (verb) call log_test_header(this_test)
+                  if (verb) call log_test_header(this_test, tol)
 
                   do i = 1, ntrials_
                      call u%zero()
                      call A%apply_matvec(u, Au)
                      error_norm = Au%norm()
-                     success = merge(.true., .false., error_norm <= tol)
 
                      if (verb) call log_trial(i, error_norm)
-                     if (record(test_id, this_test)) exit tests
+                     if (record(test_id, this_test, tol)) exit tests
                   end do
                   !> Clean up.
                   deallocate(u, Au)
@@ -2573,7 +2574,7 @@ contains
 
                   !> Generate random vectors.
                   allocate(wrk, u, v, Au, Av, source=x)
-                  if (verb) call log_test_header(this_test)
+                  if (verb) call log_test_header(this_test, adj_tol)
 
                   do i = 1, ntrials_
                      !> Generate random vectors.
@@ -2591,10 +2592,9 @@ contains
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
                      error_norm = abs(lhs - rhs) / max(scale, one_rdp)
-                     success = merge(.true., .false., error_norm <= adj_tol)
 
                      if (verb) call log_trial(i, error_norm)
-                     if (record(test_id, this_test)) exit tests
+                     if (record(test_id, this_test, adj_tol)) exit tests
                   end do
                   !> Clean up.
                   deallocate(wrk, u, v, Au, Av)
@@ -2611,14 +2611,17 @@ contains
             write(msg, '(A,I0,A)') 'Linop axiom check FAILED at trial ', fail_trial, ', test: '//trim(failed_test)
             call log_warning(msg, this_module, this_procedure)
         end if
-        write(msg, '(A,4ES12.4)') 'max errors [add, hom, zero, adj]: ', max_err
+        write(msg, '(A,4ES12.4)') 'tolerance  : ', tol, tol, tol, adj_tol
+        if (verb) call log_message(msg, this_module, this_procedure)
+        write(msg, '(A,4ES12.4)') 'max errors : ', max_err
         if (verb) call log_message(msg, this_module, this_procedure)
 
     contains
 
-      subroutine log_test_header(test_name)
+      subroutine log_test_header(test_name, tol)
          !! Prints the test name and tolerance, followed by the column header.
          character(len=*), intent(in) :: test_name
+         real(dp), intent(in) :: tol
          write(msg, '(A,A,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
          call log_message(msg)
          write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
@@ -2633,10 +2636,11 @@ contains
          call log_message(msg)
       end subroutine log_trial
 
-      logical function record(itest, name) result(abort)
+      logical function record(itest, name, tol) result(abort)
          !! Track the max error per test; flag the first failure; abort only if requested.
          integer,          intent(in) :: itest
          character(len=*), intent(in) :: name
+         real(dp),   intent(in) :: tol
          max_err(itest) = max(max_err(itest), error_norm)
          abort = .false.
          if (error_norm > tol) then
