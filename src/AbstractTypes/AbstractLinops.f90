@@ -1683,8 +1683,8 @@ contains
     !-----      UTILITY FUNCTIONS     -----
     !--------------------------------------
 
-    logical function verify_linop_axioms_rsp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, &
-                                                            verbose, stop_on_failure, max_errors) result(success)
+    logical function verify_linop_axioms_rsp(A, x, ntrials, tolerance, adj_tolerance, test_zero_map, &
+                                                   test_adjoint, verbose, stop_on_failure, max_errors) result(success)
         implicit none(type, external)
         class(abstract_linop_rsp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -1694,6 +1694,8 @@ contains
         !! Number of random samples generated for the tests.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance used for the axiom checks.
+        real(sp), optional, intent(in) :: adj_tolerance
+        !! Tolerance used for the adjoint axiom checks.
         logical, optional, intent(in) :: test_zero_map
         !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
@@ -1707,7 +1709,7 @@ contains
 
         integer :: ntrials_, i
         logical :: test_zero_map_, test_adjoint_, verb
-        real(sp) :: tol, error_norm, scale
+        real(sp) :: tol, adj_tol, error_norm, scale
         logical :: stop_
         integer :: fail_trial
         real(sp) :: max_err(4) ! one for each test
@@ -1719,6 +1721,7 @@ contains
         !> Deals with optional arguments.
         ntrials_ = optval(ntrials, 10)
         tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+        adj_tol = optval(adj_tolerance, tol)
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
         verb = optval(verbose, .false.)
@@ -1862,7 +1865,7 @@ contains
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
                      error_norm = abs(lhs - rhs) / max(scale, one_rsp)
-                     success = merge(.true., .false., error_norm <= tol)
+                     success = merge(.true., .false., error_norm <= adj_tol)
 
                      if (verb) call log_trial(i, error_norm)
                      if (record(test_id, this_test)) exit tests
@@ -1922,8 +1925,8 @@ contains
 
     end function verify_linop_axioms_rsp
 
-    logical function verify_linop_axioms_rdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, &
-                                                            verbose, stop_on_failure, max_errors) result(success)
+    logical function verify_linop_axioms_rdp(A, x, ntrials, tolerance, adj_tolerance, test_zero_map, &
+                                                   test_adjoint, verbose, stop_on_failure, max_errors) result(success)
         implicit none(type, external)
         class(abstract_linop_rdp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -1933,6 +1936,8 @@ contains
         !! Number of random samples generated for the tests.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance used for the axiom checks.
+        real(dp), optional, intent(in) :: adj_tolerance
+        !! Tolerance used for the adjoint axiom checks.
         logical, optional, intent(in) :: test_zero_map
         !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
@@ -1946,7 +1951,7 @@ contains
 
         integer :: ntrials_, i
         logical :: test_zero_map_, test_adjoint_, verb
-        real(dp) :: tol, error_norm, scale
+        real(dp) :: tol, adj_tol, error_norm, scale
         logical :: stop_
         integer :: fail_trial
         real(dp) :: max_err(4) ! one for each test
@@ -1958,6 +1963,7 @@ contains
         !> Deals with optional arguments.
         ntrials_ = optval(ntrials, 10)
         tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+        adj_tol = optval(adj_tolerance, tol)
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
         verb = optval(verbose, .false.)
@@ -2101,7 +2107,7 @@ contains
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
                      error_norm = abs(lhs - rhs) / max(scale, one_rdp)
-                     success = merge(.true., .false., error_norm <= tol)
+                     success = merge(.true., .false., error_norm <= adj_tol)
 
                      if (verb) call log_trial(i, error_norm)
                      if (record(test_id, this_test)) exit tests
@@ -2161,8 +2167,8 @@ contains
 
     end function verify_linop_axioms_rdp
 
-    logical function verify_linop_axioms_csp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, &
-                                                            verbose, stop_on_failure, max_errors) result(success)
+    logical function verify_linop_axioms_csp(A, x, ntrials, tolerance, adj_tolerance, test_zero_map, &
+                                                   test_adjoint, verbose, stop_on_failure, max_errors) result(success)
         implicit none(type, external)
         class(abstract_linop_csp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -2172,6 +2178,8 @@ contains
         !! Number of random samples generated for the tests.
         real(sp), optional, intent(in) :: tolerance
         !! Tolerance used for the axiom checks.
+        real(sp), optional, intent(in) :: adj_tolerance
+        !! Tolerance used for the adjoint axiom checks.
         logical, optional, intent(in) :: test_zero_map
         !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
@@ -2185,7 +2193,7 @@ contains
 
         integer :: ntrials_, i
         logical :: test_zero_map_, test_adjoint_, verb
-        real(sp) :: tol, error_norm, scale
+        real(sp) :: tol, adj_tol, error_norm, scale
         logical :: stop_
         integer :: fail_trial
         real(sp) :: max_err(4) ! one for each test
@@ -2197,6 +2205,7 @@ contains
         !> Deals with optional arguments.
         ntrials_ = optval(ntrials, 10)
         tol = optval(tolerance, 10.0_sp**(-(precision(1.0_sp)-1)))
+        adj_tol = optval(adj_tolerance, tol)
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
         verb = optval(verbose, .false.)
@@ -2340,7 +2349,7 @@ contains
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
                      error_norm = abs(lhs - rhs) / max(scale, one_rsp)
-                     success = merge(.true., .false., error_norm <= tol)
+                     success = merge(.true., .false., error_norm <= adj_tol)
 
                      if (verb) call log_trial(i, error_norm)
                      if (record(test_id, this_test)) exit tests
@@ -2400,8 +2409,8 @@ contains
 
     end function verify_linop_axioms_csp
 
-    logical function verify_linop_axioms_cdp(A, x, ntrials, tolerance, test_zero_map, test_adjoint, &
-                                                            verbose, stop_on_failure, max_errors) result(success)
+    logical function verify_linop_axioms_cdp(A, x, ntrials, tolerance, adj_tolerance, test_zero_map, &
+                                                   test_adjoint, verbose, stop_on_failure, max_errors) result(success)
         implicit none(type, external)
         class(abstract_linop_cdp), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -2411,6 +2420,8 @@ contains
         !! Number of random samples generated for the tests.
         real(dp), optional, intent(in) :: tolerance
         !! Tolerance used for the axiom checks.
+        real(dp), optional, intent(in) :: adj_tolerance
+        !! Tolerance used for the adjoint axiom checks.
         logical, optional, intent(in) :: test_zero_map
         !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
@@ -2424,7 +2435,7 @@ contains
 
         integer :: ntrials_, i
         logical :: test_zero_map_, test_adjoint_, verb
-        real(dp) :: tol, error_norm, scale
+        real(dp) :: tol, adj_tol, error_norm, scale
         logical :: stop_
         integer :: fail_trial
         real(dp) :: max_err(4) ! one for each test
@@ -2436,6 +2447,7 @@ contains
         !> Deals with optional arguments.
         ntrials_ = optval(ntrials, 10)
         tol = optval(tolerance, 10.0_dp**(-(precision(1.0_dp)-1)))
+        adj_tol = optval(adj_tolerance, tol)
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
         verb = optval(verbose, .false.)
@@ -2579,7 +2591,7 @@ contains
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
                      error_norm = abs(lhs - rhs) / max(scale, one_rdp)
-                     success = merge(.true., .false., error_norm <= tol)
+                     success = merge(.true., .false., error_norm <= adj_tol)
 
                      if (verb) call log_trial(i, error_norm)
                      if (record(test_id, this_test)) exit tests

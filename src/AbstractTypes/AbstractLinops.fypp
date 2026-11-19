@@ -683,8 +683,8 @@ contains
     !--------------------------------------
 
     #:for kind, type in RC_KINDS_TYPES
-    logical function verify_linop_axioms_${type[0]}$${kind}$(A, x, ntrials, tolerance, test_zero_map, test_adjoint, &
-                                                            verbose, stop_on_failure, max_errors) result(success)
+    logical function verify_linop_axioms_${type[0]}$${kind}$(A, x, ntrials, tolerance, adj_tolerance, test_zero_map, &
+                                                   test_adjoint, verbose, stop_on_failure, max_errors) result(success)
         implicit none(type, external)
         class(abstract_linop_${type[0]}$${kind}$), intent(inout) :: A
         !! Linear operator whose implementation needs to be tested.
@@ -694,6 +694,8 @@ contains
         !! Number of random samples generated for the tests.
         real(${kind}$), optional, intent(in) :: tolerance
         !! Tolerance used for the axiom checks.
+        real(${kind}$), optional, intent(in) :: adj_tolerance
+        !! Tolerance used for the adjoint axiom checks.
         logical, optional, intent(in) :: test_zero_map
         !! Verify explicitly that the operator maps x = 0 to 0? (Default: .true.)
         logical, optional, intent(in) :: test_adjoint
@@ -707,7 +709,7 @@ contains
 
         integer :: ntrials_, i
         logical :: test_zero_map_, test_adjoint_, verb
-        real(${kind}$) :: tol, error_norm, scale
+        real(${kind}$) :: tol, adj_tol, error_norm, scale
         logical :: stop_
         integer :: fail_trial
         real(${kind}$) :: max_err(4) ! one for each test
@@ -719,6 +721,7 @@ contains
         !> Deals with optional arguments.
         ntrials_ = optval(ntrials, 10)
         tol = optval(tolerance, 10.0_${kind}$**(-(precision(1.0_${kind}$)-1)))
+        adj_tol = optval(adj_tolerance, tol)
         test_zero_map_ = optval(test_zero_map, .true.)
         test_adjoint_ = optval(test_adjoint, .true.)
         verb = optval(verbose, .false.)
@@ -866,7 +869,7 @@ contains
                      lhs = Au%dot(v)                 ! < A A u,     A v>
                      rhs = u%dot(Av)                 ! <   A u, A^H A v >
                      error_norm = abs(lhs - rhs) / max(scale, one_r${kind}$)
-                     success = merge(.true., .false., error_norm <= tol)
+                     success = merge(.true., .false., error_norm <= adj_tol)
 
                      if (verb) call log_trial(i, error_norm)
                      if (record(test_id, this_test)) exit tests
