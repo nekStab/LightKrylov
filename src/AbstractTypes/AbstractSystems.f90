@@ -451,7 +451,6 @@ contains
 
         do ipass = 1, npass
             write(msg, '(3X,A12,2X,A16,2X,A16,2X,A6)') 'e', '||dF||', '||dF - e*Jd||', 'order'
-            if (verb) call log_message(msg, this_module, this_procedure)
 
             r1_prev = 0.0_sp
             steps: do k = 1, nsteps_
@@ -473,6 +472,7 @@ contains
                 r1 = dF%norm()
 
                 !> Print results and convergence order.
+                if (k == 1 .and. verb) call log_message(msg, this_module, this_procedure)
                 if (k > 1 .and. r1 > 0.0_sp .and. r1_prev > 0.0_sp) then
                     order = log(r1_prev / r1) / log(1.0_sp / q)
                     if (present(orders)) orders((ipass-1)*(nsteps_-1) + k-1) = order
@@ -562,7 +562,6 @@ contains
 
         do ipass = 1, npass
             write(msg, '(3X,A12,2X,A16,2X,A16,2X,A6)') 'e', '||dF||', '||dF - e*Jd||', 'order'
-            if (verb) call log_message(msg, this_module, this_procedure)
 
             r1_prev = 0.0_dp
             steps: do k = 1, nsteps_
@@ -584,6 +583,7 @@ contains
                 r1 = dF%norm()
 
                 !> Print results and convergence order.
+                if (k == 1 .and. verb) call log_message(msg, this_module, this_procedure)
                 if (k > 1 .and. r1 > 0.0_dp .and. r1_prev > 0.0_dp) then
                     order = log(r1_prev / r1) / log(1.0_dp / q)
                     if (present(orders)) orders((ipass-1)*(nsteps_-1) + k-1) = order
@@ -675,7 +675,6 @@ contains
             msg = merge('Pass 1: real perturbation', 'Pass 2: imag perturbation', ipass == 1)
             if (verb) call log_message(msg, this_module, this_procedure)
             write(msg, '(3X,A12,2X,A16,2X,A16,2X,A6)') 'e', '||dF||', '||dF - e*Jd||', 'order'
-            if (verb) call log_message(msg, this_module, this_procedure)
 
             r1_prev = 0.0_sp
             steps: do k = 1, nsteps_
@@ -697,6 +696,7 @@ contains
                 r1 = dF%norm()
 
                 !> Print results and convergence order.
+                if (k == 1 .and. verb) call log_message(msg, this_module, this_procedure)
                 if (k > 1 .and. r1 > 0.0_sp .and. r1_prev > 0.0_sp) then
                     order = log(r1_prev / r1) / log(1.0_sp / q)
                     if (present(orders)) orders((ipass-1)*(nsteps_-1) + k-1) = order
@@ -788,7 +788,6 @@ contains
             msg = merge('Pass 1: real perturbation', 'Pass 2: imag perturbation', ipass == 1)
             if (verb) call log_message(msg, this_module, this_procedure)
             write(msg, '(3X,A12,2X,A16,2X,A16,2X,A6)') 'e', '||dF||', '||dF - e*Jd||', 'order'
-            if (verb) call log_message(msg, this_module, this_procedure)
 
             r1_prev = 0.0_dp
             steps: do k = 1, nsteps_
@@ -810,6 +809,7 @@ contains
                 r1 = dF%norm()
 
                 !> Print results and convergence order.
+                if (k == 1 .and. verb) call log_message(msg, this_module, this_procedure)
                 if (k > 1 .and. r1 > 0.0_dp .and. r1_prev > 0.0_dp) then
                     order = log(r1_prev / r1) / log(1.0_dp / q)
                     if (present(orders)) orders((ipass-1)*(nsteps_-1) + k-1) = order
