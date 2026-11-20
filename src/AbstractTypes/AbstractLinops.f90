@@ -1890,10 +1890,11 @@ contains
     contains
 
       subroutine log_test_header(test_name, tol)
+         use stdlib_strings, only: padr
          !! Prints the test name and tolerance, followed by the column header.
          character(len=*), intent(in) :: test_name
          real(sp), intent(in) :: tol
-         write(msg, '(A,A,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
+         write(msg, '(A,A30,A,ES10.2)') 'Test ', padr(test_name,30), 'tol = ', tol
          call log_message(msg)
          write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
          call log_message(msg)
@@ -2133,10 +2134,11 @@ contains
     contains
 
       subroutine log_test_header(test_name, tol)
+         use stdlib_strings, only: padr
          !! Prints the test name and tolerance, followed by the column header.
          character(len=*), intent(in) :: test_name
          real(dp), intent(in) :: tol
-         write(msg, '(A,A,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
+         write(msg, '(A,A30,A,ES10.2)') 'Test ', padr(test_name,30), 'tol = ', tol
          call log_message(msg)
          write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
          call log_message(msg)
@@ -2376,10 +2378,11 @@ contains
     contains
 
       subroutine log_test_header(test_name, tol)
+         use stdlib_strings, only: padr
          !! Prints the test name and tolerance, followed by the column header.
          character(len=*), intent(in) :: test_name
          real(sp), intent(in) :: tol
-         write(msg, '(A,A,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
+         write(msg, '(A,A30,A,ES10.2)') 'Test ', padr(test_name,30), 'tol = ', tol
          call log_message(msg)
          write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
          call log_message(msg)
@@ -2619,10 +2622,11 @@ contains
     contains
 
       subroutine log_test_header(test_name, tol)
+         use stdlib_strings, only: padr
          !! Prints the test name and tolerance, followed by the column header.
          character(len=*), intent(in) :: test_name
          real(dp), intent(in) :: tol
-         write(msg, '(A,A,A,ES12.5)') 'Test ', test_name, ', tolerance: ', tol
+         write(msg, '(A,A30,A,ES10.2)') 'Test ', padr(test_name,30), 'tol = ', tol
          call log_message(msg)
          write(msg, '(3X,A5,2X,A12)') 'trial', 'error norm'
          call log_message(msg)
