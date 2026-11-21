@@ -3,8 +3,16 @@ module LightKrylov_Logger
    use mpi_f08
 #endif
    ! Fortran Standard Library
+   use iso_fortran_env, only: output_unit
    use stdlib_optval, only: optval
-   use stdlib_logger, only: logger => global_logger, debug_level, information_level, warning_level, error_level
+   use stdlib_logger, only: &
+         logger               => global_logger, &
+         lk_all_level         => all_level, &
+         lk_debug_level       => debug_level, &
+         lk_information_level => information_level, &
+         lk_warning_level     => warning_level, &
+         lk_error_level       => error_level, &
+         lk_none_level        => none_level
    use stdlib_ascii, only: to_lower
    use stdlib_strings, only: chomp, replace_all
    ! LightKrylov
@@ -15,19 +23,25 @@ module LightKrylov_Logger
 
    character(len=128), parameter :: this_module = 'LightKrylov_Logger'
 
-   logical, parameter, private :: exit_on_error = .true.
+   logical, parameter, private :: exit_on_error      = .true.
    logical, parameter, private :: exit_on_test_error = .true.
-   logical :: logger_is_active = .false.
-   integer, parameter, private :: inactive_log_level = information_level
+   integer, parameter, private :: inactive_log_level = lk_information_level
    !! Log level used when logger_setup has not been called
+   logical :: logger_is_active = .false.
+   logical :: lk_owns_mpi      = .false.
+#ifdef LIGHTKRYLOV_MPI
+   type(MPI_Comm) :: lk_comm
+#endif
 
-   public :: stop_error
-   public :: type_error
-   public :: check_info
-   public :: logger
+   public :: stop_error, type_error, check_info
+   public :: lk_debug_level, lk_information_level, lk_warning_level, lk_error_level, lk_none_level, lk_all_level
    public :: log_message, log_information, log_warning, log_error, log_debug
 
    public :: logger_setup
+   public :: logger_add_unit
+   public :: logger_remove_unit
+   public :: get_log_level
+   public :: logger_writes_to_stdout
 
    ! MPI subroutines
    public :: comm_setup
@@ -35,7 +49,7 @@ module LightKrylov_Logger
 
 contains
 
-   subroutine logger_setup(logfile, nio, log_level, log_stdout, log_timestamp, close_old, iunit)
+   subroutine logger_setup(logfile, nio, log_level, log_stdout, log_timestamp, close_old, comm, iunit)
       !! Wrapper to set up MPI if needed and initialize log files
       character(len=*), optional, intent(in) :: logfile
       !! name of the dedicated LightKrylov logfile
@@ -43,18 +57,20 @@ contains
       !! I/O rank for logging
       integer, optional, intent(in)          :: log_level
       !! set logging level
-      !! 0   : all_level
-      !! 10  : debug_level
-      !! 20  : information_level
-      !! 30  : warning_level
-      !! 40  : error_level
-      !! 100 : none_level
+      !! 0   : lk_all_level
+      !! 10  : lk_debug_level
+      !! 20  : lk_information_level
+      !! 30  : lk_warning_level
+      !! 40  : lk_error_level
+      !! 100 : lk_none_level
       logical, optional, intent(in)          :: log_stdout
       !! duplicate log messages to stdout?
       logical, optional, intent(in)          :: log_timestamp
       !! add timestamp to log messages
       logical, optional, intent(in)          :: close_old
       !! close previously opened logfiles (if present?) - stdout is not closed
+      integer, optional, intent(in)          :: comm
+      !! host communicator handle (MPI_Fint)
       integer, optional, intent(out)         :: iunit
       !! log unit identifier
 
@@ -68,19 +84,24 @@ contains
       logical                       :: close_old_
       integer                       :: iunit_
       ! misc
+      character(len=*), parameter :: default_logfile = 'lightkrylov.log'
       character(len=128) :: msg
       integer :: stat
 
-      logfile_ = optval(logfile, 'lightkrylov.log')
+      ! resolve the name: absent or blank -> default
+      logfile_ = default_logfile
+      if (present(logfile)) then
+         if (len_trim(logfile) > 0) logfile_ = trim(logfile)
+      end if
       nio_ = optval(nio, 0)
-      log_level_ = optval(log_level, 20)
-      log_level_ = max(0, min(log_level_, 100))
+      log_level_ = optval(log_level, lk_information_level)
+      log_level_ = max(0, min(log_level_, lk_none_level))
       log_stdout_ = optval(log_stdout, .true.)
       log_timestamp_ = optval(log_timestamp, .true.)
       close_old_ = optval(close_old, .true.)
 
       ! Set up comms
-      call comm_setup()
+      call comm_setup(comm)
 
       ! Set I/O rank
       if (nio_ /= 0) call set_io_rank(nio_)
@@ -95,24 +116,81 @@ contains
 
          ! set log level
          call logger%configure(level=log_level_, time_stamp=log_timestamp_)
-
-         ! set up LightKrylov log file
-         call logger%add_log_file(logfile_, unit=iunit_, stat=stat)
-         if (stat /= 0) call stop_error('Unable to open logfile '//trim(logfile_)//'.', this_module, this_procedure)
-
+         
          ! log to stdout
          if (log_stdout_) then
+            call logger%remove_log_unit(unit=6)
             call logger%add_log_unit(unit=6, stat=stat)
             if (stat /= 0) call stop_error('Unable to add stdout to logger.', this_module, this_procedure)
          end if
 
+         ! set up LightKrylov log file
+         call logger%add_log_file(logfile_, unit=iunit_, stat=stat)
+         ! user-defined name unusable -> fall back to default
+         if (stat /= 0 .and. logfile_ /= default_logfile) then
+            call log_warning('Unable to open logfile '//logfile_//', using '//default_logfile//'.', &
+                             this_module, this_procedure)
+            logfile_ = default_logfile
+            call logger%add_log_file(logfile_, unit=iunit_, stat=stat)
+         end if
+         if (stat /= 0) call stop_error('Unable to open logfile '//trim(logfile_)//'.', this_module, this_procedure)
+
          ! return unit if requested
          if (present(iunit)) iunit = iunit_
+      else 
+         if (close_old_) call reset_log_units()
+         call logger%configure(level=lk_none_level)
+         call logger%add_log_file('/dev/null', unit=iunit_, stat=stat)
       end if
 
       ! mark that logger is active
       logger_is_active = .true.
+#ifdef LIGHTKRYLOV_MPI
+      write (msg, '(A,I0,A,I0)') 'Parallel run: comm_size = ', get_comm_size(), ', IO rank = ', nio_
+#else
+      msg = 'Serial run'
+#endif
+      call log_message(trim(msg), this_module, this_procedure)
    end subroutine logger_setup
+
+   subroutine logger_add_unit(filename, unit, status, action, stat)
+      !! Attach an additional file to the logger (I/O rank only).
+      character(len=*),           intent(in)  :: filename
+      integer,                    intent(out) :: unit
+      character(len=*), optional, intent(in)  :: status, action
+      integer,          optional, intent(out) :: stat
+      unit = -1
+      if (present(stat)) stat = 0
+      if (.not. io_rank()) return
+      call logger%add_log_file(filename, unit, status=status, action=action, stat=stat)
+   end subroutine logger_add_unit
+
+   subroutine logger_remove_unit(unit, close_unit)
+      !! Detach a unit from the logger (I/O rank only; no-op for unit < 0).
+      integer,           intent(in) :: unit
+      logical, optional, intent(in) :: close_unit
+      if (.not. io_rank() .or. unit < 0) return
+      call logger%remove_log_unit(unit, close_unit=close_unit)
+   end subroutine logger_remove_unit
+
+   integer function get_log_level() result(level)
+      !! Current logging level on this rank (none_level on non-I/O ranks).
+      call logger%configuration(level=level)
+   end function get_log_level
+
+   logical function logger_writes_to_stdout() result(yes)
+      !! True if LightKrylov log messages already reach stdout on this rank.
+      integer, allocatable :: units(:)
+      if (.not. logger_is_active) then
+         ! Fallback path: log_message prints with a plain `print`
+         yes = (inactive_log_level <= lk_information_level)
+         return
+      end if
+      yes = .false.
+      if (.not. io_rank()) return          ! non-I/O ranks log to /dev/null
+      call logger%configuration(log_units=units)
+      yes = any(units == output_unit)
+   end function logger_writes_to_stdout
 
    subroutine log_message(msg, module, procedure, flush_log)
       character(len=*), intent(in)  :: msg
@@ -132,7 +210,7 @@ contains
             if (flush_) call flush_log_units()
          end if
       else
-         if (inactive_log_level <= information_level) print '(A)', msg
+         if (inactive_log_level <= lk_information_level) print '(A)', msg
       end if
    end subroutine log_message
 
@@ -154,7 +232,7 @@ contains
             if (flush_) call flush_log_units()
          end if
       else
-         if (inactive_log_level <= information_level) print '("INFO: ",A)', msg
+         if (inactive_log_level <= lk_information_level) print '("INFO: ",A)', msg
       end if
    end subroutine log_information
 
@@ -171,7 +249,7 @@ contains
             call flush_log_units()
          end if
       else
-         if (inactive_log_level <= warning_level) print '("WARN: ",A)', msg
+         if (inactive_log_level <= lk_warning_level) print '("WARN: ",A)', msg
       end if
    end subroutine log_warning
 
@@ -192,7 +270,7 @@ contains
                                   stat=stat, errmsg=errmsg)
             call flush_log_units()
          end if
-      else
+      else if (fallback_print()) then
          print '(A,": ",A)', msg, errmsg
          call error_handler(-1)
       end if
@@ -211,7 +289,7 @@ contains
             call flush_log_units()
          end if
       else
-         if (inactive_log_level <= debug_level) print '("DEBUG: ",A)', msg
+         if (inactive_log_level <= lk_debug_level) print '("DEBUG: ",A)', msg
       end if
    end subroutine log_debug
 
@@ -245,11 +323,13 @@ contains
       end if
    end subroutine reset_log_units
 
-   subroutine comm_setup()
+   subroutine comm_setup(comm)
+      integer, optional, intent(in) :: comm
       ! internal
       character(len=*), parameter :: this_procedure = 'comm_setup'
       character(len=128) :: msg
 #ifdef LIGHTKRYLOV_MPI
+      type(MPI_Comm) :: c
       integer :: ierr, rank_local, size_local
       logical :: mpi_is_initialized
 
@@ -258,23 +338,22 @@ contains
          call MPI_Init(ierr)
          if (ierr /= MPI_SUCCESS) call stop_error("Error initializing MPI", &
                                                   this_module, this_procedure)
+         lk_owns_mpi = .true.
       end if
 
-      call MPI_Comm_rank(MPI_COMM_WORLD, rank_local, ierr)
-      call MPI_Comm_size(MPI_COMM_WORLD, size_local, ierr)
+      c = MPI_COMM_WORLD
+      if (present(comm)) c%MPI_VAL = comm
+
+      call MPI_Comm_rank(c, rank_local, ierr)
+      call MPI_Comm_size(c, size_local, ierr)
 
       call set_rank(rank_local)
       call set_comm_size(size_local)
-
-      if (rank_local == 0) then
-         call logger%log_message('Setup parallel run', this_module, this_procedure)
-         write (msg, '(A,I0,A,I0)') 'comm_size = ', size_local
-         call logger%log_message(trim(msg), this_module, this_procedure)
-      end if
+      lk_comm = c
 #else
+      if (present(comm)) continue   ! silence unused-argument warnings
       call set_rank(0)
       call set_comm_size(1)
-      call logger%log_message('Setup serial run', this_module, this_procedure)
 #endif
    end subroutine comm_setup
 
@@ -289,6 +368,21 @@ contains
       ierr = 0
 #endif
    end subroutine comm_close
+
+   logical function fallback_print() result(io_rank)
+#ifdef LIGHTKRYLOV_MPI
+      logical :: init
+      integer :: rk, ierr
+      call MPI_Initialized(init, ierr)
+      io_rank = .true.
+      if (init) then
+         call MPI_Comm_rank(MPI_COMM_WORLD, rk, ierr)
+         io_rank = (rk == 0)
+      end if
+#else
+      io_rank = .true.
+#endif
+   end function fallback_print
 
    subroutine stop_error(msg, module, procedure)
       character(len=*), intent(in)  :: msg

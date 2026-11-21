@@ -2,7 +2,7 @@ module LightKrylov_Timer_Utils
    use stdlib_optval, only: optval
    use stdlib_ascii, only: to_lower
    use LightKrylov_Constants, only: dp
-   use LightKrylov_Logger
+   use LightKrylov_Logger, only: log_message, log_information, log_debug, stop_error, logger_add_unit, logger_remove_unit
    implicit none(type, external)
    private
    character(len=*), parameter :: this_module = 'LK_TmrUtils'
@@ -851,7 +851,7 @@ contains
       to_file = optval(write_to_file, .true.)
       if (to_file) then
          write (logfile_tmr, '(A,A)') trim(to_lower(self%name)), '.log'
-         call logger%add_log_file(logfile_tmr, tmr_unit, status='replace', action='write')
+         call logger_add_unit(logfile_tmr, tmr_unit, status='replace', action='write')
       end if
       icalled = 0
       allocate (ic(self%group_count))
@@ -891,8 +891,8 @@ contains
             call print_summary(self%timers(i))
          end do
       end if
-      call logger%log_message('#########   Global timer summary   ##########', this_module)
-      if (to_file) call logger%remove_log_unit(tmr_unit, close_unit=.true.)
+      call log_message('#########   Global timer summary   ##########', this_module)
+      if (to_file) call logger_remove_unit(tmr_unit, close_unit=.true.)
    end subroutine finalize
 
    !--------------------------------------------------------------

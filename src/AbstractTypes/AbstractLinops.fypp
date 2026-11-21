@@ -330,11 +330,11 @@ contains
       if ( count_old /= 0 .or. counter_ /= 0) then
         if (trans) then
             write(msg,'(A,I0,A,I0,A)') 'Total number of rmatvecs: ', count_old, '. Resetting counter to ', counter_, '.'
-            call log_message(msg, this_module, 'reset_counter('//trim(procedure)//')')
+            call log_debug(msg, this_module, 'reset_counter('//trim(procedure)//')')
             self%rmatvec_counter = counter_
         else
             write(msg,'(A,I0,A,I0,A)') 'Total number of matvecs: ', count_old, '. Resetting counter to ', counter_, '.'
-            call log_message(msg, this_module, 'reset_counter('//trim(procedure)//')')
+            call log_debug(msg, this_module, 'reset_counter('//trim(procedure)//')')
             self%matvec_counter = counter_
         end if
       end if

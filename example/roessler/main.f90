@@ -47,8 +47,7 @@ program demo
    write (data_fmt, *) '(A22,*(1X,F15.6))'
 
    ! Set up logging
-   call logger_setup()
-   call logger%configure(level=error_level, time_stamp=.false.)
+   call logger_setup(log_level=error_level, log_timestamp=.false.)
 
    ! Set up timing
    call timer%initialize()
@@ -78,6 +77,9 @@ program demo
 
    call timer%stop('Chaotic attractor')
    call timer%add_timer('Newton iteration (const. tol)', start=.true.)
+   
+   ! Set tolerance
+   tol = 1e-12_dp
 
    print *, '########################################################################################'
    print '(A,E9.2,A)', ' #             Newton iteration with constant tolerance (tol=', tol, ')                 #'
@@ -96,8 +98,6 @@ program demo
    sys_jac%jacobian = jacobian()
    sys_jac%jacobian%X = bf
 
-   ! Set tolerance
-   tol = 1e-12_dp
 
    opts = newton_dp_opts(maxiter=30, ifbisect=.false.)
    call newton(sys_jac, bf, gmres_rdp, info, rtol=tol, atol=tol, options=opts, scheduler=constant_tol_dp)
@@ -113,7 +113,6 @@ program demo
    call timer%stop('Newton iteration (const. tol)')
    call sys_jac%reset_timer()
    call sys_jac%jacobian%reset_timer()
-   call sys_jac%jacobian%finalize_timer()
    call timer%reset_all()
    call timer%add_timer('Newton iteration (dyn. tol)', start=.true.)
 
@@ -202,7 +201,7 @@ program demo
    Tend = 5.0_dp
    t_FTLE = 5.0_dp
    call write_header()
-   call OTD_map(bfp, OTD_in, Tend, OTD_out, t_FTLE)
+   call OTD_map(bfp, OTD_in, Tend, OTD_out, t_FTLE, if_rst=.false.)
    call rename(report_file_OTD, 'example/roessler/FP_OTD.txt')
    ! get baseflow
    call get_pos(bfp, vec)

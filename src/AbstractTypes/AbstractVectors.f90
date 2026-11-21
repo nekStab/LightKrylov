@@ -1515,14 +1515,14 @@ contains
 
                   !> Check distributivity.
                   wrk1 = v
-                  wrk2 = v
+                  wrk2 = u
                   call wrk1%add(w)    ! v + w
-                  call wrk2%add(u)    ! u + v
+                  call wrk2%add(v)    ! u + v
 
                   call u%add(wrk1)    ! u + (v + w)
-                  call w%add(wrk2)    ! (u + v) + w
+                  call wrk2%add(w)    ! (u + v) + w
 
-                  call u%sub(w)
+                  call u%sub(wrk2)
                   error_norm = u%norm()
                   success = merge(.true., .false., error_norm <= tol)
 
@@ -2009,14 +2009,14 @@ contains
 
                   !> Check distributivity.
                   wrk1 = v
-                  wrk2 = v
+                  wrk2 = u
                   call wrk1%add(w)    ! v + w
-                  call wrk2%add(u)    ! u + v
+                  call wrk2%add(v)    ! u + v
 
                   call u%add(wrk1)    ! u + (v + w)
-                  call w%add(wrk2)    ! (u + v) + w
+                  call wrk2%add(w)    ! (u + v) + w
 
-                  call u%sub(w)
+                  call u%sub(wrk2)
                   error_norm = u%norm()
                   success = merge(.true., .false., error_norm <= tol)
 
@@ -2503,14 +2503,14 @@ contains
 
                   !> Check distributivity.
                   wrk1 = v
-                  wrk2 = v
+                  wrk2 = u
                   call wrk1%add(w)    ! v + w
-                  call wrk2%add(u)    ! u + v
+                  call wrk2%add(v)    ! u + v
 
                   call u%add(wrk1)    ! u + (v + w)
-                  call w%add(wrk2)    ! (u + v) + w
+                  call wrk2%add(w)    ! (u + v) + w
 
-                  call u%sub(w)
+                  call u%sub(wrk2)
                   error_norm = u%norm()
                   success = merge(.true., .false., error_norm <= tol)
 
@@ -3005,14 +3005,14 @@ contains
 
                   !> Check distributivity.
                   wrk1 = v
-                  wrk2 = v
+                  wrk2 = u
                   call wrk1%add(w)    ! v + w
-                  call wrk2%add(u)    ! u + v
+                  call wrk2%add(v)    ! u + v
 
                   call u%add(wrk1)    ! u + (v + w)
-                  call w%add(wrk2)    ! (u + v) + w
+                  call wrk2%add(w)    ! (u + v) + w
 
-                  call u%sub(w)
+                  call u%sub(wrk2)
                   error_norm = u%norm()
                   success = merge(.true., .false., error_norm <= tol)
 
